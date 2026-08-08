@@ -101,8 +101,8 @@ class CircuitState:
             t_count=self.t_count,
             depth=self.depth,
             num_gates=self.num_gates,
-            phase_poly=self.phase_poly,
-            tableau=self.tableau,
+            phase_poly=self.phase_poly.copy() if self.phase_poly is not None else None,
+            tableau=self.tableau.copy() if self.tableau is not None else None,
         )
 
     def __repr__(self):

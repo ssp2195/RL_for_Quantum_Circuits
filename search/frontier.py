@@ -63,6 +63,17 @@ class Frontier:
     def pop(self) -> SearchNode:
         return heapq.heappop(self.heap)
 
+    def remove(self, node: SearchNode) -> bool:
+        """
+        Remove a node by identity. Returns True if removed.
+        """
+        for i, n in enumerate(self.heap):
+            if n is node:
+                del self.heap[i]
+                heapq.heapify(self.heap)
+                return True
+        return False
+
     def is_empty(self) -> bool:
         return len(self.heap) == 0
 

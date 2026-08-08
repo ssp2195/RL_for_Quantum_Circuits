@@ -10,7 +10,7 @@ class Trainer:
         self.env = env
         self.policy = LinearQPolicy(feature_dim)
 
-        # attach policy to env (important for priority scoring)
+        # attach policy to env (used for child priorities)
         self.env.policy = self.policy
 
         # visitation counts for exploration bonus
@@ -24,7 +24,7 @@ class Trainer:
         self.min_epsilon = 0.05
         self.epsilon_decay = 0.995
 
-        self.reward_clip = 1.0
+        self.reward_clip = 10.0
         self.exploration_beta = 0.1
 
     # =========================================================
@@ -39,31 +39,30 @@ class Trainer:
 
             total_reward = 0.0
             steps = 0
+            certified = False
 
             while not done:
-                current_state = self.env.current_node.state
+                nodes = self.env.current_nodes()
 
-                # ---------- Action selection ----------
-                action_data = self.policy.select_action(
-                    current_state,
-                    self.env.actions,
-                    epsilon=self.epsilon
-                )
-
-                if action_data is None:
+                if not nodes:
                     break
 
-                action, _, predicted_next_state = action_data
+                # ---------- Frontier node selection (Stage 4) ----------
+                selected = self.policy.select_node(nodes, epsilon=self.epsilon)
 
-                action_idx = self.env.actions.index(action)
+                if selected is None:
+                    break
 
-                # ---------- Step ----------
-                next_obs, reward, done, _, info = self.env.step(action_idx)
+                node_idx = next(
+                    i for i, n in enumerate(nodes) if n is selected
+                )
+                current_state = selected.state
 
-                next_state = self.env.current_node.state
+                # ---------- Step (expand selected node) ----------
+                next_obs, reward, done, _, info = self.env.step(node_idx)
 
                 # ---------- Exploration bonus ----------
-                identity = self.canonicalizer.identity_hash(next_state)
+                identity = self.canonicalizer.identity_hash(current_state)
                 self.visit_counts[identity] += 1
 
                 bonus = self.exploration_beta / np.sqrt(self.visit_counts[identity])
@@ -73,16 +72,21 @@ class Trainer:
                 # ---------- Reward clipping ----------
                 reward = np.clip(reward, -self.reward_clip, self.reward_clip)
 
-                # ---------- TD Update ----------
+                # ---------- TD Update (Stage 12) ----------
+                next_frontier = self.env.current_nodes()
+
                 self.policy.update(
                     state=current_state,
                     reward=reward,
-                    next_state=next_state,
-                    done=done
+                    next_frontier=next_frontier,
+                    done=done,
                 )
 
                 total_reward += reward
                 steps += 1
+
+                if info.get("num_certified", 0) > 0:
+                    certified = True
 
             # ---------- Epsilon decay ----------
             self.epsilon = max(
@@ -95,5 +99,6 @@ class Trainer:
                 f"Episode {ep:03d} | "
                 f"Reward: {total_reward:.3f} | "
                 f"Steps: {steps} | "
+                f"Certified: {certified} | "
                 f"Epsilon: {self.epsilon:.3f}"
             )

@@ -10,3 +10,4 @@ class Config:
     # RL-related placeholders (used later)
     max_steps: int = 100
     discount: float = 0.99
+    max_frontier: int = 100

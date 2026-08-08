@@ -34,12 +34,21 @@ class Canonicalizer:
 
     def _identity_canonical_form(self, state: CircuitState) -> Tuple:
         """
-        ONLY functional behavior (unitary)
+        Functional behavior (unitary): combines phase polynomial and tableau
         """
         phase_repr = self._canonicalize_phase(state)
+        tableau_repr = self._canonicalize_tableau(state)
+        return (phase_repr, tableau_repr)
 
-        # Tableau intentionally ignored (Stage 4 simplification)
-        return (phase_repr,)
+    def _canonicalize_tableau(self, state: CircuitState) -> Tuple:
+        tab = state.tableau
+        if tab is None:
+            return ()
+        return (
+            tuple(map(tuple, tab.X)),
+            tuple(map(tuple, tab.Z)),
+            tuple(tab.phase)
+        )
 
     # ---------- Resource Canonicalization ----------
 

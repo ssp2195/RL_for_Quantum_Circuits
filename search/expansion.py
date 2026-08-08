@@ -1,6 +1,7 @@
 from typing import List
 
 from circuit.gate import Gate
+from enums import GateType
 from search.node import SearchNode
 from search.action import Action
 
@@ -60,4 +61,6 @@ def _compute_priority(state, policy):
     RL-based priority:
     Higher Q → better → lower priority value
     """
+    if policy is None:
+        return float(state.t_count + state.depth + state.num_gates)
     return policy.score_state(state)
