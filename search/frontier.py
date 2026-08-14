@@ -111,13 +111,19 @@ class Frontier:
 
     def active_records(self) -> list[ArchiveRecord]:
         """Return currently selectable records in a deterministic order."""
+        # The frontier owns ``_queued_ids``.  Looking up only those record
+        # IDs avoids a full archive scan for every RL observation; a
+        # constrained normal-form search can retain many historical expanded
+        # witnesses while only a comparatively small open subset is eligible
+        # for selection.  Tombstoned stale IDs are filtered lazily exactly as
+        # heap entries are in ``pop``.
         records = [
             record
-            for record in self.archive.all_records()
-            if self._is_open(record)
+            for record_id in tuple(self._queued_ids)
+            if (record := self.archive.record(record_id)) is not None
+            and self._is_open(record)
         ]
-        live_ids = {record.record_id for record in records}
-        self._queued_ids.intersection_update(live_ids)
+        self._queued_ids.intersection_update(record.record_id for record in records)
         return sorted(records, key=lambda record: (record.node.priority, record.record_id))
 
     def nodes(self) -> list[SearchNode]:

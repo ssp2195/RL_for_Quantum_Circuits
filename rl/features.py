@@ -10,7 +10,7 @@ identifier.
 
 from __future__ import annotations
 
-from typing import Iterable, Optional, Sequence, TYPE_CHECKING
+from typing import Iterable, Mapping, Optional, Protocol, Sequence, TYPE_CHECKING
 
 import numpy as np
 
@@ -523,6 +523,132 @@ def feature_dimension(
     return int(extract_features(state, target_context=target_context).shape[0])
 
 
+class FeatureProvider(Protocol):
+    """Stable opt-in feature-provider contract for frontier record policies.
+
+    Providers receive a :class:`CircuitState` and an optional frontier of
+    states or nodes, and must return a deterministic fixed-width vector.  A
+    provider may use labelled target/problem information, but it must never
+    use a heap position, record ID, or any other scheduler implementation
+    detail as a learned feature.
+
+    The protocol deliberately mirrors the module-level legacy helpers so the
+    original target-free and ``DenseTargetContext`` paths remain available via
+    :class:`LegacyFeatureProvider` and
+    :class:`TargetContextFeatureProvider` without changing their schemas.
+    """
+
+    @property
+    def schema_version(self) -> str:
+        """Durable schema label used to bind policy weights."""
+
+    @property
+    def dimension(self) -> int:
+        """Exact number of coordinates returned by :meth:`extract`."""
+
+    @property
+    def names(self) -> tuple[str, ...]:
+        """Ordered, human-readable coordinate names."""
+
+    def extract(
+        self,
+        state: CircuitState,
+        frontier: Optional[Iterable[object]] = None,
+    ) -> np.ndarray:
+        """Return one fixed-width feature vector for ``state``."""
+
+    def metadata(self) -> Mapping[str, object]:
+        """Return immutable-schema metadata suitable for a policy report."""
+
+
+class LegacyFeatureProvider:
+    """Adapter for the existing target-free/dense-target feature functions.
+
+    This is intentionally thin: it delegates to the public module functions
+    above, so existing 16-D target-free and 60-D target-aware vectors remain
+    exactly unchanged.  It is the default provider used by
+    :class:`rl.policy.LinearQPolicy` when callers do not supply a custom one.
+    """
+
+    def __init__(self, target_context: Optional[object] = None) -> None:
+        self.target_context = target_context
+
+    @property
+    def schema_version(self) -> str:
+        return feature_schema_version(self.target_context)
+
+    @property
+    def dimension(self) -> int:
+        return feature_dimension(target_context=self.target_context)
+
+    @property
+    def names(self) -> tuple[str, ...]:
+        return feature_names(self.target_context)
+
+    def extract(
+        self,
+        state: CircuitState,
+        frontier: Optional[Iterable[object]] = None,
+    ) -> np.ndarray:
+        return extract_features(state, frontier, target_context=self.target_context)
+
+    def metadata(self) -> Mapping[str, object]:
+        # Return the historical metadata verbatim.  In particular, callers
+        # using a DenseTargetContext see the same target fields as before the
+        # provider abstraction was introduced.
+        return feature_metadata(self.target_context)
+
+    def bind(self, target_context: object) -> "TargetContextFeatureProvider":
+        """Return a target-aware adapter without mutating this provider."""
+
+        if target_context is None:
+            raise TypeError("target_context must not be None")
+        return TargetContextFeatureProvider(target_context)
+
+
+class TargetContextFeatureProvider(LegacyFeatureProvider):
+    """Named adapter for the existing ``DenseTargetContext`` feature path."""
+
+    def __init__(self, target_context: object) -> None:
+        if target_context is None:
+            raise TypeError("target_context must not be None")
+        super().__init__(target_context)
+
+
+def validate_feature_provider(provider: object) -> FeatureProvider:
+    """Validate the small runtime contract used by ``LinearQPolicy``.
+
+    Structural validation gives integration errors at policy construction
+    rather than after a partially completed scheduling transition.  A custom
+    provider need not inherit a project base class; matching the documented
+    attributes and methods is sufficient.
+    """
+
+    required = ("schema_version", "dimension", "names", "extract", "metadata")
+    missing = [name for name in required if not hasattr(provider, name)]
+    if missing:
+        raise TypeError(
+            "feature_provider must expose " + ", ".join(required) + "; missing " + ", ".join(missing)
+        )
+    if not callable(getattr(provider, "extract")) or not callable(
+        getattr(provider, "metadata")
+    ):
+        raise TypeError("feature_provider.extract and feature_provider.metadata must be callable")
+
+    schema_version = getattr(provider, "schema_version")
+    if not isinstance(schema_version, str) or not schema_version:
+        raise TypeError("feature_provider.schema_version must be a non-empty string")
+    dimension = getattr(provider, "dimension")
+    if isinstance(dimension, bool) or not isinstance(dimension, (int, np.integer)) or int(dimension) < 1:
+        raise ValueError("feature_provider.dimension must be a positive integer")
+    names = tuple(getattr(provider, "names"))
+    if len(names) != int(dimension) or not all(isinstance(name, str) and name for name in names):
+        raise ValueError(
+            "feature_provider.names must contain one non-empty string per feature dimension"
+        )
+    return provider  # type: ignore[return-value]
+
+
 __all__ = [
     "DIRECTED_CNOT_PAIRS",
     "LAST_OPERATION_GATE_ORDER",
@@ -532,9 +658,13 @@ __all__ = [
     "TARGET_AWARE_FEATURE_SCHEMA_VERSION",
     "TARGET_FEATURE_QUBIT_CAPACITY",
     "TARGET_SEMANTIC_FEATURE_NAMES",
+    "FeatureProvider",
+    "LegacyFeatureProvider",
+    "TargetContextFeatureProvider",
     "extract_features",
     "feature_dimension",
     "feature_metadata",
     "feature_names",
     "feature_schema_version",
+    "validate_feature_provider",
 ]

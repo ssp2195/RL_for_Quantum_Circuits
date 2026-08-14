@@ -30,14 +30,22 @@ def _basis_label(index: int, num_qubits: int) -> str:
     return format(index, f"0{num_qubits}b")
 
 
-def _svg(width: int, height: int, body: str, title: str) -> str:
+def _svg(
+    width: int,
+    height: int,
+    body: str,
+    title: str,
+    *,
+    description: str = "Deterministic GHZ-3 smoke-test artifact.",
+) -> str:
     escaped_title = html.escape(title)
+    escaped_description = html.escape(description)
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" '
         f'height="{height}" viewBox="0 0 {width} {height}" '
         f'role="img" aria-labelledby="title desc">\n'
         f"  <title id=\"title\">{escaped_title}</title>\n"
-        "  <desc id=\"desc\">Deterministic GHZ-3 smoke-test artifact.</desc>\n"
+        f"  <desc id=\"desc\">{escaped_description}</desc>\n"
         f'  <rect width="100%" height="100%" fill="{_LIGHT}"/>\n'
         f"{body}\n"
         "</svg>\n"
@@ -139,17 +147,41 @@ def _frontier_svg(
     return _svg(width, height, "\n".join(parts), heading)
 
 
-def _circuit_svg(gates: Sequence[Gate], num_qubits: int) -> str:
+def circuit_svg(
+    gates: Sequence[Gate],
+    num_qubits: int,
+    *,
+    heading: str | None = None,
+    description: str | None = None,
+    empty_heading: str | None = None,
+) -> str:
+    """Render a small dependency-free circuit diagram from concrete gates.
+
+    The caller supplies the actual authoritative DAG gate sequence.  This is
+    deliberately a presentation helper only: its SVG must never be used as
+    semantic evidence for a candidate circuit.  The optional labels make the
+    helper reusable by deterministic reference benchmarks without duplicating
+    the GHZ-specific renderer.
+    """
+
     gate_count = max(1, len(gates))
     width = max(760, 180 + 145 * gate_count)
     height = 120 + 92 * num_qubits
     left, top, spacing = 150, 86, 84
     wire_y = [top + qubit * spacing for qubit in range(num_qubits)]
     has_witness = bool(gates)
-    heading = "Generated GHZ-3 circuit" if has_witness else "No certified GHZ-3 witness"
+    rendered_heading = heading or (
+        "Generated GHZ-3 circuit" if has_witness else "No certified GHZ-3 witness"
+    )
+    rendered_description = description or (
+        "Circuit order is left to right; q0 is the least-significant simulation bit."
+    )
+    rendered_empty_heading = empty_heading or (
+        "The search did not return a certified circuit."
+    )
     parts = [
-        f'  <text x="36" y="32" font-family="sans-serif" font-size="22" fill="{_DARK}">{heading}</text>',
-        f'  <text x="36" y="54" font-family="sans-serif" font-size="13" fill="{_DARK}">Circuit order is left to right; q0 is the least-significant simulation bit.</text>',
+        f'  <text x="36" y="32" font-family="sans-serif" font-size="22" fill="{_DARK}">{html.escape(rendered_heading)}</text>',
+        f'  <text x="36" y="54" font-family="sans-serif" font-size="13" fill="{_DARK}">{html.escape(rendered_description)}</text>',
     ]
     for qubit, y in enumerate(wire_y):
         label = f"q{qubit}" + (" (LSB)" if qubit == 0 else "")
@@ -186,9 +218,20 @@ def _circuit_svg(gates: Sequence[Gate], num_qubits: int) -> str:
             )
     if not has_witness:
         parts.append(
-            f'  <text x="{width / 2}" y="{height - 38}" text-anchor="middle" font-family="sans-serif" font-size="16" fill="{_DARK}">The search did not return a certified circuit.</text>'
+            f'  <text x="{width / 2}" y="{height - 38}" text-anchor="middle" font-family="sans-serif" font-size="16" fill="{_DARK}">{html.escape(rendered_empty_heading)}</text>'
         )
-    return _svg(width, height, "\n".join(parts), f"{heading} diagram")
+    return _svg(
+        width,
+        height,
+        "\n".join(parts),
+        f"{rendered_heading} diagram",
+        description=rendered_description,
+    )
+
+
+# Kept as a private compatibility alias for downstream code written against
+# the initial GHZ artifact helper before it became a general circuit renderer.
+_circuit_svg = circuit_svg
 
 
 def _markdown_report(report: Mapping[str, Any], artifact_names: Mapping[str, str]) -> str:
@@ -298,7 +341,7 @@ def save_ghz3_artifacts(
     )
     paths["frontier_chart"].write_text(_frontier_svg(trace), encoding="utf-8")
     paths["circuit_diagram"].write_text(
-        _circuit_svg(gates, num_qubits), encoding="utf-8"
+        circuit_svg(gates, num_qubits), encoding="utf-8"
     )
 
     summary = dict(report)
@@ -447,7 +490,7 @@ def save_ghz3_rl_artifacts(
         encoding="utf-8",
     )
     paths["circuit_diagram"].write_text(
-        _circuit_svg(gates, num_qubits), encoding="utf-8"
+        circuit_svg(gates, num_qubits), encoding="utf-8"
     )
 
     summary = dict(report)
@@ -461,4 +504,4 @@ def save_ghz3_rl_artifacts(
     return {name: str(path.resolve()) for name, path in paths.items()}
 
 
-__all__ = ["save_ghz3_artifacts", "save_ghz3_rl_artifacts"]
+__all__ = ["circuit_svg", "save_ghz3_artifacts", "save_ghz3_rl_artifacts"]

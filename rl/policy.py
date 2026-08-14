@@ -3,16 +3,15 @@
 from __future__ import annotations
 
 from hashlib import sha256
-from typing import Iterable, Optional, Sequence, TYPE_CHECKING
+from typing import Iterable, Mapping, Optional, Sequence, TYPE_CHECKING
 
 import numpy as np
 
 from circuit.circuit_state import CircuitState
 from rl.features import (
-    extract_features,
-    feature_dimension,
-    feature_metadata,
-    feature_schema_version,
+    FeatureProvider,
+    LegacyFeatureProvider,
+    validate_feature_provider,
 )
 from search.node import SearchNode
 
@@ -63,6 +62,44 @@ def _context_binding_digest(target_context: Optional[object]) -> Optional[str]:
     return f"sha256:{sha256(payload).hexdigest()}"
 
 
+def _freeze_metadata(value: object) -> object:
+    """Return a deterministic representation of provider-binding metadata."""
+
+    if isinstance(value, Mapping):
+        return tuple(
+            (str(key), _freeze_metadata(item))
+            for key, item in sorted(value.items(), key=lambda item: str(item[0]))
+        )
+    if isinstance(value, (tuple, list)):
+        return tuple(_freeze_metadata(item) for item in value)
+    return repr(value)
+
+
+def _feature_provider_binding_digest(provider: FeatureProvider) -> str:
+    """Bind explicit policy weights to all provider-visible metadata."""
+
+    metadata = dict(provider.metadata())
+    payload = repr(
+        (
+            str(provider.schema_version),
+            int(provider.dimension),
+            tuple(provider.names),
+            _freeze_metadata(metadata),
+        )
+    ).encode("utf-8")
+    return f"sha256:{sha256(payload).hexdigest()}"
+
+
+def _feature_provider_target_fingerprint(provider: FeatureProvider) -> Optional[str]:
+    """Read the immutable target binding advertised by an explicit provider."""
+
+    fingerprint = dict(provider.metadata()).get("target_fingerprint")
+    if fingerprint is None:
+        return None
+    value = str(fingerprint)
+    return value or None
+
+
 class LinearQPolicy:
     """Shared linear scorer for persistent frontier records.
 
@@ -79,13 +116,26 @@ class LinearQPolicy:
         gamma: float = 1.0,
         seed: Optional[int] = None,
         target_context: Optional["DenseTargetContext"] = None,
+        feature_provider: Optional[FeatureProvider] = None,
     ):
-        expected_dim = feature_dimension(target_context=target_context)
+        if feature_provider is not None and target_context is not None:
+            raise ValueError(
+                "pass either target_context or feature_provider, not both; "
+                "use a TargetContextFeatureProvider for an explicit adapter"
+            )
+        if feature_provider is None:
+            provider: FeatureProvider = LegacyFeatureProvider(target_context)
+            explicit_provider = False
+        else:
+            provider = validate_feature_provider(feature_provider)
+            explicit_provider = True
+
+        expected_dim = int(provider.dimension)
         if feature_dim is None:
             feature_dim = expected_dim
         elif int(feature_dim) != expected_dim:
             context_description = (
-                "target-aware" if target_context is not None else "target-free"
+                "target-aware" if target_context is not None else provider.schema_version
             )
             raise ValueError(
                 f"feature_dim={feature_dim} does not match the {context_description} "
@@ -99,15 +149,34 @@ class LinearQPolicy:
         self.rng = np.random.default_rng(seed)
         self.seed = seed
         self.target_context: Optional["DenseTargetContext"] = target_context
+        self.feature_provider: FeatureProvider = provider
+        self._explicit_feature_provider = explicit_provider
+        self._feature_provider_binding_digest = (
+            _feature_provider_binding_digest(provider) if explicit_provider else None
+        )
+        self._bound_feature_provider_target_fingerprint = (
+            _feature_provider_target_fingerprint(provider)
+            if explicit_provider
+            else None
+        )
         self._bound_target_fingerprint = _context_fingerprint(target_context)
         self._bound_target_context_schema_version = _context_schema_version(target_context)
         self._bound_target_context_digest = _context_binding_digest(target_context)
 
     @property
     def target_fingerprint(self) -> Optional[str]:
-        """Fingerprint of the immutable target context bound to this policy."""
+        """Fingerprint of the immutable target binding for this policy.
 
-        return self._bound_target_fingerprint
+        Legacy policies continue to expose the dense target-context fingerprint.
+        An explicit problem feature provider instead owns the target binding,
+        so expose the value captured when that provider was bound rather than
+        reporting an unhelpful ``None`` to checkpoint/report callers.
+        """
+
+        return (
+            self._bound_target_fingerprint
+            or self._bound_feature_provider_target_fingerprint
+        )
 
     @property
     def target_context_schema_version(self) -> Optional[str]:
@@ -122,10 +191,16 @@ class LinearQPolicy:
         return self._bound_target_context_digest
 
     @property
+    def feature_provider_binding_digest(self) -> Optional[str]:
+        """Metadata digest for an explicitly supplied feature provider."""
+
+        return self._feature_provider_binding_digest
+
+    @property
     def feature_schema_version(self) -> str:
         """Feature schema used by the policy's weight vector."""
 
-        return feature_schema_version(self.target_context)
+        return self.feature_provider.schema_version
 
     def bind_target_context(self, target_context: "DenseTargetContext") -> None:
         """Bind an initially target-free, zero-weight policy to one target.
@@ -140,7 +215,14 @@ class LinearQPolicy:
         if target_context is None:
             raise TypeError("bind_target_context requires a DenseTargetContext")
 
-        expected_dim = feature_dimension(target_context=target_context)
+        if self._explicit_feature_provider:
+            raise ValueError(
+                "cannot bind a target_context to a policy with an explicit "
+                "feature_provider; create a TargetContextFeatureProvider instead"
+            )
+
+        candidate_provider = LegacyFeatureProvider(target_context)
+        expected_dim = candidate_provider.dimension
         fingerprint = _context_fingerprint(target_context)
         schema_version = _context_schema_version(target_context)
         binding_digest = _context_binding_digest(target_context)
@@ -157,6 +239,7 @@ class LinearQPolicy:
             if self.feature_dim != expected_dim:
                 raise ValueError("bound target context has an incompatible feature dimension")
             self.target_context = target_context
+            self.feature_provider = candidate_provider
             return
 
         if self.feature_dim != expected_dim:
@@ -169,9 +252,58 @@ class LinearQPolicy:
             self.theta = np.zeros(self.feature_dim, dtype=np.float64)
 
         self.target_context = target_context
+        self.feature_provider = candidate_provider
         self._bound_target_fingerprint = fingerprint
         self._bound_target_context_schema_version = schema_version
         self._bound_target_context_digest = binding_digest
+
+    def bind_feature_provider(self, feature_provider: FeatureProvider) -> None:
+        """Bind an opt-in provider without silently reinterpreting weights.
+
+        An equivalent provider may replace an already bound explicit provider.
+        Moving between provider schemas is allowed only while the policy has a
+        zero weight vector, matching the established target-context binding
+        safety rule.
+        """
+
+        provider = validate_feature_provider(feature_provider)
+        expected_dim = int(provider.dimension)
+        binding_digest = _feature_provider_binding_digest(provider)
+
+        if self._explicit_feature_provider:
+            if binding_digest == self._feature_provider_binding_digest:
+                if self.feature_dim != expected_dim:
+                    raise ValueError("equivalent feature provider has incompatible dimension")
+                self.feature_provider = provider
+                return
+            if np.any(self.theta != 0.0):
+                raise ValueError(
+                    "cannot bind a non-zero policy to a different feature provider"
+                )
+        elif np.any(self.theta != 0.0):
+            raise ValueError(
+                "cannot replace a non-zero legacy policy with an explicit "
+                "feature provider"
+            )
+
+        if self.feature_dim != expected_dim:
+            if np.any(self.theta != 0.0):
+                raise ValueError(
+                    "cannot bind a non-zero weight vector to a different feature schema"
+                )
+            self.feature_dim = expected_dim
+            self.theta = np.zeros(self.feature_dim, dtype=np.float64)
+
+        self.feature_provider = provider
+        self._explicit_feature_provider = True
+        self._feature_provider_binding_digest = binding_digest
+        self._bound_feature_provider_target_fingerprint = (
+            _feature_provider_target_fingerprint(provider)
+        )
+        self.target_context = None
+        self._bound_target_fingerprint = None
+        self._bound_target_context_schema_version = None
+        self._bound_target_context_digest = None
 
     def weight_digest(self) -> str:
         """Return a stable digest that binds weights to their feature schema."""
@@ -182,7 +314,12 @@ class LinearQPolicy:
         digest.update(b"\0")
         digest.update((self.target_fingerprint or "").encode("utf-8"))
         digest.update(b"\0")
-        digest.update((self.target_context_binding_digest or "").encode("utf-8"))
+        binding_digest = (
+            self.target_context_binding_digest
+            or self.feature_provider_binding_digest
+            or ""
+        )
+        digest.update(binding_digest.encode("utf-8"))
         digest.update(b"\0")
         digest.update(str(self.feature_dim).encode("ascii"))
         digest.update(b"\0")
@@ -195,19 +332,29 @@ class LinearQPolicy:
     def metadata(self) -> dict[str, object]:
         """Return checkpoint/report metadata for the active target binding."""
 
-        metadata = dict(feature_metadata(self.target_context))
+        metadata = dict(self.feature_provider.metadata())
+        provider_target_fingerprint = metadata.get("target_fingerprint")
         metadata.update(
             {
                 "algorithm": "linear-semi-gradient-sarsa(0)",
                 "learning_rate": self.lr,
                 "discount": self.gamma,
                 "seed": self.seed,
-                "target_fingerprint": self.target_fingerprint,
+                # An explicit problem provider owns its target binding.  Keep
+                # that metadata rather than replacing it with the absence of
+                # a DenseTargetContext.
+                "target_fingerprint": self.target_fingerprint
+                if self.target_fingerprint is not None
+                else provider_target_fingerprint,
                 "target_context_schema_version": self.target_context_schema_version,
                 "target_context_binding_digest": self.target_context_binding_digest,
                 "weight_digest": self.weight_digest(),
             }
         )
+        if self.feature_provider_binding_digest is not None:
+            metadata["feature_provider_binding_digest"] = (
+                self.feature_provider_binding_digest
+            )
         return metadata
 
     def _features(
@@ -215,7 +362,7 @@ class LinearQPolicy:
         state: CircuitState,
         frontier: Optional[Iterable[object]] = None,
     ) -> np.ndarray:
-        features = extract_features(state, frontier, target_context=self.target_context)
+        features = self.feature_provider.extract(state, frontier)
         if features.shape[0] != self.theta.shape[0]:
             raise ValueError(
                 f"feature dimension changed from {self.theta.shape[0]} to {features.shape[0]}"

@@ -56,6 +56,53 @@ charts, a native-gate circuit diagram, and a Markdown summary. These files use
 only the standard library and NumPy; no plotting or quantum SDK dependency is
 added.
 
+## Known exact Toffoli-3 certification
+
+`toffoli_certify.py` is a deterministic reference-certification runner for the
+fixed 15-gate native Clifford+T witness of `CCX(0,1 -> 2)`. The target is built
+analytically from the LSB basis mapping (only indices `3` and `7` exchange),
+while the candidate is reconstructed from the authoritative `CircuitDAG` and
+checked by the independent dense simulator up to one global phase.
+
+```powershell
+.\.venv\Scripts\python toffoli_certify.py --artifacts-dir outputs\toffoli-known
+```
+
+The selected directory receives `summary.json`, `summary.md`, exhaustive
+`truth_table.csv`, resource/DAG diagnostics, candidate and analytical target
+matrix CSVs, and an SVG diagram generated from the actual candidate DAG. It
+also records relative-phase, malformed-witness, and resource-budget negative
+controls. This is a known-witness certification milestone only: it does not
+train a policy, run frontier search, or claim synthesis discovery or optimality
+proofs.
+
+## Learned constrained Toffoli parity-network search
+
+`toffoli_search.py` is the separate Stage 3 frontier-record benchmark. It
+constructs the CCX target analytically, trains a policy only to rank existing
+frontier records, and lets `ToffoliParityNetworkProblem` enumerate every legal
+constrained continuation. It never substitutes a reference circuit: the
+learned SVG is reconstructed only from a fresh learned `solution_node`.
+
+Exact Toffoli synthesis within the fixed seven-term CCZ parity-network normal
+form; not a proof of general unconstrained Clifford+T synthesis.
+
+```powershell
+.\.venv\Scripts\python toffoli_search.py `
+  --artifacts-dir outputs\toffoli-search `
+  --train --seed 23
+```
+
+The command returns zero only after the analytical phase/truth-table oracle,
+FIFO/uniform/zero-policy baselines, seeded-random reproducibility, bounded
+negative resource controls, a fresh learned witness, independent dense
+validation, exact gate-resource profile, and the artifact contract all pass.
+The output directory contains `summary.json`, `summary.md`, phase and resource
+diagnostics, traces for every scheduler, policy weights, the learned truth
+table, and generated `circuit.svg` / `frontier_size.svg`. On an unsuccessful
+learned evaluation, `circuit.svg` explicitly states that no certified learned
+witness was returned and shows no reference circuit.
+
 ## Linear-policy training plan
 
 The linear SARSA policy schedules persistent frontier records; it never emits

@@ -19,13 +19,26 @@ class Trainer:
         # updates all use one feature schema.  Target-free environments keep
         # the historical 16-coordinate representation.
         target_context = getattr(env, "_feature_target_context", None)
+        feature_provider = getattr(env, "feature_provider", None)
         if policy is None:
-            policy = LinearQPolicy(
-                feature_dim=env.feature_dim,
-                gamma=env.config.discount,
-                seed=getattr(env.config, "seed", None),
-                target_context=target_context,
-            )
+            if feature_provider is None:
+                policy = LinearQPolicy(
+                    feature_dim=env.feature_dim,
+                    gamma=env.config.discount,
+                    seed=getattr(env.config, "seed", None),
+                    target_context=target_context,
+                )
+            else:
+                policy = LinearQPolicy(
+                    feature_provider=feature_provider,
+                    gamma=env.config.discount,
+                    seed=getattr(env.config, "seed", None),
+                )
+        elif feature_provider is not None:
+            bind_feature_provider = getattr(policy, "bind_feature_provider", None)
+            if not callable(bind_feature_provider):
+                raise ValueError("policy does not support the environment feature provider")
+            bind_feature_provider(feature_provider)
         elif target_context is not None:
             policy.bind_target_context(target_context)
         bind_policy = getattr(env, "_bind_policy_target_context", None)
@@ -44,7 +57,10 @@ class Trainer:
         # bonus to that objective; callers can still opt in manually.
         self.exploration_beta = (
             0.0
-            if getattr(env.config, "reward_mode", "legacy") == "target_progress"
+            if (
+                getattr(env.config, "reward_mode", "legacy") == "target_progress"
+                or getattr(env, "reward_model", None) is not None
+            )
             else 0.1
         )
 

@@ -22,6 +22,7 @@ from search.action_space import generate_actions
 from search.expansion import expand_node
 from search.frontier import Frontier
 from search.node import SearchNode
+from search.problems.native import NativeGateSearchProblem
 
 
 def _requires_phase_sensitive_archive(certification_engine: Any) -> bool:
@@ -68,21 +69,46 @@ class CircuitSynthesisEnv(gym.Env):
 
     metadata = {"render_modes": ["human"]}
 
-    def __init__(self, config, certification_engine, policy=None):
+    def __init__(
+        self,
+        config,
+        certification_engine,
+        policy=None,
+        problem=None,
+        feature_provider=None,
+        reward_model=None,
+        observation_features: bool = True,
+    ):
         super().__init__()
         self.config = config
         self.cert_engine = certification_engine
         self.policy = policy
+        # ``NativeGateSearchProblem`` is deliberately the default adapter,
+        # rather than a new code path.  Its expansion is the historical
+        # all-native gate enumeration, so existing GHZ and generic callers
+        # retain their exact semantics while constrained problems can supply
+        # a continuation-safe normal form.
+        self.problem = problem if problem is not None else NativeGateSearchProblem()
+        self.feature_provider = feature_provider
+        self.reward_model = reward_model
+        if not isinstance(observation_features, bool):
+            raise TypeError("observation_features must be a bool")
+        # Record schedulers call ``current_nodes``/the policy directly; the
+        # Gym observation is not their decision input.  Dedicated benchmark
+        # runners can therefore suppress repeated frontier-wide observation
+        # materialisation while preserving the default public Gym behavior.
+        self.observation_features = observation_features
         self.actions = generate_actions(config.num_qubits)
         # A literal-phase verifier cannot safely share a quotient-phase
         # archive: a branch differing only by global phase may be the only
         # exact literal witness.  Composite verifiers inherit the strictest
         # child policy so their archive cannot discard that witness.
-        self.canonicalizer = Canonicalizer(
-            phase_sensitive=_requires_phase_sensitive_archive(certification_engine)
+        phase_sensitive = _requires_phase_sensitive_archive(certification_engine)
+        self.canonicalizer = self.problem.canonicalizer(
+            phase_sensitive=phase_sensitive
         )
 
-        prototype = CircuitState(CircuitDAG(config.num_qubits), config.budget)
+        prototype = self.problem.initial_state(config)
         # Target-aware metrics are opt-in.  Existing FIFO/random/resource-only
         # searches consequently retain their historical feature and reward
         # behavior.  Target-progress reward shaping also needs the same dense
@@ -113,10 +139,15 @@ class CircuitSynthesisEnv(gym.Env):
                 config.target_progress_reward
             )
 
-        self.feature_dim = feature_dimension(
-            prototype,
-            target_context=self._feature_target_context,
-        )
+        if self.feature_provider is None:
+            self.feature_dim = feature_dimension(
+                prototype,
+                target_context=self._feature_target_context,
+            )
+        else:
+            self.feature_dim = int(getattr(self.feature_provider, "dimension"))
+            if self.feature_dim <= 0:
+                raise ValueError("feature_provider.dimension must be positive")
         self._bind_policy_target_context(policy)
         self.observation_space = spaces.Box(
             low=-np.inf,
@@ -133,6 +164,7 @@ class CircuitSynthesisEnv(gym.Env):
         self.current_node: Optional[SearchNode] = None
         self.solution_node: Optional[SearchNode] = None
         self.steps = 0
+        self.search_metrics: dict[str, int] = {}
 
         # Reward values affect learning only, not symbolic correctness.
         self.alpha = 0.1
@@ -150,7 +182,23 @@ class CircuitSynthesisEnv(gym.Env):
         convenience constructor path as well.
         """
 
-        if policy is None or self._feature_target_context is None:
+        if policy is None:
+            return
+        if self.feature_provider is not None:
+            bind_provider = getattr(policy, "bind_feature_provider", None)
+            if callable(bind_provider):
+                bind_provider(self.feature_provider)
+            elif getattr(policy, "feature_provider", None) is not self.feature_provider:
+                raise ValueError(
+                    "policy does not support the environment feature provider"
+                )
+            if getattr(policy, "feature_dim", self.feature_dim) != self.feature_dim:
+                raise ValueError(
+                    "policy feature dimension does not match the environment feature schema"
+                )
+            return
+
+        if self._feature_target_context is None:
             return
         policy_context = getattr(policy, "target_context", None)
         if policy_context is not None:
@@ -160,7 +208,10 @@ class CircuitSynthesisEnv(gym.Env):
             ):
                 raise ValueError("policy target context does not match environment target")
         else:
-            policy.target_context = self._feature_target_context
+            bind_target_context = getattr(policy, "bind_target_context", None)
+            if not callable(bind_target_context):
+                raise ValueError("policy does not support target-context binding")
+            bind_target_context(self._feature_target_context)
         if getattr(policy, "feature_dim", self.feature_dim) != self.feature_dim:
             raise ValueError(
                 "policy feature dimension does not match the environment feature schema"
@@ -173,6 +224,17 @@ class CircuitSynthesisEnv(gym.Env):
     ) -> np.ndarray:
         """Build an observation with this environment's immutable context."""
 
+        if not self.observation_features:
+            return np.zeros(self.feature_dim, dtype=np.float32)
+        if self.feature_provider is not None:
+            values = np.asarray(
+                self.feature_provider.extract(state, frontier), dtype=np.float32
+            )
+            if values.shape != (self.feature_dim,):
+                raise ValueError(
+                    "feature provider returned an incompatible feature dimension"
+                )
+            return values
         return extract_features(
             state,
             frontier,
@@ -214,14 +276,29 @@ class CircuitSynthesisEnv(gym.Env):
         super().reset(seed=seed)
         self.steps = 0
         self.solution_node = None
-        state = CircuitState(CircuitDAG(self.config.num_qubits), self.config.budget)
+        state = self.problem.initial_state(self.config)
         root = SearchNode(priority=0.0, state=state)
         self.frontier = Frontier(canonicalizer=self.canonicalizer)
         self.frontier.push(root)
         self.current_node = root
-        root_result = self.cert_engine.certify(root.state)
-        if root_result.status == CertStatus.SUCCESS:
-            self.solution_node = root
+        self.search_metrics = {
+            "expanded": 0,
+            "generated": 0,
+            "accepted": 1,
+            "canonical_pruned": 0,
+            "dominated": 0,
+            "reopened": 0,
+            "peak_frontier": 1,
+            "terminal_candidates": 0,
+            "terminal_certification_failures": 0,
+        }
+        # A constrained problem knows whether its root is structurally
+        # eligible for target certification.  The native adapter returns true
+        # here, preserving identity-target behavior exactly.
+        if self.problem.is_terminal_candidate(root):
+            root_result = self.cert_engine.certify(root.state)
+            if root_result.status == CertStatus.SUCCESS:
+                self.solution_node = root
         info = self.action_info()
         info["initial_certified"] = self.solution_node is not None
         return self._features(state, self.current_nodes()), info
@@ -299,7 +376,10 @@ class CircuitSynthesisEnv(gym.Env):
         self.frontier.remove(node)
         self.current_node = node
         parent_cost = self._cost(node.state)
-        children = expand_node(node, self.actions, policy=None)
+        # The policy selected ``node`` only.  The problem expander performs a
+        # deterministic exhaustive enumeration of every legal one-gate child.
+        # The native adapter delegates to the historical ``expand_node``.
+        children = self.problem.expand(node)
 
         accepted = 0
         pruned = 0
@@ -309,39 +389,94 @@ class CircuitSynthesisEnv(gym.Env):
         terminal_children: list[SearchNode] = []
         generated_child_potentials: list[float] = []
 
+        self.search_metrics["expanded"] += 1
+        self.search_metrics["generated"] += len(children)
+
         for child in children:
             if self.target_progress_reward is not None:
                 generated_child_potentials.append(self._node_potential(child))
-            result = self.cert_engine.certify(child.state)
-            if result.status == CertStatus.SUCCESS:
-                certified += 1
-                terminal_children.append(child)
-                if self.solution_node is None:
-                    self.solution_node = child
-                # We intentionally continue the loop: local expansion remains
-                # exhaustive even when a terminal witness is discovered.
-                continue
+            terminal_candidate = self.problem.is_terminal_candidate(child)
+            if terminal_candidate:
+                self.search_metrics["terminal_candidates"] += 1
+                result = self.cert_engine.certify(child.state)
+                if result.status == CertStatus.SUCCESS:
+                    certified += 1
+                    terminal_children.append(child)
+                    if self.solution_node is None:
+                        self.solution_node = child
+                    # Local expansion remains exhaustive even when a terminal
+                    # witness is discovered.
+                    continue
 
-            # A dense non-match proves only that this *prefix* is not already
-            # the target, not that it has no legal solution suffix.  It must
-            # therefore never prune a general Clifford+T prefix.
-            if result.status == CertStatus.FAILURE:
-                cert_failures += 1
+                # A normal-form terminal that fails its independent dense
+                # certification is a critical structural defect.  Reject it
+                # rather than silently treating it as an ordinary prefix.
+                if result.status == CertStatus.FAILURE:
+                    cert_failures += 1
+                # Native search intentionally certifies every child, but a
+                # dense non-match is only a prefix mismatch and must remain
+                # searchable.  Constrained normal-form problems opt into
+                # critical rejection for structurally complete terminals.
+                reject_terminal_failure = bool(
+                    getattr(
+                        self.problem,
+                        "reject_failed_terminal",
+                        not isinstance(self.problem, NativeGateSearchProblem),
+                    )
+                )
+                if reject_terminal_failure:
+                    self.search_metrics["terminal_certification_failures"] += 1
+                    continue
 
             insertion = self.frontier.insert(child)
             if insertion.accepted:
                 accepted += 1
+                self.search_metrics["accepted"] += 1
+                self.search_metrics["dominated"] += len(insertion.dominated)
+                if insertion.dominated:
+                    self.search_metrics["reopened"] += 1
                 cost_delta += parent_cost - self._cost(child.state)
             else:
                 pruned += 1
+                self.search_metrics["canonical_pruned"] += 1
 
         dead_end = int(not children)
 
         terminated = self.solution_node is not None or self.frontier.is_empty()
         truncated = not terminated and self.steps >= self.config.max_steps
         nodes_after = self.current_nodes()
+        self.search_metrics["peak_frontier"] = max(
+            self.search_metrics["peak_frontier"], len(nodes_after)
+        )
         reward_diagnostics: dict[str, float] = {}
-        if self.target_progress_reward is None:
+        if self.reward_model is not None:
+            # Constrained problems supply their own potential over the
+            # continuation progress state.  It is evaluated only at the
+            # frontier transition level: the scheduler receives no credit for
+            # choosing individual generated gates or for archive pruning.
+            potential_before = float(self.reward_model.frontier_potential(nodes_before))
+            selected_node_potential = float(
+                self.reward_model.frontier_potential((node,))
+            )
+            potential_after = float(
+                self.reward_model.frontier_potential(
+                    tuple(nodes_after) + tuple(terminal_children)
+                )
+            )
+            best_generated_child_potential = float(
+                self.reward_model.frontier_potential(children)
+            )
+            breakdown = self.reward_model.reward(
+                potential_before=potential_before,
+                potential_after=potential_after,
+                selected_node_potential=selected_node_potential,
+                best_generated_child_potential=best_generated_child_potential,
+                certified=bool(certified),
+                dead_end=bool(dead_end),
+            )
+            reward = breakdown.reward
+            reward_diagnostics = breakdown.info()
+        elif self.target_progress_reward is None:
             # Deliberately preserve the legacy reward as the default.  In
             # particular, existing resource/archive experiments retain their
             # historical pruning term and trainer-side reward clipping.
@@ -386,6 +521,9 @@ class CircuitSynthesisEnv(gym.Env):
                 "num_children": len(children),
                 "num_accepted": accepted,
                 "num_certification_nonmatches": cert_failures,
+                "terminal_certification_failures": self.search_metrics[
+                    "terminal_certification_failures"
+                ],
                 "frontier_size": len(nodes_after),
                 "selected_record_id": node.record_id,
                 "selected_by_fairness": selected_by_fairness,
@@ -394,6 +532,8 @@ class CircuitSynthesisEnv(gym.Env):
                     if self.solution_node is not None
                     else None
                 ),
+                "problem": dict(self.problem.metadata()),
+                "search_metrics": dict(self.search_metrics),
             }
         )
         info.update(reward_diagnostics)

@@ -19,12 +19,13 @@ dev = [
 ]
 
 [tool.setuptools]
-py-modules = ["ckt_types", "config", "enums", "evaluate", "ghz3_rl", "ghz3_smoke", "train"]
+py-modules = ["ckt_types", "config", "enums", "evaluate", "ghz3_rl", "ghz3_smoke", "toffoli_certify", "toffoli_search", "train"]
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = [
     "algebra*",
+    "benchmarks*",
     "canonical*",
     "certification*",
     "circuit*",
