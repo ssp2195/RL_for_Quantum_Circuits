@@ -13,12 +13,24 @@ from rl.policy import LinearQPolicy
 class Trainer:
     def __init__(self, env, policy: Optional[LinearQPolicy] = None):
         self.env = env
+        # ``target_context`` is owned by the environment because it is
+        # derived from the same exact target used by certification.  Bind the
+        # scorer before any rollout so observations, Q-values, and SARSA
+        # updates all use one feature schema.  Target-free environments keep
+        # the historical 16-coordinate representation.
+        target_context = getattr(env, "_feature_target_context", None)
         if policy is None:
             policy = LinearQPolicy(
                 feature_dim=env.feature_dim,
                 gamma=env.config.discount,
                 seed=getattr(env.config, "seed", None),
+                target_context=target_context,
             )
+        elif target_context is not None:
+            policy.bind_target_context(target_context)
+        bind_policy = getattr(env, "_bind_policy_target_context", None)
+        if callable(bind_policy):
+            bind_policy(policy)
         self.policy = policy
         self.env.policy = self.policy
         self.visit_counts = defaultdict(int)
@@ -27,7 +39,14 @@ class Trainer:
         self.min_epsilon = 0.05
         self.epsilon_decay = 0.995
         self.reward_clip = 10.0
-        self.exploration_beta = 0.1
+        # The target-progress environment already supplies an explicit
+        # potential-shaped reward.  Do not silently add the legacy visit
+        # bonus to that objective; callers can still opt in manually.
+        self.exploration_beta = (
+            0.0
+            if getattr(env.config, "reward_mode", "legacy") == "target_progress"
+            else 0.1
+        )
 
     def _behavior_node(self, nodes):
         """Mirror the environment's optional fair-scheduling override."""
@@ -55,7 +74,17 @@ class Trainer:
                 if selected is None:
                     break
 
-                selected_index = nodes_before.index(selected)
+                # ``SearchNode`` ordering/equality intentionally compares
+                # only priority for heap compatibility.  Several distinct
+                # frontier records can therefore compare equal, so ``list``'s
+                # value-based ``index`` could expand the wrong record.  The
+                # behavior policy returns this concrete object; preserve that
+                # identity when adapting it to the Gym positional API.
+                selected_index = next(
+                    index
+                    for index, candidate in enumerate(nodes_before)
+                    if candidate is selected
+                )
                 _, reward, terminated, truncated, info = self.env.step(selected_index)
 
                 # Fairness may have expanded another record; learn from the
@@ -65,6 +94,10 @@ class Trainer:
                     (node for node in nodes_before if node.record_id == chosen_id),
                     selected,
                 )
+                if not info.get("selected_by_fairness", False) and actual is not selected:
+                    raise RuntimeError(
+                        "environment expanded a different record than the behavior policy selected"
+                    )
                 identity = self.canonicalizer.identity_hash(actual.state)
                 self.visit_counts[identity] += 1
                 reward += self.exploration_beta / np.sqrt(self.visit_counts[identity])

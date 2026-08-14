@@ -19,7 +19,7 @@ dev = [
 ]
 
 [tool.setuptools]
-py-modules = ["ckt_types", "config", "enums", "evaluate", "ghz3_smoke", "train"]
+py-modules = ["ckt_types", "config", "enums", "evaluate", "ghz3_rl", "ghz3_smoke", "train"]
 
 [tool.setuptools.packages.find]
 where = ["."]

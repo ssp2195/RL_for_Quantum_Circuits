@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import argparse
 import json
-from typing import Iterable, Sequence
+from typing import Any, Iterable, Sequence
+
+import numpy as np
 
 from certification.simulator import (
     SimulatorCertificationEngine,
@@ -18,7 +20,7 @@ from certification.simulator import (
 )
 from circuit.gate import Gate
 from ckt_types import ResourceBudget
-from config import Config
+from config import Config, TargetProgressRewardConfig
 from enums import GateType
 from env.rl_env import CircuitSynthesisEnv
 from rl.policy import LinearQPolicy
@@ -56,13 +58,20 @@ def evaluate(
     seed: int | None = 0,
     scheduler: str = "fifo",
     collect_trace: bool = False,
+    policy: LinearQPolicy | None = None,
+    target_aware_features: bool = False,
+    reward_mode: str = "legacy",
+    target_progress_reward: TargetProgressRewardConfig | None = None,
+    fairness_interval: int = 0,
 ) -> dict:
-    """Run a deterministic scheduling baseline and return a JSON-ready report.
+    """Run a baseline or frozen learned frontier-record scheduler.
 
     ``collect_trace`` records compact per-expansion metrics for optional
-    post-processing.  It is off by default so the original CLI output stays
-    concise for ordinary evaluations.
+    post-processing.  ``scheduler='learned'`` requires an explicitly supplied
+    nonzero policy and freezes both epsilon and fairness: it cannot silently
+    fall back to a fresh zero-weight ranker or a FIFO interleave.
     """
+    supplied_policy = policy is not None
     target = SynthesisTarget(unitary_from_gates(num_qubits, target_gates))
     config = Config(
         num_qubits=num_qubits,
@@ -71,9 +80,44 @@ def evaluate(
         # This is only the Gym adapter cap; the core archive stays dynamic.
         max_frontier=max(1, 64),
         seed=seed,
+        fairness_interval=fairness_interval,
+        target_aware_features=target_aware_features,
+        reward_mode=reward_mode,
+        target_progress_reward=(
+            TargetProgressRewardConfig()
+            if target_progress_reward is None
+            else target_progress_reward
+        ),
     )
     env = CircuitSynthesisEnv(config, SimulatorCertificationEngine(target))
-    policy = LinearQPolicy(env.feature_dim, seed=seed)
+    feature_context = getattr(env, "_feature_target_context", None)
+    if policy is None:
+        policy = LinearQPolicy(
+            env.feature_dim,
+            seed=seed,
+            target_context=feature_context,
+        )
+    elif feature_context is not None:
+        policy.bind_target_context(feature_context)
+    bind_policy = getattr(env, "_bind_policy_target_context", None)
+    if callable(bind_policy):
+        bind_policy(policy)
+
+    valid_schedulers = {"fifo", "greedy", "random", "target_potential", "learned"}
+    if scheduler not in valid_schedulers:
+        raise ValueError(
+            "scheduler must be one of: fifo, greedy, random, target_potential, learned"
+        )
+    if scheduler == "target_potential" and env.target_context is None:
+        raise ValueError("target_potential scheduling requires a dense target context")
+    if scheduler == "learned":
+        if not supplied_policy:
+            raise ValueError("learned scheduling requires an explicitly supplied trained policy")
+        if not np.any(np.abs(policy.theta) > 0.0):
+            raise ValueError("learned scheduling requires nonzero trained policy weights")
+        if fairness_interval:
+            raise ValueError("learned scheduling requires fairness_interval=0")
+
     env.reset(seed=seed)
     terminated = env.solution_node is not None
     truncated = False
@@ -85,26 +129,56 @@ def evaluate(
             break
         if scheduler == "fifo":
             node = min(nodes, key=lambda candidate: int(candidate.record_id or 0))
-        elif scheduler == "greedy":
+        elif scheduler in {"greedy", "learned"}:
             node = policy.select_node(nodes, epsilon=0.0)
         elif scheduler == "random":
             node = policy.select_node(nodes, epsilon=1.0)
-        else:
-            raise ValueError("scheduler must be one of: fifo, greedy, random")
+        else:  # target_potential: a non-learned semantic ranking reference.
+            assert env.target_context is not None
+            node = max(
+                nodes,
+                key=lambda candidate: (
+                    env.target_context.potential(candidate.state),
+                    -int(candidate.record_id or 0),
+                ),
+            )
+        assert node is not None
+        prefix = [repr(action) for action in node.reconstruct_actions()]
+        selected_q_value = (
+            float(policy.node_value(node, nodes))
+            if scheduler in {"greedy", "learned", "random"}
+            else None
+        )
         index = next(index for index, candidate in enumerate(nodes) if candidate is node)
         _, reward, terminated, truncated, info = env.step(index)
         if collect_trace:
-            trace.append(
-                {
-                    "expansion": env.steps,
-                    "selected_record_id": info.get("selected_record_id"),
-                    "frontier_size": int(info.get("frontier_size", 0)),
-                    "num_children": int(info.get("num_children", 0)),
-                    "num_accepted": int(info.get("num_accepted", 0)),
-                    "num_pruned": int(info.get("num_pruned", 0)),
-                    "reward": float(reward),
-                }
-            )
+            row: dict[str, Any] = {
+                "expansion": env.steps,
+                "selected_record_id": info.get("selected_record_id"),
+                "selected_prefix": prefix,
+                "selected_by_fairness": bool(info.get("selected_by_fairness", False)),
+                "selected_q_value": selected_q_value,
+                "frontier_size": int(info.get("frontier_size", 0)),
+                "num_children": int(info.get("num_children", 0)),
+                "num_accepted": int(info.get("num_accepted", 0)),
+                "num_pruned": int(info.get("num_pruned", 0)),
+                "reward": float(reward),
+            }
+            for name in (
+                "potential_before",
+                "potential_after",
+                "potential_delta",
+                "selected_node_potential",
+                "best_generated_child_potential",
+                "terminal_bonus",
+                "step_cost",
+                "dead_end_cost",
+                "raw_reward",
+                "clipped_reward",
+            ):
+                if name in info:
+                    row[name] = float(info[name])
+            trace.append(row)
 
     witness_actions = []
     if env.solution_node is not None:
@@ -124,7 +198,17 @@ def evaluate(
             for action in witness_actions
         ],
         "scheduler": scheduler,
+        "fairness_interval": fairness_interval,
+        "target_aware_features": target_aware_features,
+        "reward_mode": reward_mode,
+        "feature_schema": policy.metadata(),
     }
+    if env.target_context is not None:
+        report["target"] = {
+            "fingerprint": env.target_context.fingerprint,
+            "context_schema_version": env.target_context.schema_version,
+            "phase_mode": env.target_context.phase_mode,
+        }
     if collect_trace:
         report["trace"] = trace
     return report

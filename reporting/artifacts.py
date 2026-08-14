@@ -90,13 +90,17 @@ def _probability_svg(probabilities: np.ndarray, num_qubits: int) -> str:
     return _svg(width, height, "\n".join(parts), "GHZ-3 output probability chart")
 
 
-def _frontier_svg(trace: Sequence[Mapping[str, Any]]) -> str:
+def _frontier_svg(
+    trace: Sequence[Mapping[str, Any]],
+    *,
+    heading: str = "Frontier size during deterministic search",
+) -> str:
     width, height = 900, 420
     left, right, top, bottom = 76, 32, 64, 72
     chart_width = width - left - right
     chart_height = height - top - bottom
     parts = [
-        f'  <text x="{left}" y="32" font-family="sans-serif" font-size="22" fill="{_DARK}">Frontier size during deterministic search</text>',
+        f'  <text x="{left}" y="32" font-family="sans-serif" font-size="22" fill="{_DARK}">{html.escape(heading)}</text>',
         f'  <line x1="{left}" y1="{top + chart_height}" x2="{width - right}" y2="{top + chart_height}" stroke="{_DARK}" stroke-width="2"/>',
         f'  <line x1="{left}" y1="{top}" x2="{left}" y2="{top + chart_height}" stroke="{_DARK}" stroke-width="2"/>',
     ]
@@ -132,7 +136,7 @@ def _frontier_svg(trace: Sequence[Mapping[str, Any]]) -> str:
             f'  <text x="{width / 2}" y="{height - 20}" text-anchor="middle" font-family="sans-serif" font-size="14" fill="{_DARK}">Expansion</text>',
         ]
     )
-    return _svg(width, height, "\n".join(parts), "Frontier size trace")
+    return _svg(width, height, "\n".join(parts), heading)
 
 
 def _circuit_svg(gates: Sequence[Gate], num_qubits: int) -> str:
@@ -308,4 +312,153 @@ def save_ghz3_artifacts(
     return {name: str(path.resolve()) for name, path in paths.items()}
 
 
-__all__ = ["save_ghz3_artifacts"]
+def _write_rows_csv(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
+    """Write a deterministic CSV even when a trace has no rows.
+
+    The learned benchmark carries a few more diagnostics than the smoke
+    baseline.  Deriving the columns from the complete trace means future
+    additive diagnostics do not silently disappear from the review artifact.
+    """
+
+    fieldnames: list[str] = []
+    for row in rows:
+        for key in row:
+            if key not in fieldnames:
+                fieldnames.append(str(key))
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        if fieldnames:
+            writer.writeheader()
+            for row in rows:
+                writer.writerow(
+                    {
+                        field: json.dumps(value, sort_keys=True)
+                        if isinstance(value, (dict, list, tuple))
+                        else value
+                        for field, value in row.items()
+                    }
+                )
+
+
+def _ghz3_rl_markdown_report(
+    report: Mapping[str, Any], artifact_names: Mapping[str, str]
+) -> str:
+    """Build a concise, self-contained handoff for a learned GHZ run."""
+
+    evaluation = report.get("evaluation", {})
+    learning = report.get("learning", {})
+    lines = [
+        "# Learned frontier-record GHZ-3 report",
+        "",
+        f"- Correct: `{report.get('correct', False)}`",
+        f"- Certified: `{evaluation.get('certified', False)}`",
+        f"- Frozen learned-policy expansions: `{evaluation.get('expansions', 0)}`",
+        f"- Zero-weight baseline expansions: `{report.get('zero_policy_expansions')}`",
+        f"- Training episodes: `{learning.get('episodes')}`",
+        f"- Target fingerprint: `{learning.get('target_fingerprint')}`",
+        "",
+        "## Certified witness",
+        "",
+        "```text",
+        *[str(gate) for gate in evaluation.get("witness", [])],
+        "```",
+        "",
+        "## Interpretation",
+        "",
+        "The policy selects persistent frontier records.  Each selected record is expanded by the search engine through every legal native gate; the policy neither emits gates nor injects a known GHZ witness.",
+        "",
+        "## Files",
+        "",
+    ]
+    lines.extend(f"- [{key}]({name})" for key, name in artifact_names.items())
+    lines.append("")
+    return "\n".join(lines)
+
+
+def save_ghz3_rl_artifacts(
+    output_dir: str | Path,
+    *,
+    report: Mapping[str, Any],
+    gates: Sequence[Gate],
+    statevector: Any,
+    num_qubits: int = 3,
+) -> dict[str, str]:
+    """Save data and dependency-free visual artifacts for learned GHZ-3.
+
+    This intentionally uses different stable filenames from
+    :func:`save_ghz3_artifacts`: the latter is a FIFO smoke-test result, while
+    these files document a trained, frozen-policy evaluation.  In particular
+    an empty ``gates`` list renders the explicit *no certified witness*
+    diagram rather than substituting the known reference circuit.
+    """
+
+    output_path = Path(output_dir)
+    output_path.mkdir(parents=True, exist_ok=True)
+    vector = np.asarray(statevector, dtype=np.complex128)
+    dimension = 1 << num_qubits
+    if vector.shape != (dimension,) or not np.isfinite(vector).all():
+        raise ValueError("statevector must be a finite vector of length 2**num_qubits")
+
+    probabilities = np.abs(vector) ** 2
+    evaluation = report.get("evaluation", {})
+    trace = list(evaluation.get("trace", []))
+    history = list(report.get("training_history", []))
+    policy = dict(report.get("policy", {}))
+    paths = {
+        "summary": output_path / "summary.json",
+        "training_history": output_path / "training_history.csv",
+        "evaluation_trace": output_path / "evaluation_trace.csv",
+        "policy_weights": output_path / "policy_weights.json",
+        "statevector": output_path / "statevector.json",
+        "probabilities": output_path / "probabilities.csv",
+        "probability_chart": output_path / "probabilities.svg",
+        "frontier_progress": output_path / "frontier_progress.svg",
+        "circuit_diagram": output_path / "circuit.svg",
+        "report": output_path / "README.md",
+    }
+    artifact_names = {name: path.name for name, path in paths.items()}
+
+    state_rows = [
+        {
+            "basis": _basis_label(index, num_qubits),
+            "real": float(amplitude.real),
+            "imag": float(amplitude.imag),
+            "probability": float(probabilities[index]),
+        }
+        for index, amplitude in enumerate(vector)
+    ]
+    paths["statevector"].write_text(
+        json.dumps(state_rows, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    _write_rows_csv(paths["probabilities"], state_rows)
+    _write_rows_csv(paths["training_history"], history)
+    _write_rows_csv(paths["evaluation_trace"], trace)
+    paths["policy_weights"].write_text(
+        json.dumps(policy, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    paths["probability_chart"].write_text(
+        _probability_svg(probabilities, num_qubits), encoding="utf-8"
+    )
+    paths["frontier_progress"].write_text(
+        _frontier_svg(
+            trace,
+            heading="Frontier size during frozen learned-policy evaluation",
+        ),
+        encoding="utf-8",
+    )
+    paths["circuit_diagram"].write_text(
+        _circuit_svg(gates, num_qubits), encoding="utf-8"
+    )
+
+    summary = dict(report)
+    summary["artifacts"] = artifact_names
+    paths["summary"].write_text(
+        json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    paths["report"].write_text(
+        _ghz3_rl_markdown_report(summary, artifact_names), encoding="utf-8"
+    )
+    return {name: str(path.resolve()) for name, path in paths.items()}
+
+
+__all__ = ["save_ghz3_artifacts", "save_ghz3_rl_artifacts"]

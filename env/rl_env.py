@@ -13,6 +13,11 @@ from certification.base import CertStatus
 from circuit.circuit_state import CircuitState
 from circuit.dag import CircuitDAG
 from rl.features import extract_features, feature_dimension
+from rl.reward import TargetProgressRewardModel
+from rl.target_context import (
+    TargetProgressWeights,
+    target_context_from_certification_engine,
+)
 from search.action_space import generate_actions
 from search.expansion import expand_node
 from search.frontier import Frontier
@@ -78,7 +83,41 @@ class CircuitSynthesisEnv(gym.Env):
         )
 
         prototype = CircuitState(CircuitDAG(config.num_qubits), config.budget)
-        self.feature_dim = feature_dimension(prototype)
+        # Target-aware metrics are opt-in.  Existing FIFO/random/resource-only
+        # searches consequently retain their historical feature and reward
+        # behavior.  Target-progress reward shaping also needs the same dense
+        # context even when a caller elects not to append target features.
+        self.target_context = None
+        self._feature_target_context = None
+        self.target_progress_reward = None
+        reward_mode = getattr(config, "reward_mode", "legacy")
+        needs_target_context = bool(
+            getattr(config, "target_aware_features", False)
+            or reward_mode == "target_progress"
+        )
+        if needs_target_context:
+            reward_config = config.target_progress_reward
+            weights = TargetProgressWeights(
+                process_fidelity=reward_config.process_fidelity_weight,
+                support_match=reward_config.support_match_weight,
+                entanglement_match=reward_config.entanglement_match_weight,
+            )
+            self.target_context = target_context_from_certification_engine(
+                certification_engine,
+                weights=weights,
+            )
+            if bool(getattr(config, "target_aware_features", False)):
+                self._feature_target_context = self.target_context
+        if reward_mode == "target_progress":
+            self.target_progress_reward = TargetProgressRewardModel(
+                config.target_progress_reward
+            )
+
+        self.feature_dim = feature_dimension(
+            prototype,
+            target_context=self._feature_target_context,
+        )
+        self._bind_policy_target_context(policy)
         self.observation_space = spaces.Box(
             low=-np.inf,
             high=np.inf,
@@ -100,6 +139,55 @@ class CircuitSynthesisEnv(gym.Env):
         self.beta = 0.5
         self.gamma_r = 10.0
         self.delta = 1.0
+
+    def _bind_policy_target_context(self, policy: Any) -> None:
+        """Ensure an optional supplied policy scores with this environment's context.
+
+        The policy is a ranker over records, so a target-aware environment and
+        a target-agnostic scorer would otherwise silently disagree about the
+        feature schema.  Policies constructed after the environment can take
+        ``env.target_context`` directly; this binding supports the existing
+        convenience constructor path as well.
+        """
+
+        if policy is None or self._feature_target_context is None:
+            return
+        policy_context = getattr(policy, "target_context", None)
+        if policy_context is not None:
+            if (
+                getattr(policy_context, "fingerprint", None)
+                != self._feature_target_context.fingerprint
+            ):
+                raise ValueError("policy target context does not match environment target")
+        else:
+            policy.target_context = self._feature_target_context
+        if getattr(policy, "feature_dim", self.feature_dim) != self.feature_dim:
+            raise ValueError(
+                "policy feature dimension does not match the environment feature schema"
+            )
+
+    def _features(
+        self,
+        state: CircuitState,
+        frontier: Optional[Sequence[SearchNode]] = None,
+    ) -> np.ndarray:
+        """Build an observation with this environment's immutable context."""
+
+        return extract_features(
+            state,
+            frontier,
+            target_context=self._feature_target_context,
+        )
+
+    def _node_potential(self, node: SearchNode) -> float:
+        if self.target_context is None:
+            return 0.0
+        return float(self.target_context.potential(node.state))
+
+    def _frontier_potential(self, nodes: Sequence[SearchNode]) -> float:
+        """Return max node potential, using zero for an empty search state."""
+
+        return max((self._node_potential(node) for node in nodes), default=0.0)
 
     def _cost(self, state: CircuitState) -> float:
         return float(
@@ -136,7 +224,7 @@ class CircuitSynthesisEnv(gym.Env):
             self.solution_node = root
         info = self.action_info()
         info["initial_certified"] = self.solution_node is not None
-        return extract_features(state, self.current_nodes()), info
+        return self._features(state, self.current_nodes()), info
 
     def _select_node(
         self, action: Any, nodes: Sequence[SearchNode]
@@ -181,7 +269,7 @@ class CircuitSynthesisEnv(gym.Env):
                 }
             )
             return (
-                extract_features(self.current_node.state, self.current_nodes()),
+                self._features(self.current_node.state, self.current_nodes()),
                 0.0,
                 True,
                 False,
@@ -191,7 +279,7 @@ class CircuitSynthesisEnv(gym.Env):
         self.steps += 1
         nodes_before = self.current_nodes()
         if not nodes_before:
-            observation = extract_features(self.current_node.state)
+            observation = self._features(self.current_node.state)
             return observation, 0.0, True, False, self.action_info(nodes_before)
 
         node, selected_by_fairness = self._select_node(action, nodes_before)
@@ -201,7 +289,7 @@ class CircuitSynthesisEnv(gym.Env):
             info = self.action_info(nodes_before)
             info.update({"invalid_action": True, "selected_record_id": None})
             return (
-                extract_features(self.current_node.state, nodes_before),
+                self._features(self.current_node.state, nodes_before),
                 -1.0,
                 terminated,
                 truncated,
@@ -218,11 +306,16 @@ class CircuitSynthesisEnv(gym.Env):
         certified = 0
         cert_failures = 0
         cost_delta = 0.0
+        terminal_children: list[SearchNode] = []
+        generated_child_potentials: list[float] = []
 
         for child in children:
+            if self.target_progress_reward is not None:
+                generated_child_potentials.append(self._node_potential(child))
             result = self.cert_engine.certify(child.state)
             if result.status == CertStatus.SUCCESS:
                 certified += 1
+                terminal_children.append(child)
                 if self.solution_node is None:
                     self.solution_node = child
                 # We intentionally continue the loop: local expansion remains
@@ -243,16 +336,47 @@ class CircuitSynthesisEnv(gym.Env):
                 pruned += 1
 
         dead_end = int(not children)
-        reward = (
-            self.alpha * cost_delta
-            + self.beta * pruned
-            + self.gamma_r * float(certified > 0)
-            - self.delta * dead_end
-        )
 
         terminated = self.solution_node is not None or self.frontier.is_empty()
         truncated = not terminated and self.steps >= self.config.max_steps
         nodes_after = self.current_nodes()
+        reward_diagnostics: dict[str, float] = {}
+        if self.target_progress_reward is None:
+            # Deliberately preserve the legacy reward as the default.  In
+            # particular, existing resource/archive experiments retain their
+            # historical pruning term and trainer-side reward clipping.
+            reward = (
+                self.alpha * cost_delta
+                + self.beta * pruned
+                + self.gamma_r * float(certified > 0)
+                - self.delta * dead_end
+            )
+        else:
+            potential_before = self._frontier_potential(nodes_before)
+            selected_node_potential = self._node_potential(node)
+            # Only active post-transition records can influence Omega.  A
+            # certified terminal child is deliberately included despite not
+            # entering the frontier.  Dominated/pruned children remain a
+            # diagnostic at most and cannot earn a shaping reward.
+            potential_after = max(
+                [self._node_potential(candidate) for candidate in nodes_after]
+                + [self._node_potential(child) for child in terminal_children],
+                default=0.0,
+            )
+            best_generated_child_potential = max(
+                generated_child_potentials,
+                default=0.0,
+            )
+            breakdown = self.target_progress_reward.reward(
+                potential_before=potential_before,
+                potential_after=potential_after,
+                selected_node_potential=selected_node_potential,
+                best_generated_child_potential=best_generated_child_potential,
+                certified=bool(certified),
+                dead_end=bool(dead_end),
+            )
+            reward = breakdown.reward
+            reward_diagnostics = breakdown.info()
         info = self.action_info(nodes_after)
         info.update(
             {
@@ -272,8 +396,9 @@ class CircuitSynthesisEnv(gym.Env):
                 ),
             }
         )
+        info.update(reward_diagnostics)
         return (
-            extract_features(node.state, nodes_after),
+            self._features(node.state, nodes_after),
             float(reward),
             terminated,
             truncated,
