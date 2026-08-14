@@ -1,27 +1,34 @@
+"""Legacy algebraic certification hints.
+
+The phase-polynomial data structure is not a complete representation of an
+arbitrary Clifford+T circuit: in particular it cannot account for interleaved
+Hadamards or the full Clifford action.  It must therefore never be used as a
+terminal success oracle.  The independent dense simulator is responsible for
+all general Clifford+T certification.
+"""
+
 from certification.base import CertResult, CertStatus
 from certification.base_engine import CertificationEngine
 
 
 class AlgebraicCertificationEngine(CertificationEngine):
-    """
-    Fast algebraic check based on phase polynomial
+    """Conservative legacy hint engine for phase-polynomial search metadata.
+
+    ``target_phase_terms`` remains accepted for compatibility with callers
+    built around the original API.  Matching terms are deliberately not
+    interpreted as unitary equality, because the representation omits enough
+    information to make that conclusion unsound even for some CNOT-containing
+    circuits.  This engine consequently returns only ``INCONCLUSIVE``.
     """
 
     def __init__(self, target_phase_terms):
-        """
-        target_phase_terms: canonical tuple from phase polynomial
-        """
-        self.target = target_phase_terms
+        self.target = dict(target_phase_terms)
 
     def certify(self, state) -> CertResult:
-        if state.phase_poly is None:
-            return CertResult(CertStatus.INCONCLUSIVE)
-
-        current = tuple(sorted(
-            (m, c % 8) for m, c in state.phase_poly.terms.items()
-        ))
-
-        if current == self.target:
-            return CertResult(CertStatus.SUCCESS, score=1.0)
-
-        return CertResult(CertStatus.FAILURE, score=0.0)
+        return CertResult(
+            CertStatus.INCONCLUSIVE,
+            score=0.0,
+            info={
+                "reason": "phase_polynomial_is_not_a_complete_clifford_t_oracle"
+            },
+        )

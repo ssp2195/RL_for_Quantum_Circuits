@@ -1,0 +1,261 @@
+"""Pareto archive for concrete witnesses of canonical semantic states.
+
+The canonical key answers *what circuit transformation is represented*;
+``ResourceVector`` answers *how cheaply a concrete witness reached it*.
+Keeping them separate is important: equal semantic states can have multiple
+incomparable, continuation-safe resource records.
+"""
+
+from __future__ import annotations
+
+from collections import defaultdict
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, DefaultDict, Dict, Hashable, Optional, Tuple
+
+from search.node import SearchNode
+
+if TYPE_CHECKING:
+    from canonical.canonicalizer import Canonicalizer
+
+
+CanonicalKey = Hashable
+
+
+@dataclass(frozen=True, slots=True)
+class ResourceVector:
+    """Continuation-monotone cost vector used for Pareto dominance.
+
+    The per-wire depths are intentionally retained componentwise.  A scalar
+    circuit depth is insufficient because a common suffix may run in parallel
+    with work on another wire.
+    """
+
+    t_count: int
+    two_qubit_count: int
+    num_gates: int
+    wire_depths: Tuple[int, ...]
+
+    def __post_init__(self) -> None:
+        values = (self.t_count, self.two_qubit_count, self.num_gates)
+        if any(int(value) < 0 for value in values):
+            raise ValueError("resource counts must be non-negative")
+
+        depths = tuple(int(depth) for depth in self.wire_depths)
+        if any(depth < 0 for depth in depths):
+            raise ValueError("wire depths must be non-negative")
+        object.__setattr__(self, "wire_depths", depths)
+
+    @classmethod
+    def from_state(cls, state: object) -> "ResourceVector":
+        """Read the consumed resources from a ``CircuitState``.
+
+        The primary path uses the post-migration CircuitState fields.  The
+        small DAG-derived fallbacks retain compatibility with an old state
+        while the semantic/resource migration is being integrated.
+        """
+
+        dag = getattr(state, "dag", None)
+
+        two_qubit_count = getattr(state, "two_qubit_count", None)
+        if two_qubit_count is None:
+            two_qubit_count = sum(
+                1
+                for gate in getattr(dag, "gates", ())
+                if _is_two_qubit(gate)
+            )
+
+        wire_depths = getattr(state, "wire_depths", None)
+        if wire_depths is None:
+            wire_depths = _wire_depths_from_dag(dag)
+
+        return cls(
+            t_count=int(getattr(state, "t_count", 0)),
+            two_qubit_count=int(two_qubit_count),
+            num_gates=int(getattr(state, "num_gates", 0)),
+            wire_depths=tuple(wire_depths),
+        )
+
+    def weakly_dominates(self, other: "ResourceVector") -> bool:
+        """Return whether this record is no worse in every resource."""
+        self._validate_wire_arity(other)
+        return (
+            self.t_count <= other.t_count
+            and self.two_qubit_count <= other.two_qubit_count
+            and self.num_gates <= other.num_gates
+            and all(
+                left <= right
+                for left, right in zip(self.wire_depths, other.wire_depths)
+            )
+        )
+
+    def strictly_dominates(self, other: "ResourceVector") -> bool:
+        """Return whether this record is no worse and better somewhere."""
+        return self.weakly_dominates(other) and self != other
+
+    def as_tuple(self) -> Tuple[int, ...]:
+        """Flatten the vector for diagnostics and stable test assertions."""
+        return (
+            self.t_count,
+            self.two_qubit_count,
+            self.num_gates,
+            *self.wire_depths,
+        )
+
+    def _validate_wire_arity(self, other: "ResourceVector") -> None:
+        if len(self.wire_depths) != len(other.wire_depths):
+            raise ValueError(
+                "cannot compare resource vectors for different numbers of wires"
+            )
+
+
+def _is_two_qubit(gate: object) -> bool:
+    predicate = getattr(gate, "is_two_qubit", None)
+    return bool(predicate()) if callable(predicate) else len(gate.qubits) == 2
+
+
+def _wire_depths_from_dag(dag: object) -> Tuple[int, ...]:
+    if dag is None:
+        return ()
+
+    depths = []
+    for node_id in getattr(dag, "last_gate_on_qubit", ()):
+        if node_id is None:
+            depths.append(0)
+        else:
+            depths.append(int(dag.nodes[node_id].level))
+    return tuple(depths)
+
+
+@dataclass(slots=True)
+class ArchiveRecord:
+    """One resource-bearing witness in a semantic state's Pareto antichain."""
+
+    record_id: int
+    node: SearchNode
+    key: CanonicalKey
+    resources: ResourceVector
+    expanded: bool = False
+    active: bool = True
+    # Queue ownership belongs to Frontier; direct archive insertions are not
+    # selectable until its record is explicitly added to a frontier.
+    queued: bool = False
+    tombstoned: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class InsertResult:
+    """Outcome of one Pareto insertion attempt."""
+
+    accepted: bool
+    record: Optional[ArchiveRecord] = None
+    dominated: Tuple[ArchiveRecord, ...] = ()
+    rejected_by: Optional[ArchiveRecord] = None
+
+
+class ParetoArchive:
+    """Map each exact canonical key to its active resource antichain."""
+
+    def __init__(self, canonicalizer: Optional[Canonicalizer] = None):
+        if canonicalizer is None:
+            # Keep resource-archive tests and utilities importable without
+            # forcing the full quantum semantic implementation to load.
+            from canonical.canonicalizer import Canonicalizer
+
+            canonicalizer = Canonicalizer()
+        self.canonicalizer = canonicalizer
+        self._records_by_key: DefaultDict[CanonicalKey, list[ArchiveRecord]] = (
+            defaultdict(list)
+        )
+        self._records_by_id: Dict[int, ArchiveRecord] = {}
+        self._next_record_id = 0
+
+    def semantic_key(self, state: object) -> CanonicalKey:
+        """Use a full canonical payload; never merge based on a digest alone."""
+        key_fn = getattr(self.canonicalizer, "semantic_key", None)
+        if not callable(key_fn):  # Defensive boundary for pre-migration users.
+            key_fn = getattr(self.canonicalizer, "identity_key", None)
+        if not callable(key_fn):
+            key_fn = getattr(self.canonicalizer, "identity_hash", None)
+        if not callable(key_fn):  # pragma: no cover - misuse guard
+            raise TypeError("canonicalizer must expose semantic_key(state)")
+
+        key = key_fn(state)
+        try:
+            hash(key)
+        except TypeError as error:  # pragma: no cover - canonicalizer contract
+            raise TypeError("semantic_key(state) must return a hashable payload") from error
+        return key
+
+    def insert(self, node: SearchNode) -> InsertResult:
+        """Insert a node unless an active record weakly dominates it.
+
+        Strictly dominated records are tombstoned in-place instead of removed
+        from the archive.  Lazy tombstones make stale priority-queue entries
+        harmless and preserve a useful diagnostic history.
+        """
+        key = self.semantic_key(node.state)
+        resources = ResourceVector.from_state(node.state)
+        records = self._records_by_key[key]
+        active_records = [record for record in records if record.active]
+
+        for old in active_records:
+            if old.resources.weakly_dominates(resources):
+                return InsertResult(accepted=False, rejected_by=old)
+
+        dominated = tuple(
+            old
+            for old in active_records
+            if resources.strictly_dominates(old.resources)
+        )
+        for old in dominated:
+            self.tombstone(old)
+
+        record = ArchiveRecord(
+            record_id=self._next_record_id,
+            node=node,
+            key=key,
+            resources=resources,
+        )
+        self._next_record_id += 1
+        records.append(record)
+        self._records_by_id[record.record_id] = record
+
+        node.record_id = record.record_id
+        node.expanded = False
+        return InsertResult(accepted=True, record=record, dominated=dominated)
+
+    def tombstone(self, record: ArchiveRecord) -> None:
+        """Retire a strictly dominated archive record without deleting it."""
+        record.active = False
+        record.queued = False
+        record.tombstoned = True
+
+    def mark_expanded(self, record: ArchiveRecord) -> bool:
+        """Remove a selected record from the open frontier, not the archive."""
+        if not record.active or record.tombstoned:
+            return False
+        record.expanded = True
+        record.queued = False
+        record.node.expanded = True
+        return True
+
+    def record(self, record_id: int) -> Optional[ArchiveRecord]:
+        return self._records_by_id.get(record_id)
+
+    def records_for(
+        self,
+        key: CanonicalKey,
+        *,
+        active_only: bool = False,
+    ) -> Tuple[ArchiveRecord, ...]:
+        records = tuple(self._records_by_key.get(key, ()))
+        if active_only:
+            return tuple(record for record in records if record.active)
+        return records
+
+    def all_records(self) -> Tuple[ArchiveRecord, ...]:
+        """Return records in stable allocation order, including tombstones."""
+        return tuple(
+            self._records_by_id[record_id]
+            for record_id in sorted(self._records_by_id)
+        )
