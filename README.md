@@ -37,3 +37,21 @@ kept only as historical reference. Its executable regressions now live in
 
 The simulator is deliberately small-instance only; its purpose is final
 certification, not large-scale search pruning.
+
+## GHZ-3 state-preparation smoke test
+
+The deterministic GHZ-3 runner checks the native state-preparation witness
+`H(0), CNOT(0,1), CNOT(0,2)` against the analytical
+`(|000> + |111>)/sqrt(2)` state. It also asks the existing FIFO frontier
+baseline to rediscover that witness under the tight three-gate resource budget.
+This is a reproducible smoke test, not a trained-policy benchmark or a claim
+of general state/unitary synthesis.
+
+```powershell
+.\.venv\Scripts\python ghz3_smoke.py --artifacts-dir outputs\ghz3-smoke
+```
+
+The selected directory receives JSON/CSV data, SVG probability and frontier
+charts, a native-gate circuit diagram, and a Markdown summary. These files use
+only the standard library and NumPy; no plotting or quantum SDK dependency is
+added.

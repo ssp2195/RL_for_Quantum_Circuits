@@ -256,6 +256,94 @@ def unitary_from_gates(num_qubits: int, gates: Iterable[Any]) -> np.ndarray:
     return unitary
 
 
+def _validated_normalized_statevector(
+    statevector: Any,
+    dimension: int,
+    *,
+    name: str,
+    atol: float,
+) -> np.ndarray:
+    """Return a finite, normalized statevector or raise a clear error."""
+
+    vector = np.asarray(statevector, dtype=np.complex128)
+    if vector.shape != (dimension,):
+        raise ValueError(
+            f"{name} must have shape ({dimension},), got {vector.shape!r}"
+        )
+    if not np.isfinite(vector).all():
+        raise ValueError(f"{name} must contain only finite amplitudes")
+    if not np.isclose(np.linalg.norm(vector), 1.0, atol=atol, rtol=atol):
+        raise ValueError(f"{name} must be normalized")
+    return vector.copy()
+
+
+def statevector_from_gates(
+    num_qubits: int,
+    gates: Iterable[Any],
+    initial_state: Any | None = None,
+    *,
+    atol: float = 1e-9,
+) -> np.ndarray:
+    """Simulate a circuit witness on a normalized input statevector.
+
+    The default input is ``|0...0>``.  Qubit ``0`` remains the least-
+    significant basis bit, so the conventional GHZ-3 basis states are indices
+    ``0`` (``|000>``) and ``7`` (``|111>``).  This small helper deliberately
+    reuses :func:`unitary_from_gates` instead of maintaining a second gate
+    implementation.
+    """
+
+    if atol < 0:
+        raise ValueError("atol must be non-negative")
+    unitary = unitary_from_gates(num_qubits, gates)
+    dimension = unitary.shape[0]
+    if initial_state is None:
+        state = np.zeros(dimension, dtype=np.complex128)
+        state[0] = 1.0
+    else:
+        state = _validated_normalized_statevector(
+            initial_state,
+            dimension,
+            name="initial_state",
+            atol=atol,
+        )
+    return unitary @ state
+
+
+def state_fidelity(
+    expected: Any,
+    actual: Any,
+    *,
+    atol: float = 1e-9,
+) -> float:
+    """Return pure-state fidelity, retaining sensitivity to relative phase.
+
+    A single global phase is intentionally immaterial, while states such as
+    ``(|000> + |111>)/sqrt(2)`` and ``(|000> - |111>)/sqrt(2)`` have fidelity
+    zero.  Both inputs must be finite normalized one-dimensional vectors.
+    """
+
+    if atol < 0:
+        raise ValueError("atol must be non-negative")
+    expected_array = np.asarray(expected, dtype=np.complex128)
+    if expected_array.ndim != 1:
+        raise ValueError("expected must be a one-dimensional statevector")
+    expected_array = _validated_normalized_statevector(
+        expected_array,
+        expected_array.size,
+        name="expected",
+        atol=atol,
+    )
+    actual_array = _validated_normalized_statevector(
+        actual,
+        expected_array.size,
+        name="actual",
+        atol=atol,
+    )
+    fidelity = float(abs(np.vdot(expected_array, actual_array)) ** 2)
+    return min(1.0, max(0.0, fidelity))
+
+
 def equivalent_up_to_global_phase(
     candidate: np.ndarray,
     target: np.ndarray,
@@ -391,5 +479,7 @@ __all__ = [
     "X_MATRIX",
     "equivalent_up_to_global_phase",
     "gate_matrix",
+    "state_fidelity",
+    "statevector_from_gates",
     "unitary_from_gates",
 ]

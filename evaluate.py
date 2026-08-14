@@ -55,8 +55,14 @@ def evaluate(
     max_steps: int = 100,
     seed: int | None = 0,
     scheduler: str = "fifo",
+    collect_trace: bool = False,
 ) -> dict:
-    """Run a deterministic scheduling baseline and return a JSON-ready report."""
+    """Run a deterministic scheduling baseline and return a JSON-ready report.
+
+    ``collect_trace`` records compact per-expansion metrics for optional
+    post-processing.  It is off by default so the original CLI output stays
+    concise for ordinary evaluations.
+    """
     target = SynthesisTarget(unitary_from_gates(num_qubits, target_gates))
     config = Config(
         num_qubits=num_qubits,
@@ -71,6 +77,7 @@ def evaluate(
     env.reset(seed=seed)
     terminated = env.solution_node is not None
     truncated = False
+    trace: list[dict] = []
 
     while not (terminated or truncated):
         nodes = env.current_nodes()
@@ -85,20 +92,42 @@ def evaluate(
         else:
             raise ValueError("scheduler must be one of: fifo, greedy, random")
         index = next(index for index, candidate in enumerate(nodes) if candidate is node)
-        _, _, terminated, truncated, _ = env.step(index)
+        _, reward, terminated, truncated, info = env.step(index)
+        if collect_trace:
+            trace.append(
+                {
+                    "expansion": env.steps,
+                    "selected_record_id": info.get("selected_record_id"),
+                    "frontier_size": int(info.get("frontier_size", 0)),
+                    "num_children": int(info.get("num_children", 0)),
+                    "num_accepted": int(info.get("num_accepted", 0)),
+                    "num_pruned": int(info.get("num_pruned", 0)),
+                    "reward": float(reward),
+                }
+            )
 
-    witness = []
+    witness_actions = []
     if env.solution_node is not None:
-        witness = [repr(action) for action in env.solution_node.reconstruct_actions()]
-    return {
+        witness_actions = env.solution_node.reconstruct_actions()
+    report = {
         "certified": env.solution_node is not None,
         "terminated": terminated,
         "truncated": truncated,
         "expansions": env.steps,
         "frontier_size": len(env.current_nodes()),
-        "witness": witness,
+        "witness": [repr(action) for action in witness_actions],
+        "witness_operations": [
+            {
+                "gate": action.gate_type.name,
+                "qubits": list(action.qubits),
+            }
+            for action in witness_actions
+        ],
         "scheduler": scheduler,
     }
+    if collect_trace:
+        report["trace"] = trace
+    return report
 
 
 def main(argv: Iterable[str] | None = None) -> int:
