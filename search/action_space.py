@@ -11,7 +11,9 @@ def generate_actions(num_qubits: int) -> List[Action]:
     for q in range(num_qubits):
         actions.append(Action(GateType.H, (q,)))
         actions.append(Action(GateType.S, (q,)))
+        actions.append(Action(GateType.SDG, (q,)))
         actions.append(Action(GateType.T, (q,)))
+        actions.append(Action(GateType.TDG, (q,)))
 
     # Two-qubit gates (CNOT)
     for control in range(num_qubits):

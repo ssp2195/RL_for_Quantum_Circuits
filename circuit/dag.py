@@ -62,7 +62,7 @@ class CircuitDAG:
             raise ValueError(f"Gate {gate!r} must act on at least one qubit")
 
         for q in gate.qubits:
-            if not isinstance(q, int) or q < 0 or q >= self.num_qubits:
+            if isinstance(q, bool) or not isinstance(q, int) or q < 0 or q >= self.num_qubits:
                 raise ValueError(
                     f"Invalid qubit {q!r} for gate {gate!r} on a "
                     f"{self.num_qubits}-qubit circuit"

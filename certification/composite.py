@@ -1,4 +1,4 @@
-from certification.base import CertStatus
+from certification.base import CertResult, CertStatus
 
 
 class CompositeCertificationEngine:
@@ -10,6 +10,7 @@ class CompositeCertificationEngine:
         self.engines = engines
 
     def certify(self, state):
+        result = CertResult(CertStatus.INCONCLUSIVE, score=0.0)
         for engine in self.engines:
             result = engine.certify(state)
 

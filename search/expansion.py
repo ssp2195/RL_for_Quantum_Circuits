@@ -6,7 +6,11 @@ from search.node import SearchNode
 from search.action import Action
 
 
-def expand_node(node: SearchNode, actions: List[Action], policy) -> List[SearchNode]:
+def expand_node(
+    node: SearchNode,
+    actions: List[Action],
+    policy=None,
+) -> List[SearchNode]:
     """
     Expands a node into child nodes using given actions.
     """
@@ -35,15 +39,6 @@ def _apply_action(node: SearchNode, action: Action, policy):
 
     if not success:
         return None
-
-    if node.action is not None:
-        if action == node.action:
-            return None
-
-    # Avoid H followed by H (H^2 = I)
-    if node.action is not None:
-        if node.action.gate_type == action.gate_type == GateType.H:
-            return None
 
     # simple heuristic priority (can be replaced by RL later)
     priority = _compute_priority(state, policy)

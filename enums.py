@@ -4,7 +4,9 @@ from enum import Enum, auto
 class GateType(Enum):
     H = auto()
     S = auto()
+    SDG = auto()
     T = auto()
+    TDG = auto()
     X = auto()
     CNOT = auto()
 
