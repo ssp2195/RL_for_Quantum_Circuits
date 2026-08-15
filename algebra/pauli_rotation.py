@@ -3,9 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, Sequence, Tuple
+from typing import TYPE_CHECKING, Iterable, Tuple
 
 from algebra.pauli import PauliAxis
+
+if TYPE_CHECKING:
+    from algebra.tableau import CliffordFrame
 
 
 @dataclass(frozen=True, slots=True)
@@ -22,6 +25,11 @@ class PauliRotation:
     @property
     def is_identity(self) -> bool:
         return self.quarter_turns == 0
+
+    @property
+    def is_clifford(self) -> bool:
+        """Whether the angle is an exact integer multiple of ``pi/2``."""
+        return self.quarter_turns % 2 == 0
 
     def canonical_payload(self) -> Tuple[int, int, int, int, int]:
         return (*self.axis.canonical_payload(), self.quarter_turns)
@@ -141,8 +149,83 @@ def normalize_semantics(
     return word, (int(global_phase_eighths) + phase_delta) % 16
 
 
+def normalize_clifford_semantics(
+    frame: "CliffordFrame",
+    rotations: Iterable[PauliRotation],
+    global_phase_eighths: int = 0,
+    *,
+    absorb_clifford_angles: bool = True,
+) -> tuple["CliffordFrame", tuple[PauliRotation, ...], int]:
+    """Return the exact fixed-point Clifford-frame/rotation normal form.
+
+    The invariant is ``exp(i phi pi/8) C R_0 ... R_m``.  After conservative
+    word normalization, every Clifford-valued factor ``K`` is moved left using
+
+    ``R_Q(theta) K = K R_(K^dagger Q K)(theta)``
+
+    and absorbed by the exact right-frame update ``C <- C K``.  Only factors
+    crossed by ``K`` are conjugated; anticommuting rotations are never swapped.
+    Re-normalizing after each absorption exposes cancellations and newly
+    emergent Clifford angles, so the routine terminates with odd quarter-turns
+    only.  All angle and phase operations remain integral modulo 16.
+
+    A copied frame is returned; the input frame is never mutated.  Setting
+    ``absorb_clifford_angles=False`` retains the conservative word normal form
+    and is intended solely for controlled canonicalization ablations.
+    """
+    from algebra.tableau import CliffordFrame, conjugate_axis_by_pauli_rotation
+
+    if not isinstance(frame, CliffordFrame):
+        raise TypeError("frame must be a CliffordFrame")
+    if not isinstance(absorb_clifford_angles, bool):
+        raise TypeError("absorb_clifford_angles must be a bool")
+    normalized_frame = frame.copy()
+    word = tuple(rotations)
+    phase = int(global_phase_eighths)
+
+    while True:
+        word, phase_delta = normalize_rotation_word(word)
+        phase += phase_delta
+
+        if not absorb_clifford_angles:
+            return normalized_frame, word, phase % 16
+
+        clifford_index = next(
+            (
+                index
+                for index, rotation in enumerate(word)
+                if rotation.is_clifford
+            ),
+            None,
+        )
+        if clifford_index is None:
+            return normalized_frame, word, phase % 16
+
+        clifford = word[clifford_index]
+        # _reduce_turns has already restricted a nonzero even factor to one of
+        # {-2, 2, 4}.  Transport K left across the prefix without exchanging
+        # any pair of non-Clifford rotations with each other.
+        transported_prefix = tuple(
+            PauliRotation(
+                conjugate_axis_by_pauli_rotation(
+                    rotation.axis,
+                    clifford.axis,
+                    -clifford.quarter_turns,
+                ),
+                rotation.quarter_turns,
+            )
+            for rotation in word[:clifford_index]
+        )
+        normalized_frame.right_multiply_pauli_rotation(
+            clifford.axis,
+            clifford.quarter_turns,
+        )
+        word = transported_prefix + word[clifford_index + 1 :]
+
+
 __all__ = [
     "PauliRotation",
     "normalize_rotation_word",
     "normalize_semantics",
+    "normalize_clifford_semantics",
 ]

@@ -4,6 +4,10 @@ __pycache__/
 *.py[cod]
 *.egg-info/
 .pytest_cache/
+.pytest-*/
+.stage2-pytest-*/
+.stage3-pytest-*/
+.stage3-audit-baseline/
 .coverage
 htmlcov/
 outputs/

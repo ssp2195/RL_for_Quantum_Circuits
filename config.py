@@ -5,6 +5,34 @@ from typing import Optional
 from ckt_types import ResourceBudget
 
 
+REWARD_MODE_ALIASES = {
+    "legacy": "legacy_archive_shaping",
+    "target_progress": "target_progress_shaping",
+}
+
+REWARD_MODES = frozenset(
+    {
+        "legacy_archive_shaping",
+        "target_progress_shaping",
+        "expansion_cost",
+        "expansion_cost_plus_visit_bonus",
+        "article_v1_expansion_potential",
+    }
+)
+
+
+def normalize_reward_mode(value: str) -> str:
+    """Return the durable reward-mode name used in reports and checkpoints."""
+
+    if not isinstance(value, str):
+        raise TypeError("reward_mode must be a string")
+    normalized = REWARD_MODE_ALIASES.get(value, value)
+    if normalized not in REWARD_MODES:
+        choices = ", ".join(sorted(REWARD_MODES))
+        raise ValueError(f"unsupported reward_mode {value!r}; choose one of {choices}")
+    return normalized
+
+
 @dataclass(frozen=True)
 class TargetProgressRewardConfig:
     """Parameters for the opt-in target-progress reward model.
@@ -88,23 +116,49 @@ class Config:
     # Every Kth selection can be forced to the oldest open record.  Zero
     # disables the fairness interleave for purely learned experiments.
     fairness_interval: int = 0
+    # Explicit experiment switches.  Both remain enabled for production
+    # search; disabling either is supported only to run declared tiny-instance
+    # ablations with the same expansion/certification engine.
+    canonicalization_enabled: bool = True
+    pareto_dominance_enabled: bool = True
+    absorb_clifford_angles: bool = True
+    canonicalization_mode: str = "enhanced"
     seed: Optional[int] = None
     # The legacy feature/reward behavior remains the default for existing
     # searches.  GHZ target-aware experiments opt in explicitly.
     target_aware_features: bool = False
-    reward_mode: str = "legacy"
+    reward_mode: str = "legacy_archive_shaping"
+    # Article V1 potential-shaping coefficient.  It is consumed only by the
+    # versioned Article V1 reward strategy; legacy modes ignore it.
+    article_v1_beta: float = 1.0
     target_progress_reward: TargetProgressRewardConfig = field(
         default_factory=TargetProgressRewardConfig
     )
 
     def __post_init__(self) -> None:
-        if self.reward_mode not in {"legacy", "target_progress"}:
+        # Accept the two historical spellings for checkpoint/config migration,
+        # but expose one unambiguous name to every new report.
+        object.__setattr__(self, "reward_mode", normalize_reward_mode(self.reward_mode))
+        if self.canonicalization_mode not in {"enhanced", "raw_witness"}:
             raise ValueError(
-                "reward_mode must be either 'legacy' or 'target_progress'"
+                "canonicalization_mode must be 'enhanced' or 'raw_witness'"
             )
         if not isinstance(self.target_aware_features, bool):
             raise TypeError("target_aware_features must be a bool")
+        if not isinstance(self.canonicalization_enabled, bool):
+            raise TypeError("canonicalization_enabled must be a bool")
+        if not isinstance(self.pareto_dominance_enabled, bool):
+            raise TypeError("pareto_dominance_enabled must be a bool")
+        if not isinstance(self.absorb_clifford_angles, bool):
+            raise TypeError("absorb_clifford_angles must be a bool")
         if not isinstance(self.target_progress_reward, TargetProgressRewardConfig):
             raise TypeError(
                 "target_progress_reward must be a TargetProgressRewardConfig"
             )
+        if (
+            isinstance(self.article_v1_beta, bool)
+            or not isinstance(self.article_v1_beta, (int, float))
+            or not math.isfinite(float(self.article_v1_beta))
+            or float(self.article_v1_beta) < 0.0
+        ):
+            raise ValueError("article_v1_beta must be finite and non-negative")

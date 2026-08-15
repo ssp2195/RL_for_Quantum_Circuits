@@ -179,13 +179,57 @@ class CircuitState:
         affected = tuple(gate.qubits)
         layer = 1 + max(self.wire_depths[q] for q in affected)
 
-        self.dag.add_gate(gate)
+        self.dag._append_gate_unchecked(gate)
         self._update_resources(gate, layer)
         self._update_semantics(gate)
 
         if self.depth != self.dag.depth():  # catches resource/DAG regressions
             raise AssertionError("per-wire resource depth diverged from CircuitDAG")
         return True
+
+    def validate_consistency(self) -> None:
+        """Prove cached resources and semantics agree with the DAG witness.
+
+        Validation deliberately replays the concrete witness through the same
+        supported public mutation boundary into a fresh state.  It never
+        silently repairs this object: unauthorized raw DAG or cache mutation
+        remains an explicit assertion failure for tests and debug builds.
+        """
+
+        self.dag.validate()
+        assert self.frame is not None, "CircuitState has no Clifford frame"
+        assert len(self.wire_depths) == self.dag.num_qubits, (
+            "wire-depth arity disagrees with the DAG"
+        )
+
+        replayed = CircuitState(
+            CircuitDAG(self.dag.num_qubits),
+            self.budget,
+            continuation_interface=tuple(self.continuation_interface),
+        )
+        for gate in self.dag.gates:
+            assert replayed.apply_gate(gate), (
+                "DAG witness cannot be replayed under the state's budget"
+            )
+
+        assert self.resource_vector() == replayed.resource_vector(), (
+            "cached resource vector disagrees with the DAG witness"
+        )
+        assert self.depth == replayed.depth == self.dag.depth(), (
+            "cached depth disagrees with the DAG witness"
+        )
+        assert tuple(self.rotations) == tuple(replayed.rotations), (
+            "Pauli-rotation summary disagrees with the DAG witness"
+        )
+        assert self.frame.phase_sensitive_payload() == (
+            replayed.frame.phase_sensitive_payload()
+        ), "Clifford frame disagrees with the DAG witness"
+        assert self.global_phase_eighths % 16 == replayed.global_phase_eighths % 16, (
+            "global phase disagrees with the DAG witness"
+        )
+        assert tuple(self.continuation_interface) == tuple(
+            replayed.continuation_interface
+        ), "continuation interface changed during replay"
 
     def _valid_gate(self, gate: Gate) -> bool:
         name = gate.gate_type.name

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from dataclasses import dataclass
+import time
 from typing import TYPE_CHECKING, DefaultDict, Dict, Hashable, Optional, Tuple
 
 from search.node import SearchNode
@@ -150,33 +151,75 @@ class InsertResult:
     record: Optional[ArchiveRecord] = None
     dominated: Tuple[ArchiveRecord, ...] = ()
     rejected_by: Optional[ArchiveRecord] = None
+    semantic_key_existed: bool = False
+    pareto_incomparable_accepted: bool = False
+    previously_expanded: bool = False
+    reopened: bool = False
+    rejection_kind: Optional[str] = None
+
+    @property
+    def duplicate_rejected(self) -> bool:
+        """Whether weak Pareto dominance rejected this semantic duplicate."""
+
+        return not self.accepted and self.rejected_by is not None
+
+    @property
+    def dominated_retired(self) -> int:
+        """Number of active records strictly dominated by this insertion."""
+
+        return len(self.dominated)
+
+    @property
+    def exact_duplicate_rejected(self) -> bool:
+        return self.rejection_kind == "exact_duplicate"
+
+    @property
+    def dominance_rejected(self) -> bool:
+        return self.rejection_kind == "strict_weak_dominance"
 
 
 class ParetoArchive:
     """Map each exact canonical key to its active resource antichain."""
 
-    def __init__(self, canonicalizer: Optional[Canonicalizer] = None):
+    def __init__(
+        self,
+        canonicalizer: Optional[Canonicalizer] = None,
+        *,
+        canonicalization_enabled: bool = True,
+        pareto_dominance_enabled: bool = True,
+    ):
         if canonicalizer is None:
             # Keep resource-archive tests and utilities importable without
             # forcing the full quantum semantic implementation to load.
             from canonical.canonicalizer import Canonicalizer
 
             canonicalizer = Canonicalizer()
+        key_fn = getattr(canonicalizer, "semantic_key", None)
+        if not callable(key_fn):
+            raise TypeError("canonicalizer must expose semantic_key(state)")
+        if not isinstance(canonicalization_enabled, bool):
+            raise TypeError("canonicalization_enabled must be a bool")
+        if not isinstance(pareto_dominance_enabled, bool):
+            raise TypeError("pareto_dominance_enabled must be a bool")
+
         self.canonicalizer = canonicalizer
+        self.canonicalization_enabled = canonicalization_enabled
+        self.pareto_dominance_enabled = pareto_dominance_enabled
         self._records_by_key: DefaultDict[CanonicalKey, list[ArchiveRecord]] = (
             defaultdict(list)
         )
         self._records_by_id: Dict[int, ArchiveRecord] = {}
         self._next_record_id = 0
+        self._next_uncanonicalized_key = 0
+        self._pareto_width_peak = 0
+        self._active_record_peak = 0
+        self.last_canonicalization_time_ns = 0
+        self.last_archive_time_ns = 0
 
     def semantic_key(self, state: object) -> CanonicalKey:
         """Use a full canonical payload; never merge based on a digest alone."""
         key_fn = getattr(self.canonicalizer, "semantic_key", None)
-        if not callable(key_fn):  # Defensive boundary for pre-migration users.
-            key_fn = getattr(self.canonicalizer, "identity_key", None)
-        if not callable(key_fn):
-            key_fn = getattr(self.canonicalizer, "identity_hash", None)
-        if not callable(key_fn):  # pragma: no cover - misuse guard
+        if not callable(key_fn):  # pragma: no cover - constructor guards this
             raise TypeError("canonicalizer must expose semantic_key(state)")
 
         key = key_fn(state)
@@ -193,19 +236,66 @@ class ParetoArchive:
         from the archive.  Lazy tombstones make stale priority-queue entries
         harmless and preserve a useful diagnostic history.
         """
-        key = self.semantic_key(node.state)
+        insert_started = time.perf_counter_ns()
+        key_started = time.perf_counter_ns()
+        semantic_key = self.semantic_key(node.state)
+        self.last_canonicalization_time_ns = time.perf_counter_ns() - key_started
+        if self.canonicalization_enabled:
+            key = semantic_key
+        else:
+            # A unique wrapper disables all semantic merging without changing
+            # expansion, certification, or the canonicalizer itself.  This is
+            # deliberately an explicit tiny-instance experiment mode.
+            key = (
+                "uncanonicalized-record",
+                self._next_uncanonicalized_key,
+                semantic_key,
+            )
+            self._next_uncanonicalized_key += 1
         resources = ResourceVector.from_state(node.state)
+        semantic_key_existed = key in self._records_by_key
         records = self._records_by_key[key]
         active_records = [record for record in records if record.active]
+        previously_expanded = any(record.expanded for record in records)
 
         for old in active_records:
-            if old.resources.weakly_dominates(resources):
-                return InsertResult(accepted=False, rejected_by=old)
+            # Canonical duplicate elimination remains active in the
+            # Pareto-off ablation: an identical semantic/resource record has
+            # neither a new continuation nor a new trade-off.  Disabling
+            # Pareto dominance only retains *different* comparable resource
+            # profiles, matching the article's duplicate-only control.
+            exact_duplicate = old.resources == resources
+            pareto_rejected = (
+                self.pareto_dominance_enabled
+                and old.resources.weakly_dominates(resources)
+            )
+            if exact_duplicate or pareto_rejected:
+                result = InsertResult(
+                    accepted=False,
+                    rejected_by=old,
+                    semantic_key_existed=semantic_key_existed,
+                    previously_expanded=previously_expanded,
+                    rejection_kind=(
+                        "exact_duplicate"
+                        if exact_duplicate
+                        else "strict_weak_dominance"
+                    ),
+                )
+                self.last_archive_time_ns = (
+                    time.perf_counter_ns()
+                    - insert_started
+                    - self.last_canonicalization_time_ns
+                )
+                return result
 
-        dominated = tuple(
-            old
-            for old in active_records
-            if resources.strictly_dominates(old.resources)
+        dominated = (
+            tuple(
+                old
+                for old in active_records
+                if resources.strictly_dominates(old.resources)
+            )
+            if self.pareto_dominance_enabled
+            else ()
         )
         for old in dominated:
             self.tombstone(old)
@@ -222,7 +312,37 @@ class ParetoArchive:
 
         node.record_id = record.record_id
         node.expanded = False
-        return InsertResult(accepted=True, record=record, dominated=dominated)
+        active_width = sum(candidate.active for candidate in records)
+        self._pareto_width_peak = max(self._pareto_width_peak, active_width)
+        self._active_record_peak = max(
+            self._active_record_peak,
+            sum(candidate.active for candidate in self._records_by_id.values()),
+        )
+
+        # Since weakly dominated records were rejected above, every surviving
+        # old active record is incomparable with the accepted new one.  A
+        # pure dominating replacement therefore does not count as an
+        # additional incomparable Pareto record.
+        incomparable_accepted = any(
+            old.active
+            and not old.resources.weakly_dominates(resources)
+            and not resources.weakly_dominates(old.resources)
+            for old in active_records
+        )
+        result = InsertResult(
+            accepted=True,
+            record=record,
+            dominated=dominated,
+            semantic_key_existed=semantic_key_existed,
+            pareto_incomparable_accepted=incomparable_accepted,
+            previously_expanded=previously_expanded,
+        )
+        self.last_archive_time_ns = (
+            time.perf_counter_ns()
+            - insert_started
+            - self.last_canonicalization_time_ns
+        )
+        return result
 
     def tombstone(self, record: ArchiveRecord) -> None:
         """Retire a strictly dominated archive record without deleting it."""
@@ -259,3 +379,36 @@ class ParetoArchive:
             self._records_by_id[record_id]
             for record_id in sorted(self._records_by_id)
         )
+
+    @property
+    def archive_size(self) -> int:
+        """Number of distinct semantic identities ever admitted."""
+
+        return len(self._records_by_key)
+
+    @property
+    def archive_record_count(self) -> int:
+        """Number of admitted records, including expanded/tombstoned history."""
+
+        return len(self._records_by_id)
+
+    @property
+    def active_record_count(self) -> int:
+        """Number of non-tombstoned resource witnesses in the archive."""
+
+        return sum(record.active for record in self._records_by_id.values())
+
+    @property
+    def active_record_peak(self) -> int:
+        return self._active_record_peak
+
+    @property
+    def pareto_width_peak(self) -> int:
+        """Largest active antichain width observed at any semantic key."""
+
+        return self._pareto_width_peak
+
+    def pareto_width(self, key: CanonicalKey) -> int:
+        """Current active Pareto-antichain width for ``key``."""
+
+        return sum(record.active for record in self._records_by_key.get(key, ()))

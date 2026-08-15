@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import heapq
 import itertools
+from dataclasses import replace
 from typing import TYPE_CHECKING, Optional, Union
 
 from search.archive import ArchiveRecord, InsertResult, ParetoArchive, ResourceVector
@@ -30,12 +31,39 @@ class Frontier:
         canonicalizer: Optional[Canonicalizer] = None,
         *,
         archive: Optional[ParetoArchive] = None,
+        canonicalization_enabled: Optional[bool] = None,
+        pareto_dominance_enabled: Optional[bool] = None,
     ):
         if archive is not None and canonicalizer is not None:
             if archive.canonicalizer is not canonicalizer:
                 raise ValueError("pass either canonicalizer or archive, not mismatched both")
 
-        self.archive = archive or ParetoArchive(canonicalizer=canonicalizer)
+        if archive is not None:
+            if (
+                canonicalization_enabled is not None
+                and archive.canonicalization_enabled != canonicalization_enabled
+            ):
+                raise ValueError("archive canonicalization setting does not match")
+            if (
+                pareto_dominance_enabled is not None
+                and archive.pareto_dominance_enabled != pareto_dominance_enabled
+            ):
+                raise ValueError("archive Pareto setting does not match")
+            self.archive = archive
+        else:
+            self.archive = ParetoArchive(
+                canonicalizer=canonicalizer,
+                canonicalization_enabled=(
+                    True
+                    if canonicalization_enabled is None
+                    else canonicalization_enabled
+                ),
+                pareto_dominance_enabled=(
+                    True
+                    if pareto_dominance_enabled is None
+                    else pareto_dominance_enabled
+                ),
+            )
         self.canonicalizer = self.archive.canonicalizer
 
         # (priority, insertion_order, record_id).  Entries are deliberately
@@ -54,7 +82,13 @@ class Frontier:
         result = self.archive.insert(node)
         if result.accepted:
             assert result.record is not None
-            self.add(result.record)
+            queued = self.add(result.record)
+            if not queued:  # pragma: no cover - archive/frontier invariant
+                raise AssertionError("accepted archive record was not selectable")
+            result = replace(
+                result,
+                reopened=bool(result.previously_expanded and queued),
+            )
         return result
 
     def push(self, node: SearchNode) -> bool:

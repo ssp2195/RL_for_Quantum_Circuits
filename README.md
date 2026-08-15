@@ -38,6 +38,18 @@ kept only as historical reference. Its executable regressions now live in
 The simulator is deliberately small-instance only; its purpose is final
 certification, not large-scale search pruning.
 
+The article-aligned reward, record-action, metric, baseline, ablation, and
+held-out evaluation definitions are fixed in
+[`docs/article_experiment_contract.md`](docs/article_experiment_contract.md).
+The stage-by-stage implementation evidence and final measurements are in
+[`docs/article_alignment_completion_report.md`](docs/article_alignment_completion_report.md).
+The one-sided continuation/resource-simulation theorem used by Pareto pruning
+is documented separately in
+[`docs/continuation_pruning_contract.md`](docs/continuation_pruning_contract.md).
+Its normative replacement for the manuscript's earlier strict symmetric
+wording is in
+[`docs/article_continuation_contract_amendment.md`](docs/article_continuation_contract_amendment.md).
+
 ## GHZ-3 state-preparation smoke test
 
 The deterministic GHZ-3 runner checks the native state-preparation witness
@@ -150,3 +162,179 @@ certified witness was returned.
 This is evidence for a target-aware linear ranking policy on this labelled,
 small GHZ-3 search only. It is not evidence of generalization to arbitrary
 circuits, larger registers, or state-preparation targets.
+
+## Legacy held-out native Clifford+T target corpus
+
+`benchmarks/native_corpus.py` generates two deterministic target suites from
+the actual unrestricted native grammar (`H`, `S`, `SDG`, `T`, `TDG`, and every
+directed `CNOT`) on one, two, and three qubits. The semantic/property suite uses
+longer short witnesses; the bounded-synthesis suite uses one- or two-gate
+witnesses so scheduler comparisons remain practical. Its multiqubit cases are
+transparently conditioned to contain at least one directed CNOT, while gate
+selection otherwise remains seeded and uniform over the native action list.
+
+The fixed partition seeds are `1729` (train), `2753` (validation), and `3769`
+(test). Partition identity is a global-phase-normalized dense-unitary digest,
+not witness syntax, so semantically equal generator circuits cannot cross a
+split. Each record retains its generator witness solely for replay and audit;
+generic search receives `case.synthesis_target()` and has no target-specific
+reachability oracle. The module also exposes a separately labelled analytical
+CCZ target and the fixed native diagonal witness obtained from the established
+`CCZ = H(2) CCX H(2)` relation. This reference witness is not generic-search
+evidence.
+
+Run this retained pre-Article-V1 train/test benchmark and its historical tiny
+ablations with:
+
+```powershell
+.\.venv\Scripts\python article_benchmark.py `
+  --artifacts-dir outputs\article-native-heldout
+```
+
+The default uses training seed `20260815` and evaluation seeds `11`, `23`, and
+`37`. Learning rates `0.001` and `0.0005` are compared only on the validation
+split before the untouched test split is opened. The runner writes the model
+selection record, complete corpus replay manifest, TD/weight diagnostics,
+individual and aggregate held-out scheduler results, trained-policy
+ablations, and a Markdown summary. Search receives dense targets only; corpus
+witnesses appear solely in the replay manifest.
+
+## Article V1 publication workflow
+
+The versioned Article V1 path is separate from the legacy command above.
+`benchmarks/article_native_corpus.py` generates only two- and three-qubit
+targets from the unchanged native grammar. The pilot primary corpus is exactly
+five easy (witness length 2–3), five medium (4–5), and five hard (6–8) targets
+across train/validation/test, plus four separately labelled length-OOD targets.
+Generator witnesses are reachability/audit metadata only and are absent from
+the evaluation surface.
+
+The seven primary schedulers are FIFO, LIFO, uniform cost, seeded random,
+zero-weight Article linear, direct Article target distance, and trained Article
+SARSA. Every scheduler uses the same `ArticleTargetContext`, amended
+`article_v1_expansion_potential` reward and configured `beta`, native grammar,
+resource/expansion budgets, canonicalizer, Pareto archive, and independent
+Article certifier. Frozen policies do not consume evaluation rewards. OOD SARSA
+uses separate `ood-seed-*.json` checkpoints trained only on train targets whose
+generator length is at most four.
+
+Article timing separates record ranking, structural feature construction, and
+dense target-metric evaluation. `wall_time_ns` is the complete evaluation
+envelope, including reset, selection, features, environment steps, and stopping
+logic; the narrower accumulated step-body timer is separately named
+`environment_step_time_ns`. `frontier_sum` samples actual selection states: the
+root and each nonterminal/nontruncated successor. The compatibility
+`frontier_mean` intentionally retains the older root-plus-post-expansion
+convention and is not the Article decision-state mean. The zero-weight linear
+control still materializes the same Article 31D feature/target-metric pipeline;
+only its coefficients are zero.
+
+Learned checkpoints use the fail-closed
+`article-v1-transferable-linear-checkpoint-v2` contract. The checkpoint digest
+binds its feature schema, standard/OOD family, corpus config, training-scope
+mode, ordered training target IDs, training `beta`, certification tolerance,
+episodes per target, learning rate, epsilon schedule, training seed, optional
+expansion cap, budget policy, effective per-target training budgets, and
+weights. Evaluation additionally binds an explicit scope, its allowed training
+seed set, and an exact training-partition match, so a foreign-corpus,
+held-out-leaking, incomplete, OOD, or feature-ablation checkpoint cannot be
+silently used as the primary learner. Standard, OOD, and ablation campaign
+checkpoints use their complete declared train partition; mini-CI alone is
+explicitly labelled `explicit_partial_smoke`. Raw-run identity includes both
+the checkpoint training seed and source-worktree digest. Resume validates
+immutable run/environment/corpus manifests and existing checkpoints before
+reuse; a compatible checkpoint is loaded, not retrained or rewritten, while
+stale/conflicting content fails closed. Pre-V2/pre-identity ledgers require a
+new run ID.
+
+The root CLI dispatches the Article V1 workflow:
+
+```powershell
+.\.venv\Scripts\python article_benchmark.py mini-ci `
+  --output-root outputs\article_v1 --run-id mini-ci-v5-new
+.\.venv\Scripts\python article_benchmark.py pilot `
+  --config configs\article_v1_pilot.json `
+  --output-root outputs\article_v1 --run-id pilot
+.\.venv\Scripts\python article_benchmark.py generate-corpus `
+  --config configs\article_v1_publication.json
+.\.venv\Scripts\python article_benchmark.py train `
+  --config configs\article_v1_publication.json
+.\.venv\Scripts\python article_benchmark.py evaluate `
+  --config configs\article_v1_publication.json
+.\.venv\Scripts\python article_benchmark.py aggregate `
+  --config configs\article_v1_publication.json
+.\.venv\Scripts\python article_benchmark.py ablations `
+  --config configs\article_v1_publication.json
+```
+
+The ablation command writes `ablations.csv`, `ablation_results.json`, and
+variant checkpoints. Its Pareto-off arm retains exact duplicate suppression
+but disables resource-dominance rejection/removal. Its `raw_witness`
+canonicalization arm disables commuting reorder, cross-position fusion, and
+Clifford-angle absorption while remaining sound because distinct DAG words are
+never merged.
+
+An Article V1 run directory includes run/environment/report metadata,
+combined and per-split corpus manifests, standard and OOD checkpoints,
+resumable `raw_runs.jsonl`, per-target/success/timing CSVs, paired tables, SVG
+figures, per-learner `tables/learner_seed_results.csv`, between-learner
+`tables/learner_seed_summary.csv`, and the completion summary. Success curves
+contain only budgets actually executed for that target/method; reporting never
+manufactures a lower-budget point from a larger-cap trajectory. Artifact-map
+paths below the repository are serialized as portable repository-relative
+POSIX paths.
+
+The current `outputs/article_v1/final-mini-ci-v5` artifact passes all eleven
+mini semantic checks. It contains nine raw scheduler records, uses a seed-19
+scope-validated SARSA checkpoint explicitly marked as partial-smoke training,
+independently certifies the reachable target under FIFO, and uses no
+generator/reference-witness fallback. A same-ID resume appended zero records
+and skipped all nine without changing `raw_runs.jsonl`; it also loaded the
+existing checkpoint without training or rewriting it.
+The configured pilot and full publication campaigns have not been run, so the
+repository makes no scheduler-superiority, optimality, or scalability claim.
+
+## QFT reference and exact-capability boundary
+
+`benchmarks/qft.py` defines SDK-neutral reference-only `H`,
+`ControlledPhase(angle_pi)`, and `SWAP` operations. Qubit 0 is the
+least-significant basis bit, and the forward swapped convention is
+
+```text
+F[j,k] = exp(+2*pi*i*j*k/N) / sqrt(N).
+```
+
+Forward QFT without swaps has bit-reversed outputs; its inverse has
+bit-reversed inputs. Both conventions have separate declared target matrices.
+The operation-derived QFT-3 forward/inverse matrices are tested against the
+independently constructed analytical 8x8 matrices and phase-sensitive basis
+columns.
+
+Before an exact target reaches native search,
+`prepare_native_exact_search(...)` applies a machine-readable capability
+guard. QFT-1 is `EXACT_NATIVE`, QFT-2 is `EXACT_DECOMPOSABLE`, and canonical
+QFT-3 is `APPROXIMATION_REQUIRED` because the present no-ancilla model has no
+registered exact lowering for its controlled phase below pi/2. Consequently a
+QFT-3 request carries no exact `SynthesisTarget` and cannot be reported as a
+false native-search success.
+
+`aqft3_metrics(...)` is a distinct approximate benchmark that omits exactly
+the pi/4 controlled phase and reports the complete operation/omission metadata,
+process fidelity, maximum elementwise matrix error, selected state fidelities,
+and swap/permutation convention. Approximate metrics are never accepted by the
+exact certifier. These reference gates do not modify `GateType` or native
+frontier expansion.
+
+Generate the machine-readable report and high-level diagrams with:
+
+```powershell
+.\.venv\Scripts\python qft_benchmark.py `
+  --artifacts-dir outputs\qft3-reference
+```
+
+The command exits successfully only when analytical forward/inverse checks,
+swap and no-swap conventions, the exact native capability guard, the declared
+AQFT omission/fidelity, and the unchanged native action grammar all pass. It
+writes `summary.json`, `summary.md`, `exact_qft3.svg`, and `aqft3.svg`; both
+diagrams explicitly identify themselves as high-level references rather than
+native witnesses.

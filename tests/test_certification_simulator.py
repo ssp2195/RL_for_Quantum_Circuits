@@ -38,9 +38,7 @@ def _gate(name: str, *qubits: int) -> WitnessGate:
 
 
 def _state_from_gates(num_qubits: int, gates: list[WitnessGate]):
-    dag = CircuitDAG(num_qubits)
-    for gate in gates:
-        dag.add_gate(gate)
+    dag = CircuitDAG.from_gates(num_qubits, gates)
     return SimpleNamespace(dag=dag)
 
 

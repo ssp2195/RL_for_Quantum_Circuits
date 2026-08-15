@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import time
 from typing import Any, Optional
 
 import numpy as np
 
+from config import normalize_reward_mode
 from rl.policy import LinearQPolicy
 
 
@@ -51,14 +53,31 @@ class Trainer:
         self.epsilon = 0.2
         self.min_epsilon = 0.05
         self.epsilon_decay = 0.995
-        self.reward_clip = 10.0
+        self.last_training_runtime_seconds = 0.0
+        self.reward_mode = normalize_reward_mode(
+            getattr(env.config, "reward_mode", "legacy_archive_shaping")
+        )
+        # Clipping would change Equation (24) when an exhausted frontier must
+        # receive a failure correction larger than ten.  Legacy/task-shaped
+        # modes retain their historical trainer-side bound.
+        self.reward_clip = (
+            None
+            if self.reward_mode
+            in {
+                "expansion_cost",
+                "expansion_cost_plus_visit_bonus",
+                "article_v1_expansion_potential",
+            }
+            else 10.0
+        )
         # The target-progress environment already supplies an explicit
         # potential-shaped reward.  Do not silently add the legacy visit
         # bonus to that objective; callers can still opt in manually.
         self.exploration_beta = (
             0.0
             if (
-                getattr(env.config, "reward_mode", "legacy") == "target_progress"
+                self.reward_mode in {"target_progress_shaping", "expansion_cost"}
+                or self.reward_mode == "article_v1_expansion_potential"
                 or getattr(env, "reward_model", None) is not None
             )
             else 0.1
@@ -71,7 +90,16 @@ class Trainer:
             return min(nodes, key=lambda node: int(node.record_id or 0)) if nodes else None
         return self.policy.select_node(nodes, epsilon=self.epsilon)
 
+    def _behavior_node_from_batch(self, nodes, batch):
+        """Select from the exact frozen Article V1 decision snapshot."""
+
+        interval = max(0, int(getattr(self.env.config, "fairness_interval", 0)))
+        if interval and (self.env.steps + 1) % interval == 0:
+            return min(nodes, key=lambda node: int(node.record_id or 0)) if nodes else None
+        return self.policy.select_from_batch(batch, epsilon=self.epsilon)
+
     def train(self, num_episodes: int = 100) -> list[dict[str, Any]]:
+        training_started = time.perf_counter()
         history: list[dict[str, Any]] = []
         for episode in range(num_episodes):
             _, reset_info = self.env.reset(
@@ -82,26 +110,41 @@ class Trainer:
             total_reward = 0.0
             steps = 0
             selected = None
+            selected_features = None
+            td_errors: list[float] = []
 
             while not (terminated or truncated):
                 nodes_before = self.env.current_nodes()
                 if selected is None or not any(node is selected for node in nodes_before):
-                    selected = self._behavior_node(nodes_before)
+                    if self.reward_mode == "article_v1_expansion_potential":
+                        decision_batch = self.policy.build_feature_batch(nodes_before)
+                        selected = self._behavior_node_from_batch(
+                            nodes_before, decision_batch
+                        )
+                        selected_features = (
+                            None
+                            if selected is None
+                            else decision_batch.features_for(selected)
+                        )
+                    else:
+                        selected = self._behavior_node(nodes_before)
+                        selected_features = None
                 if selected is None:
                     break
 
-                # ``SearchNode`` ordering/equality intentionally compares
-                # only priority for heap compatibility.  Several distinct
-                # frontier records can therefore compare equal, so ``list``'s
-                # value-based ``index`` could expand the wrong record.  The
-                # behavior policy returns this concrete object; preserve that
-                # identity when adapting it to the Gym positional API.
-                selected_index = next(
-                    index
-                    for index, candidate in enumerate(nodes_before)
-                    if candidate is selected
+                if (
+                    self.reward_mode == "article_v1_expansion_potential"
+                    and selected_features is None
+                ):
+                    decision_batch = self.policy.build_feature_batch(nodes_before)
+                    selected_features = decision_batch.features_for(selected)
+
+                # The core action is a persistent record identity.  Positional
+                # Gym actions are only a compatibility adapter and are never
+                # used by the reference trainer.
+                _, reward, terminated, truncated, info = self.env.select_record(
+                    int(selected.record_id)
                 )
-                _, reward, terminated, truncated, info = self.env.step(selected_index)
 
                 # Fairness may have expanded another record; learn from the
                 # actual environment transition rather than the proposed one.
@@ -114,29 +157,64 @@ class Trainer:
                     raise RuntimeError(
                         "environment expanded a different record than the behavior policy selected"
                     )
-                identity = self.canonicalizer.identity_hash(actual.state)
+                identity = self.canonicalizer.semantic_key(actual.state)
                 self.visit_counts[identity] += 1
-                reward += self.exploration_beta / np.sqrt(self.visit_counts[identity])
-                reward = float(np.clip(reward, -self.reward_clip, self.reward_clip))
+                if self.exploration_beta:
+                    reward += self.exploration_beta / np.sqrt(
+                        self.visit_counts[identity]
+                    )
+                reward = float(reward)
+                if self.reward_clip is not None:
+                    reward = float(
+                        np.clip(reward, -self.reward_clip, self.reward_clip)
+                    )
+                if (
+                    self.reward_mode == "article_v1_expansion_potential"
+                    and actual is not selected
+                ):
+                    # Fairness is disabled in frozen article evaluation, but
+                    # retain a correct legacy override path during training.
+                    selected_features = decision_batch.features_for(actual)
 
                 next_nodes = self.env.current_nodes()
                 next_node = None
+                next_features = None
                 if not (terminated or truncated):
-                    next_node = self._behavior_node(next_nodes)
+                    if self.reward_mode == "article_v1_expansion_potential":
+                        next_batch = self.policy.build_feature_batch(next_nodes)
+                        next_node = self._behavior_node_from_batch(next_nodes, next_batch)
+                        next_features = (
+                            None
+                            if next_node is None
+                            else next_batch.features_for(next_node)
+                        )
+                    else:
+                        next_node = self._behavior_node(next_nodes)
 
-                self.policy.update(
-                    state=actual.state,
-                    reward=reward,
-                    next_frontier=next_nodes,
-                    done=terminated or truncated,
-                    next_node=next_node,
-                    frontier=nodes_before,
-                )
+                if self.reward_mode == "article_v1_expansion_potential":
+                    assert selected_features is not None
+                    td_error = self.policy.update_from_features(
+                        current_features=selected_features,
+                        reward=reward,
+                        next_features=next_features,
+                        done=terminated or truncated,
+                    )
+                else:
+                    td_error = self.policy.update(
+                        state=actual.state,
+                        reward=reward,
+                        next_frontier=next_nodes,
+                        done=terminated or truncated,
+                        next_node=next_node,
+                        frontier=nodes_before,
+                    )
+                td_errors.append(float(td_error))
                 total_reward += reward
                 steps += 1
                 # SARSA's bootstrap action is the behavior action used on the
                 # next iteration (unless the fairness interleave supersedes it).
                 selected = next_node
+                selected_features = next_features
 
             self.epsilon = max(self.min_epsilon, self.epsilon * self.epsilon_decay)
             result = {
@@ -146,6 +224,29 @@ class Trainer:
                 "certified": self.env.solution_node is not None,
                 "truncated": truncated,
                 "epsilon": self.epsilon,
+                "reward_mode": self.reward_mode,
+                "reward_coefficients": self.env.reward_spec(),
+                "learning_rate": float(self.policy.lr),
+                "discount": float(self.policy.gamma),
+                "exploration_beta": float(self.exploration_beta),
+                "mean_absolute_td_error": float(
+                    np.mean(np.abs(td_errors)) if td_errors else 0.0
+                ),
+                "max_absolute_td_error": float(
+                    np.max(np.abs(td_errors)) if td_errors else 0.0
+                ),
+                "weight_norm": float(np.linalg.norm(self.policy.theta)),
+                "policy_weight_digest": self.policy.weight_digest(),
+                # Keep nondeterministic wall-clock counters out of the
+                # reproducible learning history.  Publication runners collect
+                # those counters separately from the environment.
+                "search_metrics": {
+                    name: value
+                    for name, value in dict(
+                        getattr(self.env, "search_metrics", {})
+                    ).items()
+                    if not name.endswith("_time_ns")
+                },
             }
             history.append(result)
             print(
@@ -153,4 +254,7 @@ class Trainer:
                 f"Steps: {steps} | Certified: {result['certified']} | "
                 f"Epsilon: {self.epsilon:.3f}"
             )
+        # Wall time is deliberately kept outside the deterministic episode
+        # history so same-seed histories remain byte-for-byte reproducible.
+        self.last_training_runtime_seconds = float(time.perf_counter() - training_started)
         return history

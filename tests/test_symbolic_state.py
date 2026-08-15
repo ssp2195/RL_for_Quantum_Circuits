@@ -86,9 +86,10 @@ def test_symbolic_invariant_matches_independent_witness_simulation():
 
 
 def test_bare_prepopulated_dag_is_replayed_not_mistaken_for_identity():
-    dag = CircuitDAG(1)
-    dag.add_gate(Gate(GateType.H, (0,)))
-    dag.add_gate(Gate(GateType.T, (0,)))
+    dag = CircuitDAG.from_gates(
+        1,
+        (Gate(GateType.H, (0,)), Gate(GateType.T, (0,))),
+    )
 
     state = CircuitState(dag, ResourceBudget(2, 2, 2))
     empty = _state()
@@ -102,9 +103,10 @@ def test_bare_prepopulated_dag_is_replayed_not_mistaken_for_identity():
 
 
 def test_forged_cached_snapshot_is_ignored_in_favor_of_the_dag_witness():
-    dag = CircuitDAG(1)
-    dag.add_gate(Gate(GateType.H, (0,)))
-    dag.add_gate(Gate(GateType.T, (0,)))
+    dag = CircuitDAG.from_gates(
+        1,
+        (Gate(GateType.H, (0,)), Gate(GateType.T, (0,))),
+    )
 
     forged = CircuitState(
         dag,
@@ -160,7 +162,79 @@ def test_invalid_boolean_qubits_are_rejected_without_mutating_the_witness():
     assert state.resource_vector() == (0, 0, 0, 0, 0)
 
     with pytest.raises(ValueError):
-        CircuitDAG(2).add_gate(Gate(GateType.H, (True,)))
+        CircuitDAG.from_gates(2, (Gate(GateType.H, (True,)),))
+
+
+def test_public_dag_mutation_is_a_hard_failure():
+    dag = CircuitDAG(1)
+
+    with pytest.raises(RuntimeError, match="CircuitState.apply_gate"):
+        dag.add_gate(Gate(GateType.H, (0,)))
+
+    assert dag.gates == []
+    dag.validate()
+
+    with pytest.raises(AttributeError):
+        dag.num_qubits = 2
+
+
+def test_supported_mutation_and_copy_preserve_independent_consistent_snapshots():
+    original = _append(_state(), GateType.H, (0,))
+    original.validate_consistency()
+
+    copied = original.copy()
+    _append(copied, GateType.T, (0,))
+
+    assert original.dag.gates == [Gate(GateType.H, (0,))]
+    assert copied.dag.gates == [Gate(GateType.H, (0,)), Gate(GateType.T, (0,))]
+    assert original.frame is not copied.frame
+    assert original.dag is not copied.dag
+    original.validate_consistency()
+    copied.validate_consistency()
+
+
+def test_consistency_validation_detects_unauthorized_raw_dag_mutation():
+    state = _append(_state(), GateType.H, (0,))
+    state.dag._append_gate_unchecked(Gate(GateType.T, (0,)))
+
+    with pytest.raises(AssertionError, match="resource vector"):
+        state.validate_consistency()
+
+
+def test_replaying_serialized_dag_reproduces_dense_and_symbolic_unitaries():
+    state = _state(2)
+    for gate_type, qubits in (
+        (GateType.H, (0,)),
+        (GateType.CNOT, (0, 1)),
+        (GateType.TDG, (1,)),
+        (GateType.S, (0,)),
+    ):
+        _append(state, gate_type, qubits)
+
+    serialized_gates = tuple(state.dag.gates)
+    replayed = CircuitState(
+        CircuitDAG.from_gates(2, serialized_gates),
+        state.budget,
+    )
+
+    state.validate_consistency()
+    replayed.validate_consistency()
+    np.testing.assert_allclose(state.symbolic_unitary(), replayed.symbolic_unitary())
+    np.testing.assert_allclose(
+        replayed.symbolic_unitary(),
+        unitary_from_gates(2, serialized_gates),
+    )
+
+
+def test_dag_validation_requires_the_latest_gate_cache():
+    dag = CircuitDAG.from_gates(
+        1,
+        (Gate(GateType.H, (0,)), Gate(GateType.T, (0,))),
+    )
+    dag._last_gate_on_qubit[0] = 0
+
+    with pytest.raises(AssertionError, match="latest"):
+        dag.validate()
 
 
 def test_canonicalisation_is_sound_for_key_regressions_and_global_phase_modes():

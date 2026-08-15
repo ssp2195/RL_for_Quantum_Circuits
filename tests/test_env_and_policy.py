@@ -49,6 +49,14 @@ def test_env_uses_gymnasium_termination_for_a_certified_witness():
     assert not truncated
     assert info["num_children"] == 5
     assert info["num_certified"] == 1
+    assert info["num_certification_nonmatches"] == 4
+    assert info["search_metrics"]["generated"] == 5
+    assert info["search_metrics"]["certification_nonmatch"] == 4
+    assert info["search_metrics"]["expanded"] == 1
+    assert info["search_metrics"]["frontier_peak"] == 4
+    assert info["search_metrics"]["frontier_mean"] == 2.5
+    assert info["search_metrics"]["archive_size"] == 5
+    assert info["search_metrics"]["pareto_width_peak"] == 1
     assert env.solution_node is not None
     assert [action.gate_type for action in env.solution_node.reconstruct_actions()] == [GateType.H]
 

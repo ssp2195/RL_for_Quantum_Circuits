@@ -9,7 +9,7 @@ generation and the environment owns independent dense certification.
 from __future__ import annotations
 
 from contextlib import redirect_stdout
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from io import StringIO
 from typing import Literal
 import pytest
@@ -224,7 +224,32 @@ def test_toffoli_baseline_schedulers_are_seed_reproducible(scheduler: Scheduler)
         max_steps=32,
     )
 
-    assert first == second
+    # Instrumentation deliberately records wall-clock nanoseconds, which are
+    # observable but cannot be reproducible.  Compare the complete scheduler
+    # result after removing only those timing counters, and separately retain
+    # a contract check that every timing sample is present and nonnegative.
+    deterministic_first = replace(
+        first,
+        search_metrics=tuple(
+            item for item in first.search_metrics if not item[0].endswith("_time_ns")
+        ),
+    )
+    deterministic_second = replace(
+        second,
+        search_metrics=tuple(
+            item for item in second.search_metrics if not item[0].endswith("_time_ns")
+        ),
+    )
+    assert deterministic_first == deterministic_second
+    first_timings = {
+        name: value for name, value in first.search_metrics if name.endswith("_time_ns")
+    }
+    second_timings = {
+        name: value for name, value in second.search_metrics if name.endswith("_time_ns")
+    }
+    assert first_timings.keys() == second_timings.keys()
+    assert first_timings
+    assert all(value >= 0 for value in (*first_timings.values(), *second_timings.values()))
     assert first.trace
     assert first.expansions == len(first.trace)
 

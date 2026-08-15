@@ -18,6 +18,21 @@ class NativeGateSearchProblem:
     name = "native-gate-search"
     schema_version = "native-gate-search-v1"
 
+    def __init__(
+        self,
+        *,
+        absorb_clifford_angles: bool = True,
+        canonicalization_mode: str = "enhanced",
+    ) -> None:
+        if not isinstance(absorb_clifford_angles, bool):
+            raise TypeError("absorb_clifford_angles must be a bool")
+        self.absorb_clifford_angles = absorb_clifford_angles
+        if canonicalization_mode not in {"enhanced", "raw_witness"}:
+            raise ValueError(
+                "canonicalization_mode must be 'enhanced' or 'raw_witness'"
+            )
+        self.canonicalization_mode = canonicalization_mode
+
     def initial_state(self, config: object) -> CircuitState:
         return CircuitState(CircuitDAG(int(getattr(config, "num_qubits"))), getattr(config, "budget"))
 
@@ -34,7 +49,11 @@ class NativeGateSearchProblem:
         )
 
     def canonicalizer(self, *, phase_sensitive: bool = False) -> Canonicalizer:
-        return Canonicalizer(phase_sensitive=phase_sensitive)
+        return Canonicalizer(
+            phase_sensitive=phase_sensitive,
+            absorb_clifford_angles=self.absorb_clifford_angles,
+            normalization_mode=self.canonicalization_mode,
+        )
 
     def is_terminal_candidate(self, node: SearchNode) -> bool:
         """Keep generic behavior: every native child is dense-certified."""
@@ -46,4 +65,6 @@ class NativeGateSearchProblem:
             "name": self.name,
             "schema_version": self.schema_version,
             "continuation_model": "all-native-clifford-t",
+            "absorb_clifford_angles": self.absorb_clifford_angles,
+            "canonicalization_mode": self.canonicalization_mode,
         }
