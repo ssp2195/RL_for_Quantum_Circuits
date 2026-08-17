@@ -127,10 +127,10 @@ def test_pilot_corpus_is_deterministic_unique_nonidentity_and_replayable():
     assert not manifest["target_specific_reachability_oracle"]
     assert tuple(manifest["split_order"]) == SPLIT_ORDER
     assert manifest["split_seeds"] == {
-        "train": 1729,
-        "validation": 2753,
-        "test": 3769,
-        "ood_test": 4783,
+        "train": 201729,
+        "validation": 202753,
+        "test": 203769,
+        "ood_test": 204783,
     }
     assert manifest["counts"] == {
         "train": {"easy": 2, "medium": 2, "hard": 2},
@@ -180,6 +180,29 @@ def test_pilot_corpus_is_deterministic_unique_nonidentity_and_replayable():
     for left, right in combinations(first.targets, 2):
         if left.unitary.shape == right.unitary.shape:
             assert article_delta_phi(left.unitary, right.unitary) > tolerance
+
+
+def test_pilot_and_publication_corpora_are_disjoint_and_internally_unique():
+    pilot = build_article_v1_corpus("pilot")
+    publication = build_article_v1_corpus("publication")
+    pilot_target_ids = [case.target_id for case in pilot.targets]
+    publication_target_ids = [case.target_id for case in publication.targets]
+
+    assert len(pilot_target_ids) == len(set(pilot_target_ids)) == 19
+    assert len(publication_target_ids) == len(set(publication_target_ids)) == 230
+    assert set(pilot_target_ids).isdisjoint(publication_target_ids)
+    identity_tolerance = max(
+        pilot.config.tau_identity,
+        publication.config.tau_identity,
+    )
+    cross_profile_distances = [
+        article_delta_phi(pilot_case.unitary, publication_case.unitary)
+        for pilot_case in pilot.targets
+        for publication_case in publication.targets
+        if pilot_case.unitary.shape == publication_case.unitary.shape
+    ]
+    assert cross_profile_distances
+    assert min(cross_profile_distances) > identity_tolerance
 
 
 def test_ood_length_partition_is_disjoint_and_manifested():

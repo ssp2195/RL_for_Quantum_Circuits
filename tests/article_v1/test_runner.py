@@ -589,13 +589,19 @@ def test_checkpoint_resume_rejects_pre_v2_scientific_schema(tmp_path: Path) -> N
     assert path.read_bytes() == old_bytes
 
 
-def test_run_resume_rejects_pre_v2_manifest_without_rewriting(tmp_path: Path) -> None:
+@pytest.mark.parametrize(
+    "old_schema",
+    ("article-v1-publication-runner-v1", "article-v1-publication-runner-v2"),
+)
+def test_run_resume_rejects_pre_v3_manifest_without_rewriting(
+    tmp_path: Path, old_schema: str
+) -> None:
     destination, _ = initialize_run(
         "pilot", output_root=tmp_path, run_id="old-manifest"
     )
     path = destination / "run_manifest.json"
     payload = json.loads(path.read_text(encoding="utf-8"))
-    payload["schema_version"] = "article-v1-publication-runner-v1"
+    payload["schema_version"] = old_schema
     path.write_text(json.dumps(payload), encoding="utf-8")
     old_bytes = path.read_bytes()
 

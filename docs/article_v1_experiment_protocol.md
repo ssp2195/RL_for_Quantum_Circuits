@@ -80,16 +80,22 @@ legality, preferred path, stopping rule, terminal predicate, or failure
 fallback. A failed search remains failed; no reference witness is substituted.
 
 The identity-disjoint splits are `train`, `validation`, `test`, and
-`ood_test`. Identity and the projective identity target are rejected using the
-global-phase quotient discrepancy \(\Delta_\phi\) with the separately named
-`tau_identity`. The length-OOD comparison uses `ood_test` targets of length
-5–8 and separately trained `ood-seed-*.json` SARSA checkpoints whose training
-targets are restricted to the `train` split with generator length at most 4.
-The ordinary in-distribution checkpoints remain trained on the complete train
-split; the two checkpoint families are never silently interchanged. Corpus
-manifests serialize target ID, split, difficulty, qubit count, seeds, witness
-audit metadata, length, target/dense digests, shape, resource and expansion
-budgets, generation schema, identity tolerance, and
+`ood_test`. The pilot uses the separately preregistered split seeds `201729`,
+`202753`, `203769`, and `204783`; publication retains `1729`, `2753`, `3769`,
+and `4783`, respectively. Automated corpus regression checks require every
+profile to be internally target-ID unique and the complete pilot and
+publication corpora to have no equivalent pair under the same projective
+identity rule. Identity and the projective identity target are rejected using
+the global-phase quotient discrepancy
+\(\Delta_\phi\) with the separately named `tau_identity`. The length-OOD
+comparison uses `ood_test` targets of length 5–8 and separately trained
+`ood-seed-*.json` SARSA checkpoints whose training targets are restricted to
+the `train` split with generator length at most 4. The ordinary
+in-distribution checkpoints remain trained on the complete train split; the
+two checkpoint families are never silently interchanged. Corpus manifests
+serialize target ID, split, difficulty, qubit count, seeds, witness audit
+metadata, length, target/dense digests, shape, resource and expansion budgets,
+generation schema, identity tolerance, and
 `target_specific_reachability_oracle=false`.
 
 The pilot primary corpus is exactly five easy, five medium, and five hard
@@ -213,7 +219,7 @@ frontier, and target-metric cache. Missing or zero-weight checkpoints may not
 be labelled `article_sarsa`.
 
 Article learned policies serialize as
-`article-v1-transferable-linear-checkpoint-v2`. The digest binds the feature
+`article-v1-transferable-linear-checkpoint-v3`. The digest binds the feature
 schema, checkpoint family, training-scope mode, corpus-config digest, ordered
 training-target IDs, training `beta`, certification tolerance, episodes per
 target, learning rate, epsilon schedule, training seed, optional expansion cap,
@@ -231,7 +237,7 @@ mini-CI uses `explicit_partial_smoke`, with explicit training IDs and cap; that
 checkpoint cannot pass a complete-training scope and is not publication learner
 evidence. A structurally valid checkpoint from another scope is rejected. A V1
 or otherwise pre-scope checkpoint is not upgraded by inference and must be
-retrained/serialized as V2.
+retrained/serialized as V3.
 
 The explicit plan amendment to Eq. 104 is
 
@@ -374,10 +380,11 @@ respectively. Every seed must appear in raw output.
 
 Use append-only JSONL with atomic writes and fail-closed resume. The unique run
 key contains target identity, scheduler, resource and expansion budgets,
-training seed, checkpoint digest, evaluation seed, feature/reward/certification
-schemas and parameters, search-reduction settings, commit version, and the
-source-worktree digest. Training seed remains an independent identity field
-even when two learner seeds happen to produce identical weight digests.
+the corpus `config_digest`, training seed, checkpoint digest, evaluation seed,
+feature/reward/certification schemas and parameters, search-reduction settings,
+commit version, and the source-worktree digest. Training seed remains an
+independent identity field even when two learner seeds happen to produce
+identical weight digests.
 
 On reuse of a nonempty run ID, the runner compares the existing immutable run,
 environment, combined-corpus, and per-split manifests against the current
@@ -385,7 +392,7 @@ config/profile/code-worktree/corpus contract before loading the raw ledger.
 Missing, corrupt, stale, or conflicting immutable content is rejected, not
 overwritten. A partial final JSONL line is not a completed record and may be
 repaired atomically; a conflicting completed key is an error. Old ledgers
-created before checkpoint V2 or before the training-seed/source-worktree
+created before raw-run V3 or before the config/training-seed/source-worktree
 identity fields are intentionally incompatible and require a new run ID.
 Existing checkpoints are also fail-closed immutable artifacts: a compatible
 resume validates and loads them without retraining or rewriting, while a
@@ -463,9 +470,34 @@ python article_benchmark.py aggregate --config configs/article_v1_publication.js
 python article_benchmark.py ablations --config configs/article_v1_publication.json
 ```
 
+After the pilot completes, audit it before using its measurements for the
+publication cost projection:
+
+```powershell
+python article_benchmark.py audit `
+  --config configs/article_v1_pilot.json `
+  --output-root outputs/article_v1 --run-id pilot
+python -m reporting.article_v1_campaign_projection `
+  --pilot-run-dir outputs/article_v1/pilot `
+  --publication-config configs/article_v1_publication.json `
+  --workers 1 `
+  --observed-pilot-peak-rss-bytes $pilotPeakRssBytes
+```
+
+Projection fails unless `campaign_audit.json` reports `passed: true`, every
+integrity check is true, expected and observed cardinalities agree, and its
+recorded SHA-256 matches the exact `raw_runs.jsonl` bytes being measured. The
+currently supported execution mode is one serial worker. A worker count above
+one is accepted only with
+`--execution-mode idealized-parallel-estimate`; its projected wall time assumes
+perfect scaling and is labelled estimate-only. The deterministic
+`pilot_cost_projection.json` records the observed pilot throughput
+distribution, empirical uncertainty, projection assumptions, and publication
+CPU, wall-time, disk, per-process RAM, raw-record, and checkpoint estimates.
+
 It also provides
 `python article_benchmark.py mini-ci --output-root outputs/article_v1 --run-id mini-ci-v5-new`.
-Use a fresh run ID when an older pre-V2 ledger is present. The implemented
+Use a fresh run ID when an older pre-V3 ledger is present. The implemented
 output root is `outputs/article_v1/<run_id>/` and may contain:
 
 ```text
@@ -474,6 +506,8 @@ environment.json
 validation_audit.json
 report_metadata.json
 mini_ci_summary.json                 # mini only
+campaign_audit.json
+pilot_cost_projection.json           # post-audit pilot estimate
 raw_runs.jsonl
 per_target.csv
 success_curves.csv

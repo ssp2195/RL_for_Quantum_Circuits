@@ -25,8 +25,8 @@ import time
 from typing import Any
 
 
-ARTICLE_V1_RAW_RUN_SCHEMA = "article-v1-raw-run-v2"
-ARTICLE_V1_REPORT_SCHEMA = "article-v1-publication-report-v2"
+ARTICLE_V1_RAW_RUN_SCHEMA = "article-v1-raw-run-v3"
+ARTICLE_V1_REPORT_SCHEMA = "article-v1-publication-report-v3"
 DEFAULT_STATISTICS_SEED = 20_260_815
 DEFAULT_BOOTSTRAP_SAMPLES = 10_000
 
@@ -115,6 +115,12 @@ def run_identity_payload(run: Mapping[str, Any]) -> dict[str, Any]:
             run,
             ("target_id", "target_identity", "target.id", "target.fingerprint"),
             name="target identity",
+        ),
+        "config_digest": _first_value(
+            run,
+            ("config_digest", "corpus_config_digest", "config.digest"),
+            name="corpus configuration digest",
+            default="unspecified",
         ),
         "scheduler": _first_value(run, ("scheduler",), name="scheduler"),
         "resource_budget": _first_value(
@@ -256,6 +262,9 @@ def run_identity_payload(run: Mapping[str, Any]) -> dict[str, Any]:
     source_digest = normalized["source_worktree_digest"]
     if not isinstance(source_digest, str) or not source_digest:
         raise ValueError("source_worktree_digest must be a nonempty string")
+    config_digest = normalized["config_digest"]
+    if not isinstance(config_digest, str) or not config_digest:
+        raise ValueError("config_digest must be a nonempty string")
     return normalized
 
 
@@ -1483,13 +1492,42 @@ def write_article_v1_report(
     budgets: Sequence[int] | None = None,
     stats_seed: int = DEFAULT_STATISTICS_SEED,
     bootstrap_samples: int = DEFAULT_BOOTSTRAP_SAMPLES,
+    expected_raw_sha256: str | None = None,
 ) -> dict[str, str]:
     """Rebuild all publication primitives from the raw JSONL store only."""
 
     reporting_started = time.perf_counter_ns()
     raw_path = Path(raw_jsonl)
     destination = Path(output_dir)
-    records = AppendOnlyJSONLRunStore(raw_path).load_records(repair_partial=True)
+    store = AppendOnlyJSONLRunStore(raw_path)
+    if expected_raw_sha256 is None:
+        records = store.load_records(repair_partial=True)
+    else:
+        if (
+            not isinstance(expected_raw_sha256, str)
+            or len(expected_raw_sha256) != 71
+            or not expected_raw_sha256.startswith("sha256:")
+            or any(
+                character not in "0123456789abcdef"
+                for character in expected_raw_sha256.removeprefix("sha256:")
+            )
+        ):
+            raise ValueError(
+                "expected_raw_sha256 must use canonical sha256:<64 lowercase hex>"
+            )
+
+        def raw_digest() -> str:
+            try:
+                encoded = raw_path.read_bytes()
+            except OSError as error:
+                raise ValueError("raw JSONL is missing or unreadable") from error
+            return f"sha256:{hashlib.sha256(encoded).hexdigest()}"
+
+        if raw_digest() != expected_raw_sha256:
+            raise ValueError("raw JSONL digest differs before report loading")
+        records = store.load_records(repair_partial=False)
+        if raw_digest() != expected_raw_sha256:
+            raise ValueError("raw JSONL digest changed during report loading")
     aggregate = aggregate_article_v1_runs(
         records,
         budgets=budgets,
@@ -1565,6 +1603,8 @@ def write_article_v1_report(
                     "raw_run_count": aggregate["raw_run_count"],
                     "statistics_seed": int(stats_seed),
                     "bootstrap_samples": int(bootstrap_samples),
+                    "raw_ledger_sha256": expected_raw_sha256,
+                    "raw_ledger_digest_bound": expected_raw_sha256 is not None,
                     "reporting_time_ns": int(reporting_time_ns),
                     "timing_categories_are_not_summed": True,
                 }

@@ -206,6 +206,11 @@ The versioned Article V1 path is separate from the legacy command above.
 targets from the unchanged native grammar. The pilot primary corpus is exactly
 five easy (witness length 2–3), five medium (4–5), and five hard (6–8) targets
 across train/validation/test, plus four separately labelled length-OOD targets.
+Its split seeds are `201729`, `202753`, `203769`, and `204783`, distinct from
+the publication seeds `1729`, `2753`, `3769`, and `4783`; regression coverage
+requires both complete corpora to be internally unique and mutually disjoint
+under the shared projective identity metric at `tau_identity` (with distinct
+target IDs as an additional check).
 Generator witnesses are reachability/audit metadata only and are absent from
 the evaluation surface.
 
@@ -230,7 +235,7 @@ control still materializes the same Article 31D feature/target-metric pipeline;
 only its coefficients are zero.
 
 Learned checkpoints use the fail-closed
-`article-v1-transferable-linear-checkpoint-v2` contract. The checkpoint digest
+`article-v1-transferable-linear-checkpoint-v3` contract. The checkpoint digest
 binds its feature schema, standard/OOD family, corpus config, training-scope
 mode, ordered training target IDs, training `beta`, certification tolerance,
 episodes per target, learning rate, epsilon schedule, training seed, optional
@@ -241,11 +246,12 @@ held-out-leaking, incomplete, OOD, or feature-ablation checkpoint cannot be
 silently used as the primary learner. Standard, OOD, and ablation campaign
 checkpoints use their complete declared train partition; mini-CI alone is
 explicitly labelled `explicit_partial_smoke`. Raw-run identity includes both
-the checkpoint training seed and source-worktree digest. Resume validates
+the corpus `config_digest`, checkpoint training seed, and source-worktree
+digest under `article-v1-raw-run-v3`. Resume validates
 immutable run/environment/corpus manifests and existing checkpoints before
 reuse; a compatible checkpoint is loaded, not retrained or rewritten, while
-stale/conflicting content fails closed. Pre-V2/pre-identity ledgers require a
-new run ID.
+stale/conflicting content fails closed. Pre-V3 or pre-config-identity ledgers
+and checkpoints require a new run ID.
 
 The root CLI dispatches the Article V1 workflow:
 

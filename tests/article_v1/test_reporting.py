@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import csv
+import hashlib
 import json
 from pathlib import Path
 
 import pytest
 
 from reporting.article_v1 import (
+    ARTICLE_V1_REPORT_SCHEMA,
     AppendOnlyJSONLRunStore,
     aggregate_article_v1_runs,
     bootstrap_mean_ci,
@@ -14,6 +16,10 @@ from reporting.article_v1 import (
     unique_run_key,
     write_article_v1_report,
 )
+
+
+def _sha256(path: Path) -> str:
+    return f"sha256:{hashlib.sha256(path.read_bytes()).hexdigest()}"
 
 
 def _run(
@@ -330,6 +336,120 @@ def test_report_artifacts_are_rebuilt_from_raw_jsonl_only(tmp_path: Path) -> Non
     assert "Failed and truncated runs remain" in summary
     assert "not counted as independent held-out targets" in summary
     assert "do not establish circuit optimality" in summary
+
+
+def test_report_binds_audited_raw_digest_without_repairing(tmp_path: Path) -> None:
+    raw_path = tmp_path / "raw_runs.jsonl"
+    store = AppendOnlyJSONLRunStore(raw_path)
+    assert store.append(
+        _run(target="a", scheduler="fifo", seed=0, certified=True, expansions=2)
+    )
+    original_raw = raw_path.read_bytes()
+    expected_digest = _sha256(raw_path)
+
+    paths = write_article_v1_report(
+        raw_path,
+        tmp_path / "publication",
+        stats_seed=2,
+        bootstrap_samples=30,
+        expected_raw_sha256=expected_digest,
+    )
+
+    metadata = json.loads(
+        Path(paths["report_metadata"]).read_text(encoding="utf-8")
+    )
+    assert raw_path.read_bytes() == original_raw
+    assert metadata["schema_version"] == ARTICLE_V1_REPORT_SCHEMA
+    assert metadata["raw_ledger_sha256"] == expected_digest
+    assert metadata["raw_ledger_digest_bound"] is True
+
+
+def test_report_rejects_stale_raw_digest_before_writing_artifacts(
+    tmp_path: Path,
+) -> None:
+    raw_path = tmp_path / "raw_runs.jsonl"
+    store = AppendOnlyJSONLRunStore(raw_path)
+    assert store.append(
+        _run(target="a", scheduler="fifo", seed=0, certified=True, expansions=2)
+    )
+    expected_digest = _sha256(raw_path)
+    with raw_path.open("ab") as handle:
+        handle.write(b"\n")
+    destination = tmp_path / "publication"
+
+    with pytest.raises(ValueError, match="differs before report loading"):
+        write_article_v1_report(
+            raw_path,
+            destination,
+            expected_raw_sha256=expected_digest,
+        )
+    assert not destination.exists()
+
+
+def test_report_rejects_raw_mutation_during_load_before_writing_artifacts(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    raw_path = tmp_path / "raw_runs.jsonl"
+    store = AppendOnlyJSONLRunStore(raw_path)
+    assert store.append(
+        _run(target="a", scheduler="fifo", seed=0, certified=True, expansions=2)
+    )
+    expected_digest = _sha256(raw_path)
+    original_load = AppendOnlyJSONLRunStore.load_records
+
+    def mutating_load(self, *, repair_partial=True):
+        assert repair_partial is False
+        records = original_load(self, repair_partial=repair_partial)
+        with self.path.open("ab") as handle:
+            handle.write(b"\n")
+        return records
+
+    monkeypatch.setattr(AppendOnlyJSONLRunStore, "load_records", mutating_load)
+    destination = tmp_path / "publication"
+    with pytest.raises(ValueError, match="changed during report loading"):
+        write_article_v1_report(
+            raw_path,
+            destination,
+            expected_raw_sha256=expected_digest,
+        )
+    assert not destination.exists()
+
+
+def test_report_without_digest_preserves_partial_line_repair(tmp_path: Path) -> None:
+    raw_path = tmp_path / "raw_runs.jsonl"
+    store = AppendOnlyJSONLRunStore(raw_path)
+    assert store.append(
+        _run(target="a", scheduler="fifo", seed=0, certified=True, expansions=2)
+    )
+    complete_raw = raw_path.read_bytes()
+    with raw_path.open("ab") as handle:
+        handle.write(b'{"incomplete":')
+
+    write_article_v1_report(raw_path, tmp_path / "publication")
+
+    assert raw_path.read_bytes() == complete_raw
+
+
+@pytest.mark.parametrize(
+    "invalid_digest",
+    (
+        "sha256:short",
+        "SHA256:" + "0" * 64,
+        "sha256:" + "A" * 64,
+        "sha256:" + "g" * 64,
+    ),
+)
+def test_report_requires_canonical_expected_raw_digest(
+    tmp_path: Path, invalid_digest: str
+) -> None:
+    destination = tmp_path / "publication"
+    with pytest.raises(ValueError, match="canonical sha256"):
+        write_article_v1_report(
+            tmp_path / "not-read.jsonl",
+            destination,
+            expected_raw_sha256=invalid_digest,
+        )
+    assert not destination.exists()
 
 
 def test_report_paths_are_repo_relative_when_output_is_below_cwd(

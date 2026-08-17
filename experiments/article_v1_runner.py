@@ -15,6 +15,7 @@ from hashlib import sha256
 from importlib.metadata import PackageNotFoundError, version as package_version
 import json
 from io import StringIO
+import math
 import os
 from pathlib import Path
 import platform
@@ -29,6 +30,7 @@ from benchmarks.article_native_corpus import (
     ARTICLE_V1_TRAINING_BUDGET_POLICY,
     CHECKPOINT_FAMILIES,
     COMPLETE_TRAINING_SCOPE,
+    NATIVE_GATE_NAMES,
     OOD_LENGTH_CHECKPOINT_FAMILY,
     PARTIAL_SMOKE_TRAINING_SCOPE,
     STANDARD_CHECKPOINT_FAMILY,
@@ -38,20 +40,29 @@ from benchmarks.article_native_corpus import (
     ArticleV1CorpusConfig,
     ArticleV1EvaluationTarget,
     ArticleV1TargetCase,
+    article_delta_phi,
     build_article_v1_corpus,
+    dense_target_digest,
     load_article_v1_config,
 )
 from certification.article_v1 import ArticleV1CertificationEngine
+from certification.base import CertStatus
+from circuit.circuit_state import CircuitState
+from circuit.dag import CircuitDAG
+from circuit.gate import Gate
 from config import Config
 from env.rl_env import CircuitSynthesisEnv
+from enums import GateType
 from evaluate import evaluate
 from experiments.profiles import ARTICLE_V1_PROFILE
 from reporting.article_v1 import (
     ARTICLE_V1_RAW_RUN_SCHEMA,
     ArticleV1RunStore,
+    run_identity_payload,
     unique_run_key,
     write_article_v1_report,
 )
+from search.action_space import generate_actions
 from rl.article_features import (
     ARTICLE_V1_FEATURE_NAMES,
     ARTICLE_V1_FEATURE_SCHEMA_VERSION,
@@ -64,7 +75,8 @@ from rl.policy import LinearQPolicy
 from train import Trainer
 
 
-ARTICLE_V1_RUNNER_SCHEMA = "article-v1-publication-runner-v2"
+ARTICLE_V1_RUNNER_SCHEMA = "article-v1-publication-runner-v3"
+ARTICLE_V1_CAMPAIGN_AUDIT_SCHEMA = "article-v1-campaign-audit-v1"
 PRIMARY_SCHEDULERS = (
     "fifo",
     "lifo",
@@ -94,6 +106,11 @@ _RELEVANT_UNTRACKED_SUFFIXES = {
     ".yaml",
     ".yml",
 }
+_TIMING_THREAD_ENVIRONMENT = (
+    "OMP_NUM_THREADS",
+    "MKL_NUM_THREADS",
+    "OPENBLAS_NUM_THREADS",
+)
 
 
 def _json_ready(value: Any) -> Any:
@@ -232,6 +249,14 @@ def environment_metadata() -> dict[str, object]:
         "processor": platform.processor(),
         "executable": _portable_environment_path(sys.executable),
         "cwd": ".",
+        "execution": {
+            "concurrency_mode": "serial-single-process",
+            "worker_count": 1,
+            "thread_environment": {
+                name: os.environ.get(name)
+                for name in _TIMING_THREAD_ENVIRONMENT
+            },
+        },
         "git": git_provenance(),
     }
 
@@ -646,6 +671,24 @@ class ArticleV1Checkpoint:
             raise ValueError("unsupported Article V1 checkpoint schema")
         if payload.get("profile_name") != ARTICLE_V1_PROFILE.name:
             raise ValueError("checkpoint profile is not the frozen Article V1 profile")
+        checkpoint_code = payload.get("code")
+        if not isinstance(checkpoint_code, Mapping):
+            raise ValueError("checkpoint code provenance is missing")
+        if type(checkpoint_code.get("dirty_worktree")) is not bool:
+            raise ValueError(
+                "checkpoint code provenance dirty_worktree must be boolean"
+            )
+        current_code = git_provenance()
+        for field_name in (
+            "commit_sha",
+            "source_worktree_digest",
+            "dirty_worktree",
+        ):
+            if checkpoint_code.get(field_name) != current_code[field_name]:
+                raise ValueError(
+                    f"checkpoint code provenance {field_name} does not match "
+                    "the current source tree"
+                )
         feature_schema = str(payload["feature_schema_version"])
         names = tuple(str(value) for value in payload["ordered_feature_names"])
         weights = tuple(float(value) for value in payload["weights"])
@@ -924,6 +967,76 @@ def train_article_v1_checkpoint(
     )
 
 
+def _serialized_witness_gates(
+    operations: object,
+    *,
+    num_qubits: int,
+) -> tuple[Gate, ...]:
+    if not isinstance(operations, (list, tuple)):
+        raise ValueError("witness_operations must be a list")
+    gates: list[Gate] = []
+    for index, operation in enumerate(operations):
+        if not isinstance(operation, Mapping) or set(operation) != {"gate", "qubits"}:
+            raise ValueError(
+                f"witness operation {index} must contain exactly gate and qubits"
+            )
+        gate_name = operation["gate"]
+        if not isinstance(gate_name, str) or gate_name not in NATIVE_GATE_NAMES:
+            raise ValueError(f"witness operation {index} uses a non-native gate")
+        qubits_value = operation["qubits"]
+        if not isinstance(qubits_value, (list, tuple)) or any(
+            isinstance(qubit, bool) or not isinstance(qubit, int)
+            for qubit in qubits_value
+        ):
+            raise ValueError(f"witness operation {index} has invalid qubits")
+        qubits = tuple(int(qubit) for qubit in qubits_value)
+        gate_type = GateType[gate_name]
+        expected_arity = 2 if gate_type is GateType.CNOT else 1
+        if (
+            len(qubits) != expected_arity
+            or len(set(qubits)) != len(qubits)
+            or any(qubit < 0 or qubit >= num_qubits for qubit in qubits)
+        ):
+            raise ValueError(f"witness operation {index} has invalid gate operands")
+        gates.append(Gate(gate_type, qubits))
+    return tuple(gates)
+
+
+def _independent_witness_certification_diagnostics(
+    case: ArticleV1TargetCase | ArticleV1EvaluationTarget,
+    operations: object,
+    *,
+    certification_tolerance: float,
+) -> dict[str, object]:
+    """Freshly replay one serialized witness and return certifier diagnostics."""
+
+    gates = _serialized_witness_gates(operations, num_qubits=case.num_qubits)
+    state = CircuitState(
+        CircuitDAG.from_gates(case.num_qubits, gates),
+        case.budget.resource_budget(),
+    )
+    result = ArticleV1CertificationEngine(
+        _target(case), tau_cert=float(certification_tolerance)
+    ).certify(state)
+    if result.status is not CertStatus.SUCCESS or result.info.get("passed") is not True:
+        raise ValueError("reported successful witness failed independent certification")
+    return _json_ready(dict(result.info))
+
+
+def _independent_witness_resource_vector(
+    case: ArticleV1TargetCase | ArticleV1EvaluationTarget,
+    operations: object,
+) -> list[int]:
+    """Replay one witness through the budget-aware authoritative state."""
+
+    gates = _serialized_witness_gates(operations, num_qubits=case.num_qubits)
+    state = CircuitState(
+        CircuitDAG.from_gates(case.num_qubits, gates),
+        case.budget.resource_budget(),
+    )
+    return [int(value) for value in state.resource_vector()]
+
+
 def evaluate_article_v1_run(
     case: ArticleV1TargetCase | ArticleV1EvaluationTarget,
     *,
@@ -938,6 +1051,7 @@ def evaluate_article_v1_run(
     pareto_dominance_enabled: bool = True,
     absorb_clifford_angles: bool = True,
     canonicalization_mode: str = "enhanced",
+    config_digest: str = "unspecified-direct-run",
 ) -> dict[str, object]:
     """Run one fresh, witness-free Article V1 evaluation trajectory."""
 
@@ -1016,6 +1130,16 @@ def evaluate_article_v1_run(
         observation_features=False,
     )
     metrics = dict(report["search_metrics"])
+    witness_operations = list(report["witness_operations"])
+    certification_diagnostics: dict[str, object] | None = None
+    if bool(report["certified"]):
+        certification_diagnostics = _independent_witness_certification_diagnostics(
+            case,
+            witness_operations,
+            certification_tolerance=certification_tolerance,
+        )
+    elif witness_operations:
+        raise ValueError("an uncertified run must not expose witness operations")
     checkpoint_digest = "none" if checkpoint is None else checkpoint.weight_digest
     provenance = git_provenance()
     timings = {
@@ -1026,6 +1150,8 @@ def evaluate_article_v1_run(
     raw: dict[str, object] = {
         "schema_version": ARTICLE_V1_RAW_RUN_SCHEMA,
         **_case_metadata(case),
+        "config_digest": str(config_digest),
+        "target_fingerprint": target_context.fingerprint,
         "scheduler": scheduler,
         "scheduler_semantics": report["scheduler_semantics"],
         "action_semantics": "persistent_frontier_record",
@@ -1078,7 +1204,8 @@ def evaluate_article_v1_run(
         },
         "search_metrics": metrics,
         "solution_resource_vector": report["solution_resource_vector"],
-        "witness_operations": report["witness_operations"],
+        "witness_operations": witness_operations,
+        "certification_diagnostics": certification_diagnostics,
         "reference_witness_used": False,
         "target_specific_reachability_oracle": False,
         "profile": ARTICLE_V1_PROFILE.metadata(),
@@ -1104,6 +1231,111 @@ def _budget_grid(case, experiment: Mapping[str, Any]) -> tuple[int, ...]:
             }
         )
     )
+
+
+@dataclass(frozen=True, slots=True)
+class _ExpectedMatrixRun:
+    case: ArticleV1TargetCase | ArticleV1EvaluationTarget
+    scheduler: str
+    expansion_budget: int
+    evaluation_seed: int
+    checkpoint: ArticleV1Checkpoint | None
+    checkpoint_scope: ArticleV1CheckpointScope | None
+    identity: Mapping[str, object]
+
+    @property
+    def run_key(self) -> str:
+        return unique_run_key(self.identity)
+
+
+def _expected_matrix_runs(
+    cases: Sequence[ArticleV1TargetCase | ArticleV1EvaluationTarget],
+    *,
+    config: ArticleV1CorpusConfig,
+    checkpoints: Sequence[ArticleV1Checkpoint],
+    checkpoint_scope: ArticleV1CheckpointScope | None,
+    schedulers: Sequence[str],
+    provenance: Mapping[str, object],
+    budget_override: int | None = None,
+) -> tuple[_ExpectedMatrixRun, ...]:
+    experiment = config.experiment
+    beta = float(experiment["beta"])
+    certification_tolerance = float(experiment["certification_tolerance"])
+    search_reduction = {
+        "canonicalization_enabled": bool(experiment["canonicalization_enabled"]),
+        "pareto_dominance_enabled": bool(experiment["pareto_dominance_enabled"]),
+        "absorb_clifford_angles": bool(experiment["absorb_clifford_angles"]),
+        "canonicalization_mode": str(experiment["canonicalization_mode"]),
+    }
+    expected: list[_ExpectedMatrixRun] = []
+    for case in cases:
+        budgets = (
+            (int(budget_override),)
+            if budget_override is not None
+            else _budget_grid(case, experiment)
+        )
+        for expansion_budget in budgets:
+            for scheduler in schedulers:
+                if scheduler == "seeded_random":
+                    trajectories = tuple(
+                        (int(seed), None)
+                        for seed in experiment["random_scheduler_seeds"]
+                    )
+                elif scheduler == "article_sarsa":
+                    trajectories = tuple((0, checkpoint) for checkpoint in checkpoints)
+                else:
+                    trajectories = ((0, None),)
+                for evaluation_seed, checkpoint in trajectories:
+                    identity = run_identity_payload({
+                        "target_id": case.target_id,
+                        "config_digest": config.digest,
+                        "scheduler": scheduler,
+                        "resource_budget": _resource_budget_payload(case),
+                        "expansion_budget": int(expansion_budget),
+                        "checkpoint_digest": (
+                            "none" if checkpoint is None else checkpoint.weight_digest
+                        ),
+                        "training_seed": (
+                            None if checkpoint is None else checkpoint.training_seed
+                        ),
+                        "evaluation_seed": int(evaluation_seed),
+                        "feature_schema_version": (
+                            ARTICLE_V1_PROFILE.feature_schema
+                            if checkpoint is None
+                            else checkpoint.feature_schema_version
+                        ),
+                        "reward_schema_version": ARTICLE_V1_PROFILE.reward_schema,
+                        "reward_parameters": {"beta": beta},
+                        "target_metric_schema_version": (
+                            ARTICLE_V1_PROFILE.target_metric_schema
+                        ),
+                        "certification_schema_version": (
+                            ARTICLE_V1_PROFILE.certification_schema
+                        ),
+                        "certification_parameters": {
+                            "phase_frobenius_tolerance": certification_tolerance
+                        },
+                        "code_version": str(provenance["commit_sha"]),
+                        "source_worktree_digest": str(
+                            provenance["source_worktree_digest"]
+                        ),
+                        "search_reduction": search_reduction,
+                    })
+                    expected.append(_ExpectedMatrixRun(
+                        case=case,
+                        scheduler=scheduler,
+                        expansion_budget=int(expansion_budget),
+                        evaluation_seed=int(evaluation_seed),
+                        checkpoint=checkpoint,
+                        checkpoint_scope=(
+                            None if checkpoint is None else checkpoint_scope
+                        ),
+                        identity=identity,
+                    ))
+    keys = [item.run_key for item in expected]
+    if len(keys) != len(set(keys)):
+        raise ValueError("expected Article V1 campaign matrix contains duplicate keys")
+    return tuple(expected)
 
 
 def evaluate_article_v1_matrix(
@@ -1150,85 +1382,785 @@ def evaluate_article_v1_matrix(
     store = ArticleV1RunStore(raw_path)
     completed_keys = store.completed_keys()
     provenance = git_provenance()
-    code_version = str(provenance["commit_sha"])
-    source_worktree_digest = str(provenance["source_worktree_digest"])
+    expected_runs = _expected_matrix_runs(
+        cases,
+        config=config,
+        checkpoints=checkpoints,
+        checkpoint_scope=checkpoint_scope,
+        schedulers=schedulers,
+        provenance=provenance,
+        budget_override=budget_override,
+    )
     appended = skipped = 0
-    for case in cases:
-        budgets = (
-            (int(budget_override),)
-            if budget_override is not None
-            else _budget_grid(case, experiment)
+    for expected in expected_runs:
+        if expected.run_key in completed_keys:
+            skipped += 1
+            continue
+        run = evaluate_article_v1_run(
+            expected.case,
+            scheduler=expected.scheduler,
+            expansion_budget=expected.expansion_budget,
+            evaluation_seed=expected.evaluation_seed,
+            checkpoint=expected.checkpoint,
+            checkpoint_scope=expected.checkpoint_scope,
+            beta=beta,
+            certification_tolerance=certification_tolerance,
+            canonicalization_enabled=canonicalization_enabled,
+            pareto_dominance_enabled=pareto_dominance_enabled,
+            absorb_clifford_angles=absorb_clifford_angles,
+            canonicalization_mode=canonicalization_mode,
+            config_digest=config.digest,
         )
-        for expansion_budget in budgets:
-            for scheduler in schedulers:
-                if scheduler == "seeded_random":
-                    trajectories = [
-                        (int(seed), None)
-                        for seed in experiment["random_scheduler_seeds"]
-                    ]
-                elif scheduler == "article_sarsa":
-                    trajectories = [(0, checkpoint) for checkpoint in checkpoints]
-                else:
-                    trajectories = [(0, None)]
-                for evaluation_seed, checkpoint in trajectories:
-                    identity = {
-                        "target_id": case.target_id,
-                        "scheduler": scheduler,
-                        "resource_budget": _resource_budget_payload(case),
-                        "expansion_budget": int(expansion_budget),
-                        "checkpoint_digest": (
-                            "none" if checkpoint is None else checkpoint.weight_digest
-                        ),
-                        "training_seed": (
-                            None if checkpoint is None else checkpoint.training_seed
-                        ),
-                        "evaluation_seed": int(evaluation_seed),
-                        "feature_schema_version": (
-                            ARTICLE_V1_PROFILE.feature_schema
-                            if checkpoint is None
-                            else checkpoint.feature_schema_version
-                        ),
-                        "reward_schema_version": ARTICLE_V1_PROFILE.reward_schema,
-                        "reward_parameters": {"beta": beta},
-                        "target_metric_schema_version": (
-                            ARTICLE_V1_PROFILE.target_metric_schema
-                        ),
-                        "certification_schema_version": ARTICLE_V1_PROFILE.certification_schema,
-                        "certification_parameters": {
-                            "phase_frobenius_tolerance": certification_tolerance
-                        },
-                        "code_version": code_version,
-                        "source_worktree_digest": source_worktree_digest,
-                        "search_reduction": {
-                            "canonicalization_enabled": canonicalization_enabled,
-                            "pareto_dominance_enabled": pareto_dominance_enabled,
-                            "absorb_clifford_angles": absorb_clifford_angles,
-                            "canonicalization_mode": canonicalization_mode,
-                        },
-                    }
-                    if unique_run_key(identity) in completed_keys:
-                        skipped += 1
-                        continue
-                    run = evaluate_article_v1_run(
-                        case,
-                        scheduler=scheduler,
-                        expansion_budget=expansion_budget,
-                        evaluation_seed=evaluation_seed,
-                        checkpoint=checkpoint,
-                        checkpoint_scope=checkpoint_scope,
-                        beta=beta,
-                        certification_tolerance=certification_tolerance,
-                        canonicalization_enabled=canonicalization_enabled,
-                        pareto_dominance_enabled=pareto_dominance_enabled,
-                        absorb_clifford_angles=absorb_clifford_angles,
-                        canonicalization_mode=canonicalization_mode,
-                    )
-                    if store.append(run):
-                        appended += 1
-                        completed_keys.add(unique_run_key(run))
-                    else:
-                        skipped += 1
+        if run_identity_payload(run) != expected.identity:
+            raise ValueError("Article V1 evaluator returned a run with identity drift")
+        if store.append(run):
+            appended += 1
+            completed_keys.add(expected.run_key)
+        else:
+            skipped += 1
     return {"appended": appended, "skipped": skipped, "completed": appended + skipped}
+
+
+def _strict_campaign_records(path: str | Path) -> tuple[bytes, tuple[dict[str, object], ...]]:
+    ledger_path = Path(path)
+    try:
+        raw = ledger_path.read_bytes()
+    except FileNotFoundError as error:
+        raise ValueError(f"campaign raw ledger is missing: {ledger_path}") from error
+    if not raw:
+        raise ValueError("campaign raw ledger is empty")
+    if not raw.endswith(b"\n"):
+        raise ValueError("campaign raw ledger has an incomplete final line")
+
+    def reject_nonfinite_constant(value: str) -> object:
+        raise ValueError(f"campaign raw ledger contains nonfinite JSON value {value}")
+
+    def reject_duplicate_members(
+        pairs: list[tuple[str, object]],
+    ) -> dict[str, object]:
+        result: dict[str, object] = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError(
+                    f"campaign raw ledger contains duplicate JSON member {key!r}"
+                )
+            result[key] = value
+        return result
+
+    records: list[dict[str, object]] = []
+    seen_keys: set[str] = set()
+    for line_number, encoded in enumerate(raw.splitlines(), start=1):
+        if not encoded.strip():
+            raise ValueError(f"campaign raw ledger contains blank line {line_number}")
+        try:
+            decoded = json.loads(
+                encoded.decode("utf-8"),
+                parse_constant=reject_nonfinite_constant,
+                object_pairs_hook=reject_duplicate_members,
+            )
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
+            raise ValueError(
+                f"campaign raw ledger has corrupt JSON at line {line_number}"
+            ) from error
+        if not isinstance(decoded, dict):
+            raise ValueError(f"campaign raw ledger line {line_number} is not an object")
+        if decoded.get("raw_run_schema") != ARTICLE_V1_RAW_RUN_SCHEMA:
+            raise ValueError(
+                f"campaign raw ledger line {line_number} has an incompatible raw schema"
+            )
+        observed_key = decoded.get("run_key")
+        expected_key = unique_run_key(decoded)
+        if observed_key != expected_key:
+            raise ValueError(
+                f"campaign raw ledger line {line_number} has an invalid run key"
+            )
+        if expected_key in seen_keys:
+            raise ValueError(
+                f"campaign raw ledger contains duplicate run key {expected_key}"
+            )
+        seen_keys.add(expected_key)
+        records.append(decoded)
+    return raw, tuple(records)
+
+
+def _assert_finite_json(value: object, *, path: str) -> None:
+    if value is None or isinstance(value, (str, bool, int)):
+        return
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise ValueError(f"campaign record contains nonfinite value at {path}")
+        return
+    if isinstance(value, Mapping):
+        for key, item in value.items():
+            _assert_finite_json(item, path=f"{path}.{key}")
+        return
+    if isinstance(value, (list, tuple)):
+        for index, item in enumerate(value):
+            _assert_finite_json(item, path=f"{path}[{index}]")
+        return
+    raise ValueError(f"campaign record contains unsupported value at {path}")
+
+
+def _json_values_exact(observed: object, expected: object) -> bool:
+    """Compare decoded JSON without Python's bool/int or int/float coercions."""
+
+    if type(observed) is not type(expected):
+        return False
+    if isinstance(expected, dict):
+        return set(observed) == set(expected) and all(
+            _json_values_exact(observed[key], expected[key]) for key in expected
+        )
+    if isinstance(expected, list):
+        return len(observed) == len(expected) and all(
+            _json_values_exact(left, right)
+            for left, right in zip(observed, expected)
+        )
+    return bool(observed == expected)
+
+
+def _nonnegative_int(value: object, *, name: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        raise ValueError(f"{name} must be a non-negative integer")
+    return int(value)
+
+
+def _nonnegative_number(value: object, *, name: str) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise ValueError(f"{name} must be a finite non-negative number")
+    result = float(value)
+    if not math.isfinite(result) or result < 0.0:
+        raise ValueError(f"{name} must be a finite non-negative number")
+    return result
+
+
+_REQUIRED_TIMING_FIELDS = (
+    "wall_time_seconds",
+    "environment_step_time_seconds",
+    "ranking_time_seconds",
+    "feature_time_seconds",
+    "target_metric_time_seconds",
+    "symbolic_update_time_seconds",
+    "canonicalization_time_seconds",
+    "archive_time_seconds",
+    "certification_time_seconds",
+    "reporting_time_seconds",
+)
+_REQUIRED_COUNTER_FIELDS = (
+    "generated",
+    "certification_nonmatch",
+    "duplicate_rejected",
+    "dominated_retired",
+    "pareto_incomparable_accepted",
+    "reopened",
+    "expanded",
+    "frontier_peak",
+    "archive_size",
+    "pareto_width_peak",
+    "accepted",
+    "canonical_pruned",
+    "dominated",
+    "peak_frontier",
+    "terminal_candidates",
+    "terminal_certification_failures",
+    "num_expanded",
+    "num_gate_attempts",
+    "num_generated",
+    "num_exact_duplicate_rejections",
+    "num_dominance_rejections",
+    "num_dominance_replacements",
+    "num_pareto_incomparable_acceptances",
+    "num_reopenings",
+    "frontier_sum",
+    "frontier_observation_count",
+    "archive_record_count",
+    "active_archive_peak",
+    "certification_count",
+    "feature_evaluation_count",
+    "target_metric_evaluation_count",
+    "target_metric_cache_hits",
+    "target_metric_cache_misses",
+    "peak_frontier_records",
+    "peak_active_archive_records",
+    "maximum_pareto_antichain_width",
+)
+_REQUIRED_SUMMARY_COUNTER_FIELDS = {
+    "feature_evaluations": "feature_evaluation_count",
+    "dense_target_evaluations": "target_metric_evaluation_count",
+    "target_metric_cache_hits": "target_metric_cache_hits",
+    "target_metric_cache_misses": "target_metric_cache_misses",
+    "certification_count": "certification_count",
+    "peak_frontier": "peak_frontier_records",
+    "peak_archive": "peak_active_archive_records",
+    "maximum_pareto_antichain_width": "maximum_pareto_antichain_width",
+}
+_CANONICAL_SEARCH_METRIC_FIELDS = (
+    set(_REQUIRED_COUNTER_FIELDS)
+    | {
+        name.removesuffix("_seconds") + "_ns"
+        for name in _REQUIRED_TIMING_FIELDS
+    }
+    | {"frontier_mean", "frontier_decision_mean"}
+)
+_CANONICAL_RAW_RECORD_FIELDS = {
+    "schema_version",
+    "raw_run_schema",
+    "run_key",
+    "target_id",
+    "target_fingerprint",
+    "config_digest",
+    "split",
+    "difficulty",
+    "num_qubits",
+    "generator_length",
+    "budget",
+    "resource_budget",
+    "scheduler",
+    "scheduler_semantics",
+    "action_semantics",
+    "expansion_budget",
+    "checkpoint_digest",
+    "checkpoint_family",
+    "checkpoint_scope_schema",
+    "training_seed",
+    "evaluation_seed",
+    "feature_schema_version",
+    "reward_schema_version",
+    "reward_parameters",
+    "target_metric_schema_version",
+    "certification_schema_version",
+    "certification_parameters",
+    "code_version",
+    "source_worktree_digest",
+    "dirty_worktree",
+    "certified",
+    "terminated",
+    "truncated",
+    "expansions",
+    "runtime_seconds",
+    "time_to_solution",
+    "timings",
+    "metrics",
+    "search_metrics",
+    "solution_resource_vector",
+    "witness_operations",
+    "certification_diagnostics",
+    "reference_witness_used",
+    "target_specific_reachability_oracle",
+    "profile",
+    "search_reduction",
+    "evaluation_weights_frozen",
+    "evaluation_reward_consumed_by_policy",
+}
+_SCHEDULER_SEMANTICS = {
+    "fifo": "fifo",
+    "lifo": "lifo",
+    "uniform_cost": "uniform_cost",
+    "seeded_random": "random",
+    "zero_weight_linear": "zero_policy",
+    "article_target_distance": "article_target_distance",
+    "article_sarsa": "learned",
+}
+
+
+def _audit_campaign_record(
+    record: Mapping[str, object],
+    expected: _ExpectedMatrixRun,
+    *,
+    config: ArticleV1CorpusConfig,
+    provenance: Mapping[str, object],
+) -> bool:
+    _assert_finite_json(record, path="run")
+    observed_fields = set(record)
+    missing_fields = sorted(_CANONICAL_RAW_RECORD_FIELDS - observed_fields)
+    unexpected_fields = sorted(observed_fields - _CANONICAL_RAW_RECORD_FIELDS)
+    if missing_fields or unexpected_fields:
+        raise ValueError(
+            "campaign record does not match the canonical raw schema: "
+            f"missing={missing_fields}, unexpected={unexpected_fields}"
+        )
+    if (
+        record["schema_version"] != ARTICLE_V1_RAW_RUN_SCHEMA
+        or record["raw_run_schema"] != ARTICLE_V1_RAW_RUN_SCHEMA
+    ):
+        raise ValueError("campaign record has incompatible scientific schemas")
+    if run_identity_payload(record) != expected.identity:
+        raise ValueError("campaign record identity does not match its frozen matrix cell")
+    if type(record["dirty_worktree"]) is not bool:
+        raise ValueError("campaign record dirty_worktree must be boolean")
+
+    case = expected.case
+    target = _target(case)
+    expected_fingerprint = ArticleTargetContext(target).fingerprint
+    if dense_target_digest(
+        target.unitary, decimals=config.digest_decimals
+    ) != case.target_id:
+        raise ValueError("campaign corpus target ID does not match its dense target")
+    metadata_expectations = {
+        "target_id": case.target_id,
+        "target_fingerprint": expected_fingerprint,
+        "config_digest": config.digest,
+        "split": case.split,
+        "difficulty": case.difficulty,
+        "num_qubits": case.num_qubits,
+        "generator_length": case.generator_length,
+        "budget": case.budget.metadata(),
+        "resource_budget": _resource_budget_payload(case),
+        "profile": ARTICLE_V1_PROFILE.metadata(),
+        "search_reduction": expected.identity["search_reduction"],
+        "code_version": provenance["commit_sha"],
+        "source_worktree_digest": provenance["source_worktree_digest"],
+        "dirty_worktree": provenance["dirty_worktree"],
+        "action_semantics": "persistent_frontier_record",
+        "scheduler_semantics": _SCHEDULER_SEMANTICS[expected.scheduler],
+        "evaluation_weights_frozen": True,
+        "evaluation_reward_consumed_by_policy": False,
+        "reference_witness_used": False,
+        "target_specific_reachability_oracle": False,
+    }
+    for name, expected_value in metadata_expectations.items():
+        if not _json_values_exact(record.get(name), _json_ready(expected_value)):
+            raise ValueError(f"campaign record has incompatible {name}")
+
+    expected_scope_schema = (
+        None if expected.checkpoint_scope is None else expected.checkpoint_scope.schema_version
+    )
+    if record["checkpoint_scope_schema"] != expected_scope_schema:
+        raise ValueError("campaign record has incompatible checkpoint scope schema")
+    if expected.checkpoint is None:
+        if record["checkpoint_family"] is not None:
+            raise ValueError("checkpoint-free campaign record declares a checkpoint family")
+    elif record["checkpoint_family"] != expected.checkpoint.checkpoint_family:
+        raise ValueError("campaign record has incompatible checkpoint family")
+
+    expansions = _nonnegative_int(record["expansions"], name="expansions")
+    if expansions < 1:
+        raise ValueError("campaign record must contain at least one search expansion")
+    if expansions > expected.expansion_budget:
+        raise ValueError("campaign record exceeds its expansion budget")
+    certified = record["certified"]
+    if not isinstance(certified, bool):
+        raise ValueError("campaign record certified flag must be boolean")
+    runtime_seconds = _nonnegative_number(
+        record["runtime_seconds"], name="runtime_seconds"
+    )
+    timings = record["timings"]
+    search_metrics = record["search_metrics"]
+    metrics = record["metrics"]
+    if not isinstance(timings, Mapping) or not isinstance(search_metrics, Mapping):
+        raise ValueError("campaign record timings/search_metrics must be objects")
+    if not isinstance(metrics, Mapping):
+        raise ValueError("campaign record metrics must be an object")
+    if set(timings) != set(_REQUIRED_TIMING_FIELDS):
+        raise ValueError("campaign record timings do not match the raw schema")
+    if set(search_metrics) != _CANONICAL_SEARCH_METRIC_FIELDS:
+        raise ValueError("campaign record search metrics do not match the raw schema")
+    for metric_name, metric_value in search_metrics.items():
+        _nonnegative_number(metric_value, name=f"search_metrics.{metric_name}")
+    for name in _REQUIRED_TIMING_FIELDS:
+        if name not in timings:
+            raise ValueError(f"campaign record is missing timing {name}")
+        seconds = _nonnegative_number(timings[name], name=f"timings.{name}")
+        nanoseconds_name = name.removesuffix("_seconds") + "_ns"
+        nanoseconds = _nonnegative_int(
+            search_metrics.get(nanoseconds_name),
+            name=f"search_metrics.{nanoseconds_name}",
+        )
+        if not math.isclose(
+            seconds,
+            nanoseconds / 1e9,
+            rel_tol=0.0,
+            abs_tol=1e-12,
+        ):
+            raise ValueError(
+                f"campaign timing {name} disagrees with {nanoseconds_name}"
+            )
+    for name in _REQUIRED_COUNTER_FIELDS:
+        if name not in search_metrics:
+            raise ValueError(f"campaign record is missing counter {name}")
+        _nonnegative_int(search_metrics[name], name=f"search_metrics.{name}")
+    if int(search_metrics["expanded"]) != expansions or int(
+        search_metrics["num_expanded"]
+    ) != expansions:
+        raise ValueError("campaign record expansion counters disagree")
+    alias_equations = (
+        ("generated", "num_generated"),
+        ("dominated_retired", "dominated", "num_dominance_replacements"),
+        (
+            "pareto_incomparable_accepted",
+            "num_pareto_incomparable_acceptances",
+        ),
+        ("reopened", "num_reopenings"),
+        ("frontier_peak", "peak_frontier", "peak_frontier_records"),
+        ("active_archive_peak", "peak_active_archive_records"),
+        ("pareto_width_peak", "maximum_pareto_antichain_width"),
+    )
+    for aliases in alias_equations:
+        values = {int(search_metrics[name]) for name in aliases}
+        if len(values) != 1:
+            raise ValueError(
+                "campaign record counter aliases disagree: " + ", ".join(aliases)
+            )
+    duplicate_rejections = int(search_metrics["duplicate_rejected"])
+    if (
+        duplicate_rejections != int(search_metrics["canonical_pruned"])
+        or duplicate_rejections
+        != int(search_metrics["num_exact_duplicate_rejections"])
+        + int(search_metrics["num_dominance_rejections"])
+    ):
+        raise ValueError("campaign record duplicate-rejection counters disagree")
+    frontier_decision_mean = _nonnegative_number(
+        search_metrics["frontier_decision_mean"],
+        name="search_metrics.frontier_decision_mean",
+    )
+    frontier_sum = int(search_metrics["frontier_sum"])
+    frontier_observations = int(search_metrics["frontier_observation_count"])
+    expected_frontier_decision_mean = frontier_sum / max(1, frontier_observations)
+    if not math.isclose(
+        frontier_decision_mean,
+        expected_frontier_decision_mean,
+        rel_tol=0.0,
+        abs_tol=1e-12,
+    ):
+        raise ValueError("campaign frontier decision mean disagrees with its counters")
+    generated = int(search_metrics["generated"])
+    certification_nonmatch = int(search_metrics["certification_nonmatch"])
+    native_gate_count = len(generate_actions(case.num_qubits))
+    native_equations = (
+        (
+            int(search_metrics["terminal_candidates"]) == generated,
+            "terminal_candidates must equal generated",
+        ),
+        (
+            int(search_metrics["certification_count"]) == generated + 1,
+            "certification_count must equal generated plus the root certification",
+        ),
+        (
+            int(search_metrics["num_gate_attempts"])
+            == expansions * native_gate_count,
+            "num_gate_attempts must equal expansions times the native grammar size",
+        ),
+        (
+            int(search_metrics["accepted"])
+            == int(search_metrics["archive_record_count"]),
+            "accepted must equal archive_record_count",
+        ),
+        (
+            int(search_metrics["accepted"])
+            - 1
+            + int(search_metrics["duplicate_rejected"])
+            == certification_nonmatch,
+            "accepted/duplicate counters must account for every certification nonmatch",
+        ),
+        (
+            int(search_metrics["terminal_certification_failures"]) == 0,
+            "native campaign rows cannot contain terminal certification failures",
+        ),
+        (
+            frontier_observations == expansions,
+            "frontier_observation_count must equal completed expansions",
+        ),
+        (
+            (generated > certification_nonmatch) is certified,
+            "certified status disagrees with generated certification outcomes",
+        ),
+    )
+    for condition, message in native_equations:
+        if not condition:
+            raise ValueError(f"campaign native-search counters disagree: {message}")
+    frontier_peak = int(search_metrics["frontier_peak"])
+    accepted = int(search_metrics["accepted"])
+    archive_size = int(search_metrics["archive_size"])
+    archive_record_count = int(search_metrics["archive_record_count"])
+    active_archive_peak = int(search_metrics["active_archive_peak"])
+    pareto_width_peak = int(search_metrics["pareto_width_peak"])
+    native_bounds = (
+        (
+            generated <= int(search_metrics["num_gate_attempts"]),
+            "generated cannot exceed native gate attempts",
+        ),
+        (
+            certification_nonmatch <= generated,
+            "certification nonmatches cannot exceed generated children",
+        ),
+        (
+            frontier_peak >= 1,
+            "frontier peak must be at least one",
+        ),
+        (
+            frontier_decision_mean >= 1.0,
+            "frontier decision mean must be at least one",
+        ),
+        (
+            frontier_decision_mean <= frontier_peak,
+            "frontier decision mean cannot exceed frontier peak",
+        ),
+        (
+            accepted >= 1 and archive_record_count >= 1,
+            "accepted/archive record counts must be at least one",
+        ),
+        (
+            1 <= archive_size <= archive_record_count,
+            "archive size must lie within [1, archive_record_count]",
+        ),
+        (
+            frontier_peak <= active_archive_peak <= archive_record_count,
+            "frontier/archive peaks must not exceed archive_record_count",
+        ),
+        (
+            1 <= pareto_width_peak <= active_archive_peak,
+            "Pareto width must lie within [1, active_archive_peak]",
+        ),
+        (
+            int(search_metrics["target_metric_evaluation_count"])
+            == int(search_metrics["target_metric_cache_misses"]),
+            "target metric evaluations must equal cache misses",
+        ),
+    )
+    for condition, message in native_bounds:
+        if not condition:
+            raise ValueError(f"campaign native-search bounds disagree: {message}")
+    if set(metrics) != set(_REQUIRED_SUMMARY_COUNTER_FIELDS):
+        raise ValueError("campaign record summary counters do not match the raw schema")
+    for summary_name, search_name in _REQUIRED_SUMMARY_COUNTER_FIELDS.items():
+        summary_value = _nonnegative_int(
+            metrics[summary_name], name=f"metrics.{summary_name}"
+        )
+        if summary_value != int(search_metrics[search_name]):
+            raise ValueError(
+                f"campaign summary counter {summary_name} disagrees with {search_name}"
+            )
+    wall_time_ns = _nonnegative_int(
+        search_metrics.get("wall_time_ns"), name="search_metrics.wall_time_ns"
+    )
+    if wall_time_ns < 1 or runtime_seconds <= 0.0:
+        raise ValueError("campaign rows with expansions require positive wall time")
+    if int(search_metrics["environment_step_time_ns"]) < 1:
+        raise ValueError("campaign rows with expansions require environment step time")
+    if int(search_metrics["certification_time_ns"]) < 1:
+        raise ValueError("campaign rows with certifications require certification time")
+    if not math.isclose(
+        runtime_seconds,
+        wall_time_ns / 1e9,
+        rel_tol=0.0,
+        abs_tol=1e-12,
+    ):
+        raise ValueError("campaign record wall time disagrees with runtime_seconds")
+    if not math.isclose(
+        float(timings["wall_time_seconds"]),
+        runtime_seconds,
+        rel_tol=0.0,
+        abs_tol=1e-12,
+    ):
+        raise ValueError("campaign record timing envelope disagrees with runtime_seconds")
+    for name in _REQUIRED_TIMING_FIELDS:
+        if name == "wall_time_seconds":
+            continue
+        nanoseconds_name = name.removesuffix("_seconds") + "_ns"
+        if int(search_metrics[nanoseconds_name]) > wall_time_ns:
+            raise ValueError(f"campaign component timing {name} exceeds wall time")
+
+    if not isinstance(record["terminated"], bool) or not isinstance(
+        record["truncated"], bool
+    ):
+        raise ValueError("campaign terminal flags must be boolean")
+    if record["terminated"] is record["truncated"]:
+        raise ValueError(
+            "campaign record must be exactly one of terminated or truncated"
+        )
+    if not certified and record["truncated"] is True and expansions != (
+        expected.expansion_budget
+    ):
+        raise ValueError(
+            "truncated campaign failure must exhaust its expansion budget"
+        )
+    witness = record["witness_operations"]
+    diagnostics = record["certification_diagnostics"]
+    if certified:
+        if record["terminated"] is not True or record["truncated"] is not False:
+            raise ValueError("certified campaign record has invalid terminal flags")
+        if not isinstance(witness, list) or not witness:
+            raise ValueError("certified campaign record has no witness")
+        if expansions < 1:
+            raise ValueError("certified campaign record has no search expansion")
+        if not isinstance(diagnostics, Mapping):
+            raise ValueError("certified campaign record has no certification diagnostics")
+        replayed = _independent_witness_certification_diagnostics(
+            case,
+            witness,
+            certification_tolerance=float(
+                config.experiment["certification_tolerance"]
+            ),
+        )
+        if not _json_values_exact(dict(diagnostics), replayed):
+            raise ValueError("campaign certification diagnostics do not match fresh replay")
+        tau = float(config.experiment["certification_tolerance"])
+        if (
+            diagnostics.get("schema_version") != ARTICLE_V1_PROFILE.certification_schema
+            or diagnostics.get("passed") is not True
+            or diagnostics.get("reason") != "equivalent_phase_frobenius"
+            or float(diagnostics.get("tau_cert", -1.0)) != tau
+            or _nonnegative_number(
+                diagnostics.get("delta_phi"), name="certification delta_phi"
+            )
+            > tau
+            or diagnostics.get("candidate_finite") is not True
+            or diagnostics.get("target_finite") is not True
+            or diagnostics.get("candidate_unitary") is not True
+            or diagnostics.get("target_unitary") is not True
+            or diagnostics.get("candidate_num_qubits") != case.num_qubits
+            or diagnostics.get("target_num_qubits") != case.num_qubits
+        ):
+            raise ValueError("campaign success has invalid certification diagnostics")
+        if _nonnegative_int(
+            search_metrics["certification_count"],
+            name="search_metrics.certification_count",
+        ) < 1:
+            raise ValueError("campaign success has no certification event")
+        time_to_solution = _nonnegative_number(
+            record["time_to_solution"], name="time_to_solution"
+        )
+        if time_to_solution != runtime_seconds:
+            raise ValueError("campaign time_to_solution must equal runtime_seconds")
+        resource_vector = record["solution_resource_vector"]
+        if not isinstance(resource_vector, list) or not resource_vector:
+            raise ValueError("campaign success has no solution resource vector")
+        for index, value in enumerate(resource_vector):
+            _nonnegative_int(value, name=f"solution_resource_vector[{index}]")
+        replayed_resource_vector = _independent_witness_resource_vector(case, witness)
+        if resource_vector != replayed_resource_vector:
+            raise ValueError(
+                "campaign solution resource vector does not match fresh witness replay"
+            )
+        return True
+
+    if witness not in ([], ()) or diagnostics is not None:
+        raise ValueError("uncertified campaign record contains forged success evidence")
+    if record["solution_resource_vector"] is not None or record["time_to_solution"] is not None:
+        raise ValueError("uncertified campaign record contains solution diagnostics")
+    return False
+
+
+def audit_article_v1_campaign(
+    corpus: ArticleV1Corpus,
+    *,
+    checkpoints: Sequence[ArticleV1Checkpoint],
+    ood_checkpoints: Sequence[ArticleV1Checkpoint],
+    raw_path: str | Path,
+    output_path: str | Path | None = None,
+) -> dict[str, object]:
+    """Fail closed unless the exact primary test/OOD campaign is complete."""
+
+    config = corpus.config
+    standard_scope = corpus.checkpoint_scope(
+        checkpoint_family=STANDARD_CHECKPOINT_FAMILY
+    )
+    ood_scope = corpus.checkpoint_scope(
+        checkpoint_family=OOD_LENGTH_CHECKPOINT_FAMILY
+    )
+    checkpoints = tuple(checkpoints)
+    ood_checkpoints = tuple(ood_checkpoints)
+    _validate_checkpoint_campaign(checkpoints, standard_scope)
+    _validate_checkpoint_campaign(ood_checkpoints, ood_scope)
+    for case in corpus.evaluation_targets(split="test"):
+        for checkpoint in checkpoints:
+            checkpoint.validate_for_evaluation(standard_scope, case)
+    for case in corpus.evaluation_targets(split="ood_test"):
+        for checkpoint in ood_checkpoints:
+            checkpoint.validate_for_evaluation(ood_scope, case)
+
+    provenance = git_provenance()
+    standard_expected = _expected_matrix_runs(
+        corpus.evaluation_targets(split="test"),
+        config=config,
+        checkpoints=checkpoints,
+        checkpoint_scope=standard_scope,
+        schedulers=PRIMARY_SCHEDULERS,
+        provenance=provenance,
+    )
+    ood_expected = _expected_matrix_runs(
+        corpus.evaluation_targets(split="ood_test"),
+        config=config,
+        checkpoints=ood_checkpoints,
+        checkpoint_scope=ood_scope,
+        schedulers=PRIMARY_SCHEDULERS,
+        provenance=provenance,
+    )
+    expected = standard_expected + ood_expected
+    expected_by_key = {item.run_key: item for item in expected}
+    raw, records = _strict_campaign_records(raw_path)
+    observed_by_key = {str(record["run_key"]): record for record in records}
+    missing_keys = sorted(set(expected_by_key) - set(observed_by_key))
+    unexpected_keys = sorted(set(observed_by_key) - set(expected_by_key))
+    if missing_keys or unexpected_keys:
+        raise ValueError(
+            "campaign raw ledger does not match the exact expected matrix: "
+            f"missing={len(missing_keys)}, unexpected={len(unexpected_keys)}"
+        )
+
+    certified_count = 0
+    observed_by_split = {"test": 0, "ood_test": 0}
+    for run_key in sorted(expected_by_key):
+        item = expected_by_key[run_key]
+        record = observed_by_key[run_key]
+        certified_count += int(_audit_campaign_record(
+            record,
+            item,
+            config=config,
+            provenance=provenance,
+        ))
+        observed_by_split[item.case.split] += 1
+
+    raw_path_value = Path(raw_path)
+    output = None if output_path is None else Path(output_path)
+    if output is not None:
+        try:
+            portable_raw_path = raw_path_value.resolve().relative_to(
+                output.parent.resolve()
+            ).as_posix()
+        except ValueError:
+            portable_raw_path = str(raw_path_value.resolve())
+    else:
+        portable_raw_path = raw_path_value.name
+    expected_by_split = {
+        "test": len(standard_expected),
+        "ood_test": len(ood_expected),
+    }
+    report: dict[str, object] = {
+        "schema_version": ARTICLE_V1_CAMPAIGN_AUDIT_SCHEMA,
+        "passed": True,
+        "config_profile": config.profile,
+        "config_digest": config.digest,
+        "code_version": provenance["commit_sha"],
+        "source_worktree_digest": provenance["source_worktree_digest"],
+        "raw_ledger_path": portable_raw_path,
+        "raw_ledger_sha256": f"sha256:{sha256(raw).hexdigest()}",
+        "expected_run_count": len(expected),
+        "observed_run_count": len(records),
+        "expected_by_split": expected_by_split,
+        "observed_by_split": observed_by_split,
+        "missing_run_keys": [],
+        "unexpected_run_keys": [],
+        "duplicate_run_keys": [],
+        "independently_certified_success_count": certified_count,
+        "integrity_checks": {
+            "terminal_newline": True,
+            "no_blank_or_duplicate_records": True,
+            "no_duplicate_json_members": True,
+            "raw_schema_and_run_keys": True,
+            "exact_expected_key_set": True,
+            "target_ids_and_fingerprints": True,
+            "scheduler_seed_budget_checkpoint_binding": True,
+            "config_source_and_schema_binding": True,
+            "type_strict_scientific_metadata": True,
+            "no_reference_witness_fallback": True,
+            "finite_counters_and_timings": True,
+            "native_search_event_equations": True,
+            "successes_independently_certified": True,
+        },
+    }
+    if output is not None:
+        _atomic_json(output, report)
+    return report
 
 
 def validate_article_v1_checkpoints(
@@ -1269,6 +2201,7 @@ def validate_article_v1_checkpoints(
                     checkpoint_scope=checkpoint_scope,
                     beta=beta,
                     certification_tolerance=certification_tolerance,
+                    config_digest=checkpoint_scope.corpus_config_digest,
                 )
             )
     by_checkpoint: dict[str, dict[str, object]] = {}
@@ -1341,6 +2274,43 @@ def _validate_immutable_run_artifact(
         )
 
 
+def _assert_checked_in_pilot_publication_disjoint(
+    config: ArticleV1CorpusConfig,
+    corpus: ArticleV1Corpus,
+    *,
+    publication_corpus: ArticleV1Corpus | None = None,
+) -> None:
+    """Fail before pilot execution if its frozen targets leak into publication."""
+
+    checked_in_pilot = load_article_v1_config("pilot")
+    if config.profile != "pilot" or config.digest != checked_in_pilot.digest:
+        return
+    publication = (
+        build_article_v1_corpus("publication")
+        if publication_corpus is None
+        else publication_corpus
+    )
+    identity_tolerance = max(
+        float(config.tau_identity),
+        float(publication.config.tau_identity),
+    )
+    overlap = [
+        (pilot_case.target_id, publication_case.target_id)
+        for pilot_case in corpus.targets
+        for publication_case in publication.targets
+        if pilot_case.unitary.shape == publication_case.unitary.shape
+        and article_delta_phi(pilot_case.unitary, publication_case.unitary)
+        <= identity_tolerance
+    ]
+    if overlap:
+        raise ValueError(
+            "checked-in pilot and publication corpora overlap; refusing to expose "
+            "publication targets during pilot selection under the shared "
+            f"projective identity rule ({len(overlap)} equivalent pairs, "
+            f"tau_identity={identity_tolerance})"
+        )
+
+
 def initialize_run(
     config_path: str | Path,
     *,
@@ -1349,6 +2319,7 @@ def initialize_run(
 ) -> tuple[Path, ArticleV1Corpus]:
     config = load_article_v1_config(config_path)
     corpus = build_article_v1_corpus(config)
+    _assert_checked_in_pilot_publication_disjoint(config, corpus)
     provenance = environment_metadata()
     manifest = corpus.manifest()
     run_manifest = {
@@ -1365,6 +2336,7 @@ def initialize_run(
         },
         "full_publication_run_is_not_a_unit_test": True,
         "generator_witness_used_for_search": False,
+        "execution": provenance["execution"],
     }
     split_manifests: dict[str, dict[str, object]] = {}
     for split in ("train", "validation", "test", "ood_test"):
@@ -1820,6 +2792,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         "generate-corpus",
         "train",
         "evaluate",
+        "audit",
         "aggregate",
         "ablations",
     ):
@@ -1986,6 +2959,16 @@ def main(argv: Iterable[str] | None = None) -> int:
     ood_checkpoints = tuple(
         ArticleV1Checkpoint.load(path) for path in ood_checkpoint_paths
     )
+    if args.command == "audit":
+        result = audit_article_v1_campaign(
+            corpus,
+            checkpoints=checkpoints,
+            ood_checkpoints=ood_checkpoints,
+            raw_path=destination / "raw_runs.jsonl",
+            output_path=destination / "campaign_audit.json",
+        )
+        print(json.dumps(_json_ready(result), indent=2, sort_keys=True))
+        return 0
     if args.command == "ablations":
         from experiments.article_v1_ablations import run_article_v1_ablations
 
@@ -2016,20 +2999,35 @@ def main(argv: Iterable[str] | None = None) -> int:
             return 0
 
     if args.command in {"pilot", "aggregate"}:
+        audit_result = audit_article_v1_campaign(
+            corpus,
+            checkpoints=checkpoints,
+            ood_checkpoints=ood_checkpoints,
+            raw_path=destination / "raw_runs.jsonl",
+            output_path=destination / "campaign_audit.json",
+        )
+        if audit_result.get("passed") is not True:
+            raise ValueError("campaign audit did not report passed=true")
+        audited_raw_sha256 = audit_result.get("raw_ledger_sha256")
+        if not isinstance(audited_raw_sha256, str):
+            raise ValueError("campaign audit did not bind the raw ledger digest")
         write_article_v1_report(
             destination / "raw_runs.jsonl",
             destination,
             stats_seed=int(experiment["statistics_seed"]),
+            expected_raw_sha256=audited_raw_sha256,
         )
         return 0
     return 0
 
 
 __all__ = [
+    "ARTICLE_V1_CAMPAIGN_AUDIT_SCHEMA",
     "ARTICLE_V1_CHECKPOINT_SCHEMA",
     "ARTICLE_V1_RUNNER_SCHEMA",
     "PRIMARY_SCHEDULERS",
     "ArticleV1Checkpoint",
+    "audit_article_v1_campaign",
     "environment_metadata",
     "evaluate_article_v1_matrix",
     "evaluate_article_v1_run",

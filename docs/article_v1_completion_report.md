@@ -1,6 +1,6 @@
 # Article V1 completion report
 
-## Raw-metric V2 finalization inventory
+## Raw-metric V2 finalization inventory (historical grouped record)
 
 | Path | Changed scientific behavior | Preserved behavior and coverage |
 |---|---|---|
@@ -8,16 +8,44 @@
 | `rl/article_features.py`, `rl/target_context.py` | Shared `d_tar`, direct scheduler metric, and dense compatibility discrepancy | witness-keyed cache; direct delegation and cache-poisoning tests |
 | `benchmarks/article_native_corpus.py`, `benchmarks/article_v1_calibration.py` | Shared identity decision, aliases, tolerance calibration | deterministic witness generation; corpus tests |
 | `experiments/profiles.py`, `experiments/article_v1_runner.py`, `article_benchmark.py` | V2 provenance plus plan/calibration CLI | seven schedulers and fail-closed resume; runner tests/mini-CI |
-| `reporting/article_v1.py` | V2 raw-ledger/report schemas and target-metric-bound resume keys | failure-preserving aggregation; reporting and old-schema rejection tests |
+| `reporting/article_v1.py` | V3 raw-ledger/report schemas, config-bound resume keys, and audited-ledger SHA binding | failure-preserving aggregation; reporting, TOCTOU, and old-schema rejection tests |
 | `benchmarks/toffoli.py`, `ghz3_smoke.py`, `ghz3_rl.py`, `toffoli_certify.py` | Resource-baseline/lower-bound terminology with deprecated compatibility aliases | benchmark resource values and certification behavior |
 | Article configs and focused tests | Frozen `tau_cert=1e-6`, V2 expectations | corpus/budgets/seeds unchanged |
 
-Dirty-tree engineering qualification: focused 137 passed; full 305 passed; calibration passed; campaign planners passed; mini-CI passed twice with byte-stable resume. Pilot/publication evidence remains gated on a reviewed, committed clean version.
+### Campaign-readiness correction: per-file inventory
+
+| Path | Purpose | Scientific behavior changed | Scientific behavior preserved | Direct coverage |
+|---|---|---|---|---|
+| `README.md` | User-facing Article V1 contract | Documents disjoint pilot seeds and V3 evidence schemas | Method and capability boundaries | Documentation review |
+| `article_benchmark.py` | Root CLI dispatch | Exposes the deterministic `audit` command | Legacy benchmark dispatch | Root CLI audit test |
+| `configs/article_v1_pilot.json` | Pilot corpus definition | Moves pilot into a publication-disjoint seed namespace | Counts, strata, grammar, budgets, and experiment hyperparameters | Corpus disjointness test |
+| `docs/article_v1_experiment_protocol.md` | Executable experiment protocol | Documents disjoint identities, audit gating, and cost projection | Frozen scientific method | Documentation review |
+| `docs/article_v1_completion_report.md` | Implementation evidence inventory | Records the V3 audit/projection correction per file | Prior historical qualification remains labelled | Inventory review |
+| `docs/article_v1_manuscript_patch.md` | Manuscript-facing implementation amendment | Aligns checkpoint/raw identity terminology with V3 | Scientific claims and equations | Documentation review |
+| `experiments/article_v1_runner.py` | Campaign execution and audit | Adds config-bound identities, strict complete-ledger audit, fresh witness replay, code-bound checkpoints, timing/counter invariants, and audit-gated aggregation | Seven schedulers, frozen budgets, no witness fallback, and resume semantics | `test_campaign_audit.py`; runner and mini-CI tests |
+| `reporting/article_v1.py` | Raw store and publication report | Uses raw-run/report V3, config-bound keys, and audited SHA-bound report loading | Target-level aggregation and failure denominators | Reporting and TOCTOU tests |
+| `reporting/article_v1_campaign_projection.py` | Pilot-to-publication planning | Adds deterministic audit-bound CPU/wall/disk/RAM/checkpoint projection | Executes no search and does not inspect publication outcomes | Projection tests |
+| `tests/article_v1/test_ablations.py` | Validation-ablation regression | Updates fixtures to the V3 raw schema | Six registered validation controls | Ablation suite |
+| `tests/article_v1/test_campaign_audit.py` | Adversarial campaign integrity | Covers exact matrices, physical JSONL, provenance, replay, counters, timings, type strictness, and report gating | Uses small deterministic fixtures plus real evaluator rows | Self-contained audit suite |
+| `tests/article_v1/test_campaign_projection.py` | Projection integrity | Covers audit requirements, cardinality scaling, worker labels, and ledger TOCTOU | No-search behavior | Self-contained projection suite |
+| `tests/article_v1/test_corpus.py` | Corpus identity regression | Enforces internal and cross-profile projective disjointness | Deterministic generation and replay | Corpus suite |
+| `tests/article_v1/test_reporting.py` | Report integrity regression | Covers V3 schema and before/after SHA checks | Existing aggregation/statistics behavior | Reporting suite |
+| `tests/article_v1/test_runner.py` | Runner/resume regression | Rejects runner V1/V2 manifests under runner V3 | Checkpoint byte stability and mini-CI semantics | Runner suite |
+
+Historical dirty-tree engineering qualification before this readiness correction:
+focused 137 passed; full 305 passed; calibration passed; campaign planners
+passed; mini-CI passed twice with byte-stable resume. Pilot/publication evidence
+remains gated on the reviewed, committed clean correction.
+
+The campaign-readiness source content passed 408 repository tests, including 86
+dedicated adversarial campaign-audit tests, plus scoped compilation and diff
+hygiene on 2026-08-17. This is pre-commit engineering qualification; the fresh
+clean-commit mini-CI and pilot remain campaign evidence rather than unit tests.
 
 Status: **implementation and mini-CI qualification complete; pilot and
 publication campaigns not run**
 
-Date: 2026-08-15
+Date: 2026-08-17
 
 The Article V1 implementation has passed its focused and full repository test
 suites and a deterministic mini-CI workflow. This is an implementation
@@ -58,7 +86,7 @@ their complete contents to Article V1.
 | Group | Paths | Article V1 purpose / attribution |
 |---|---|---|
 | Article V1 scientific modules | `certification/article_v1.py`; `rl/article_v1_reward.py`; `benchmarks/article_native_corpus.py`; `experiments/article_v1_runner.py`; `experiments/article_v1_ablations.py`; `reporting/article_v1.py` | New task-scoped certifier, reward, corpus, experiment, ablation, and reporting implementations |
-| Profiles and features | `experiments/profiles.py`; `rl/article_features.py`; `rl/policy.py` | Versioned 31D Article V1 profile, common target context/features, frozen decision batches, and scope-bound transferable checkpoint V2; `rl/article_features.py` existed untracked at preflight and was extended rather than newly originated here |
+| Profiles and features | `experiments/profiles.py`; `rl/article_features.py`; `rl/policy.py` | Versioned 31D Article V1 profile, common target context/features, frozen decision batches, and scope-bound transferable checkpoint V3; `rl/article_features.py` existed untracked at preflight and was extended rather than newly originated here |
 | Frozen configs | `configs/article_v1_pilot.json`; `configs/article_v1_publication.json` | Pilot and publication corpus/experiment definitions; config presence is not evidence that either campaign ran |
 | Shared integration surfaces | `article_benchmark.py`; `benchmarks/__init__.py`; `canonical/canonicalizer.py`; `config.py`; `env/rl_env.py`; `evaluate.py`; `pyproject.toml`; `reporting/__init__.py`; `search/archive.py`; `train.py` | CLI dispatch, exports, Article reward/metric integration, exact counters and total-evaluation timing, decision-state sampling, ablation switches, fail-closed identity/resume, and packaging; most were already modified or untracked at preflight, so only their Article V1 portions are task-scoped |
 | Article V1 tests | `tests/article_v1/` | Focused unit, soundness, leakage, resume, reporting, scheduler, instrumentation, corpus, and end-to-end tests |
@@ -89,7 +117,7 @@ Similarly, the Pareto-off ablation retains exact same-key/resource duplicate
 suppression but disables dominance rejection and retirement. The primary
 profile retains the full Pareto rule.
 
-Learned policies use `article-v1-transferable-linear-checkpoint-v2`. Its digest
+Learned policies use `article-v1-transferable-linear-checkpoint-v3`. Its digest
 binds training seed, feature schema, standard/OOD family, corpus config,
 training-scope mode, ordered training target IDs, learning rate, epsilon
 schedule, training `beta`, certification tolerance, episodes per target,
@@ -111,7 +139,7 @@ target. Article V1 does not broaden any of those claims.
 |---|---|---|
 | Eq. 80 linear Q | `rl/policy.py`; `experiments/profiles.py` | Implemented and mini-CI qualified; campaign conclusions pending |
 | Eqs. 81–92 features | `rl/article_features.py` | Operational \(r_P\), novelty, normalization, and \(\eta\) implemented under the documented plan completions |
-| Eqs. 95–100 SARSA | `rl/policy.py`; `train.py`; `experiments/article_v1_runner.py` | Frozen-transition feature path and full protocol-/partition-/seed-bound checkpoint V2 qualified; multi-seed campaign unrun |
+| Eqs. 95–100 SARSA | `rl/policy.py`; `train.py`; `experiments/article_v1_runner.py` | Frozen-transition feature path and full protocol-/partition-/seed-bound checkpoint V3 qualified; multi-seed campaign unrun |
 | Eqs. 101–103 objectives | `config.py`; `env/rl_env.py`; `reporting/article_v1.py` | Expansion-budget curves use only exactly executed caps; exact counters, paired target aggregation, and reporting implemented |
 | Amended Eq. 104 | `rl/article_v1_reward.py` | Explicit operational amendment; not literal unamended-manuscript compliance |
 | Eqs. 105–107 shaping | `rl/article_v1_reward.py` | Direct \(-\min d_{tar}\), terminal zero, no composite legacy terms |
@@ -130,9 +158,9 @@ and must not be mixed with the Article statistic.
 The zero-weight Article control still computes the full 31D feature batches and
 dense target coordinates; only its policy weights are zero. `wall_time_ns` is
 the complete evaluation envelope, while `environment_step_time_ns` is the
-separately named subset spent inside environment step bodies. Raw identity
-includes both `training_seed` and `source_worktree_digest`, and report curves
-omit a budget unless that exact external cap was executed. Per-learner output
+separately named subset spent inside environment step bodies. Raw V3 identity
+includes `config_digest`, `training_seed`, and `source_worktree_digest`, and
+report curves omit a budget unless that exact external cap was executed. Per-learner output
 and target-first between-learner statistics are separate tables. Artifact maps
 under the repository use relative POSIX paths.
 
@@ -163,8 +191,9 @@ across executions.
 Resume is nevertheless fail-closed with respect to scientific identity:
 existing run/environment/corpus/per-split manifests must exactly match the
 current config, profile, code/worktree, and corpus contract. The raw key now
-includes `training_seed` and `source_worktree_digest`; old pre-change ledgers or
-pre-V2 checkpoints are intentionally incompatible and require a new run ID.
+includes `config_digest`, `training_seed`, and `source_worktree_digest`; old
+pre-V3 ledgers or checkpoints are intentionally incompatible and require a new
+run ID.
 The existing checkpoint is contract-validated before reuse, then loaded without
 training or rewriting.
 
@@ -246,7 +275,7 @@ to replace. The implemented full run layout and commands remain documented in
 Completed:
 
 - Article V1 feature, reward, certifier, corpus, scope-bound standard/OOD and
-  ablation checkpoint V2, seven-scheduler, instrumentation, reporting, and
+  ablation checkpoint V3, seven-scheduler, instrumentation, reporting, and
   ablation paths are implemented.
 - Focused and full tests pass, scoped compilation succeeds, and diff hygiene
   is clean.

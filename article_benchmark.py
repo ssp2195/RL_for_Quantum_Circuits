@@ -185,6 +185,7 @@ def main(argv: Iterable[str] | None = None) -> int:
         "generate-corpus",
         "train",
         "evaluate",
+        "audit",
         "aggregate",
         "ablations",
         "mini-ci",
