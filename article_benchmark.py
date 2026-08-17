@@ -188,6 +188,8 @@ def main(argv: Iterable[str] | None = None) -> int:
         "aggregate",
         "ablations",
         "mini-ci",
+        "calibrate-certifier",
+        "plan",
     }
     if arguments and arguments[0] in article_v1_commands:
         from experiments.article_v1_runner import main as article_v1_main

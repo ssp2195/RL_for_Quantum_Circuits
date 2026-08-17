@@ -25,8 +25,8 @@ import time
 from typing import Any
 
 
-ARTICLE_V1_RAW_RUN_SCHEMA = "article-v1-raw-run-v1"
-ARTICLE_V1_REPORT_SCHEMA = "article-v1-publication-report-v1"
+ARTICLE_V1_RAW_RUN_SCHEMA = "article-v1-raw-run-v2"
+ARTICLE_V1_REPORT_SCHEMA = "article-v1-publication-report-v2"
 DEFAULT_STATISTICS_SEED = 20_260_815
 DEFAULT_BOOTSTRAP_SAMPLES = 10_000
 
@@ -176,6 +176,16 @@ def run_identity_payload(run: Mapping[str, Any]) -> dict[str, Any]:
             name="reward parameters",
             default={},
         ),
+        "target_metric_schema": _first_value(
+            run,
+            (
+                "target_metric_schema_version",
+                "target_metric_schema",
+                "schemas.target_metric",
+                "profile.target_metric_schema",
+            ),
+            name="target metric schema",
+        ),
         "certifier_schema": _first_value(
             run,
             (
@@ -303,6 +313,11 @@ class AppendOnlyJSONLRunStore:
                 ) from error
             if not isinstance(decoded, dict):
                 raise ValueError(f"JSONL record at line {line_number} is not an object")
+            if decoded.get("raw_run_schema") != ARTICLE_V1_RAW_RUN_SCHEMA:
+                raise ValueError(
+                    f"JSONL record at line {line_number} uses an unsupported "
+                    "Article V1 raw-run schema"
+                )
             observed_key = decoded.get("run_key")
             expected_key = unique_run_key(decoded)
             if observed_key != expected_key:
@@ -335,9 +350,14 @@ class AppendOnlyJSONLRunStore:
         """Append one completed run; return false for an identical resume hit."""
 
         normalized = _canonical_json_value(dict(run))
+        declared_schema = normalized.get(
+            "raw_run_schema", normalized.get("schema_version", ARTICLE_V1_RAW_RUN_SCHEMA)
+        )
+        if declared_schema != ARTICLE_V1_RAW_RUN_SCHEMA:
+            raise ValueError("unsupported Article V1 raw-run schema")
+        normalized["raw_run_schema"] = ARTICLE_V1_RAW_RUN_SCHEMA
         key = unique_run_key(normalized)
         normalized["run_key"] = key
-        normalized.setdefault("raw_run_schema", ARTICLE_V1_RAW_RUN_SCHEMA)
         existing = self.load_records(repair_partial=True)
         for record in existing:
             if record["run_key"] != key:
@@ -604,6 +624,7 @@ def _group_fields(run: Mapping[str, Any]) -> dict[str, Any]:
         "feature_schema": display(identity["feature_schema"]),
         "reward_schema": display(identity["reward_schema"]),
         "reward_parameters": display(identity["reward_parameters"]),
+        "target_metric_schema": display(identity["target_metric_schema"]),
         "certifier_schema": display(identity["certifier_schema"]),
         "certification_parameters": display(identity["certification_parameters"]),
         "search_reduction": display(identity["search_reduction"]),
@@ -625,6 +646,7 @@ def _group_key(fields: Mapping[str, Any]) -> tuple[str, ...]:
             "feature_schema",
             "reward_schema",
             "reward_parameters",
+            "target_metric_schema",
             "certifier_schema",
             "certification_parameters",
             "search_reduction",

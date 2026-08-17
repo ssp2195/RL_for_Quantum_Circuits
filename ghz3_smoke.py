@@ -192,7 +192,7 @@ def run_ghz3_smoke(
         "reference_state_preparation": reference_preparation,
         "state_preparation": generated_preparation,
         "search": search,
-        "optimality": {
+        "resource_baseline": {
             "matches_known_native_resource_baseline": bool(
                 structure_match and resource_match
             ),
@@ -204,6 +204,10 @@ def run_ghz3_smoke(
             ),
         },
     }
+    # Backward-compatible report alias; the resource-baseline name is the
+    # normative field and does not claim that this search proves optimality.
+    report["optimality"] = report["resource_baseline"]
+    report["deprecated_report_fields"] = ["optimality"]
     report["artifacts"] = save_ghz3_artifacts(
         output_dir,
         report=report,

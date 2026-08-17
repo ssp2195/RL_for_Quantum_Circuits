@@ -31,11 +31,11 @@ class ExperimentProfile:
 
 
 ARTICLE_V1_PROFILE = ExperimentProfile(
-    name="article_v1",
+    name="article_v1_raw_metric_v2",
     feature_schema="article-v1-31d",
     reward_schema="article-v1-expansion-potential-amended",
-    target_metric_schema="process-infidelity-v1",
-    certification_schema="phase-frobenius-v1",
+    target_metric_schema="projective-unitary-metrics-v2",
+    certification_schema="phase-frobenius-raw-v2",
     gamma=1.0,
     reward_clip=None,
     exploration_bonus=0.0,
@@ -114,6 +114,8 @@ EXPERIMENT_PROFILES: Mapping[str, ExperimentProfile] = {
         TOFFOLI_PARITY_PROFILE,
     )
 }
+# Compatibility lookup only; serialized metadata retains the V2 profile name.
+EXPERIMENT_PROFILES = {**EXPERIMENT_PROFILES, "article_v1": ARTICLE_V1_PROFILE}
 
 
 def experiment_profile(name: str) -> ExperimentProfile:

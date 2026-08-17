@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 from itertools import combinations
+import json
+from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
+import pytest
 
 from benchmarks.article_native_corpus import (
     ARTICLE_V1_CONFIG_SCHEMA,
@@ -14,6 +18,7 @@ from benchmarks.article_native_corpus import (
     SPLIT_ORDER,
     STANDARD_CHECKPOINT_FAMILY,
     ArticleV1EvaluationTarget,
+    _is_semantic_duplicate,
     article_delta_phi,
     build_article_v1_corpus,
     dense_target_digest,
@@ -23,6 +28,7 @@ from benchmarks.article_native_corpus import (
 from certification.simulator import SynthesisTarget, unitary_from_gates
 from circuit.gate import Gate
 from enums import GateType
+from certification.unitary_phase_metrics import phase_frobenius_discrepancy
 
 
 def test_checked_in_profiles_fix_article_v1_counts_and_strata():
@@ -67,7 +73,27 @@ def test_checked_in_profiles_fix_article_v1_counts_and_strata():
     assert len(publication.experiment["training_seeds"]) >= 5
     assert len(publication.experiment["random_scheduler_seeds"]) >= 10
     assert publication.experiment["gamma"] == 1.0
-    assert publication.experiment["certification_tolerance"] == 1e-9
+    assert publication.experiment["certification_tolerance"] == 1e-6
+
+
+def test_pre_v2_config_schema_is_rejected(tmp_path: Path) -> None:
+    payload = load_article_v1_config("pilot").to_dict()
+    payload["schema_version"] = "article-v1-corpus-config-v1"
+    path = tmp_path / "old-config.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="config schema must be"):
+        load_article_v1_config(path)
+
+
+def test_manifest_exposes_article_facing_aliases() -> None:
+    corpus = build_article_v1_corpus(load_article_v1_config("pilot"))
+    manifest = corpus.manifest()
+    case = manifest["cases"][0]
+
+    assert manifest["identity_tolerance"] == manifest["tau_identity"]
+    assert case["stratum"] == case["difficulty"]
+    assert case["generator_witness"] == case["generator"]["witness_operations"]
 
 
 def test_native_grammar_is_exact_and_all_to_all_directed():
@@ -285,3 +311,24 @@ def test_delta_phi_and_dense_digest_quotient_only_global_phase():
     assert article_delta_phi(two_t, one_s) <= corpus.config.tau_identity
     assert dense_target_digest(two_t) == dense_target_digest(one_s)
     assert article_delta_phi(case.unitary, identity) > corpus.config.tau_identity
+
+
+def test_corpus_deduplication_calls_shared_projective_metric(monkeypatch) -> None:
+    calls: list[tuple[np.ndarray, np.ndarray]] = []
+
+    def recording_metric(left, right):
+        calls.append((np.asarray(left), np.asarray(right)))
+        return phase_frobenius_discrepancy(left, right)
+
+    monkeypatch.setattr(
+        "benchmarks.article_native_corpus.phase_frobenius_discrepancy",
+        recording_metric,
+    )
+    identity = np.eye(2, dtype=np.complex128)
+
+    assert _is_semantic_duplicate(
+        identity,
+        [SimpleNamespace(unitary=identity)],
+        tau_identity=1e-7,
+    )
+    assert len(calls) == 1

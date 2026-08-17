@@ -31,6 +31,9 @@ def test_toffoli_certification_runner_writes_complete_verifiable_artifacts(tmp_p
     assert semantic["column_phase_consistent"]
     assert semantic["symbolic_agrees_with_dense"]
     assert resources["resource_accounting_correct"]
+    mandatory = report["positive_checks"]
+    assert mandatory["matches_published_t_lower_bound"]
+    assert mandatory["matches_published_cnot_lower_bound"]
     assert report["truth_table"]
     assert report["negative_controls"]
     assert all(

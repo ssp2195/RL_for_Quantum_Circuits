@@ -33,11 +33,11 @@ class _Provider:
 def test_article_v1_profile_is_explicit_and_complete():
     assert experiment_profile("article_v1") is ARTICLE_V1_PROFILE
     assert ARTICLE_V1_PROFILE.metadata() == {
-        "name": "article_v1",
+        "name": "article_v1_raw_metric_v2",
         "feature_schema": "article-v1-31d",
         "reward_schema": "article-v1-expansion-potential-amended",
-        "target_metric_schema": "process-infidelity-v1",
-        "certification_schema": "phase-frobenius-v1",
+        "target_metric_schema": "projective-unitary-metrics-v2",
+        "certification_schema": "phase-frobenius-raw-v2",
         "gamma": 1.0,
         "reward_clip": None,
         "exploration_bonus": 0.0,
@@ -80,7 +80,7 @@ def test_checkpoint_rejects_feature_schema_or_dimension_reinterpretation(tmp_pat
     restored, metadata = LinearQPolicy.load_checkpoint(
         checkpoint,
         feature_provider=_Provider(),
-        expected_profile_name="article_v1",
+        expected_profile_name="article_v1_raw_metric_v2",
         expected_reward_schema=ARTICLE_V1_PROFILE.reward_schema,
         expected_target_metric_schema=ARTICLE_V1_PROFILE.target_metric_schema,
         expected_certification_schema=ARTICLE_V1_PROFILE.certification_schema,

@@ -1,5 +1,19 @@
 # Article V1 completion report
 
+## Raw-metric V2 finalization inventory
+
+| Path | Changed scientific behavior | Preserved behavior and coverage |
+|---|---|---|
+| `certification/unitary_phase_metrics.py`, `certification/article_v1.py` | Shared raw metric, no hidden rescaling, V2 certifier | global-phase quotient and fresh DAG replay; certifier tests/calibration |
+| `rl/article_features.py`, `rl/target_context.py` | Shared `d_tar`, direct scheduler metric, and dense compatibility discrepancy | witness-keyed cache; direct delegation and cache-poisoning tests |
+| `benchmarks/article_native_corpus.py`, `benchmarks/article_v1_calibration.py` | Shared identity decision, aliases, tolerance calibration | deterministic witness generation; corpus tests |
+| `experiments/profiles.py`, `experiments/article_v1_runner.py`, `article_benchmark.py` | V2 provenance plus plan/calibration CLI | seven schedulers and fail-closed resume; runner tests/mini-CI |
+| `reporting/article_v1.py` | V2 raw-ledger/report schemas and target-metric-bound resume keys | failure-preserving aggregation; reporting and old-schema rejection tests |
+| `benchmarks/toffoli.py`, `ghz3_smoke.py`, `ghz3_rl.py`, `toffoli_certify.py` | Resource-baseline/lower-bound terminology with deprecated compatibility aliases | benchmark resource values and certification behavior |
+| Article configs and focused tests | Frozen `tau_cert=1e-6`, V2 expectations | corpus/budgets/seeds unchanged |
+
+Dirty-tree engineering qualification: focused 137 passed; full 305 passed; calibration passed; campaign planners passed; mini-CI passed twice with byte-stable resume. Pilot/publication evidence remains gated on a reviewed, committed clean version.
+
 Status: **implementation and mini-CI qualification complete; pilot and
 publication campaigns not run**
 

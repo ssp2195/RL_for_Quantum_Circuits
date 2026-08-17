@@ -1,5 +1,9 @@
 # Proposed Article V1 manuscript patch
 
+## Final raw-metric reconciliation
+
+Equation (129) is implemented literally after finite/unitary validation: neither matrix is normalized or projected, and only `|Tr(V†U)|/d` is clipped. Deterministic calibration freezes `tau_cert=1e-6` (equivalent floor `2.5809568279517847e-8`); identity deduplication separately freezes `tau_identity=1e-7` while calling the same primitive. The amended reward remains normative: every unsuccessful episode has total base return `-B_exp`, including early frontier exhaustion.
+
 This repository document records implementation-plan amendments and
 operational completions. It is not part of the external manuscript, and the
 external `Article_limited_scope.md` file has not been edited. In particular,

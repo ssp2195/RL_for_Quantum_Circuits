@@ -26,12 +26,16 @@ import numpy as np
 
 from canonical.canonicalizer import Canonicalizer
 from certification.simulator import SynthesisTarget, unitary_from_gates
+from certification.unitary_phase_metrics import (
+    PROJECTIVE_UNITARY_METRICS_SCHEMA,
+    projective_unitary_metrics,
+)
 from circuit.circuit_state import CircuitState
 from enums import GateType
 
 
 # Article V1 schemas and exact coordinate order.
-ARTICLE_V1_TARGET_METRIC_SCHEMA_VERSION = "process-infidelity-v1"
+ARTICLE_V1_TARGET_METRIC_SCHEMA_VERSION = PROJECTIVE_UNITARY_METRICS_SCHEMA
 ARTICLE_V1_FEATURE_SCHEMA_VERSION = "article-v1-31d"
 ARTICLE_V1_NO_TARGET_FEATURE_SCHEMA_VERSION = "article-v1-no-target-28d"
 ARTICLE_V1_NO_Z_FEATURE_SCHEMA_VERSION = "article-v1-no-z-21d"
@@ -111,16 +115,9 @@ def process_infidelity(
     if not np.isfinite(tolerance) or tolerance < 0.0:
         raise ValueError("roundoff_tolerance must be finite and non-negative")
 
-    dimension = target.shape[0]
-    overlap = np.trace(target.conj().T @ candidate)
-    value = float(1.0 - (abs(overlap) ** 2) / float(dimension * dimension))
-    if not np.isfinite(value):
-        raise ArithmeticError("process infidelity is not finite")
-    if value < -tolerance or value > 1.0 + tolerance:
-        raise ArithmeticError(
-            f"process infidelity {value!r} lies outside the physical [0, 1] range"
-        )
-    return float(min(1.0, max(0.0, value)))
+    # ``roundoff_tolerance`` remains in the compatibility signature, but the
+    # shared helper owns validation and physical-range clipping for Article V1.
+    return projective_unitary_metrics(candidate, target).process_infidelity
 
 
 WitnessIdentity = tuple[int, tuple[tuple[str, tuple[int, ...]], ...]]

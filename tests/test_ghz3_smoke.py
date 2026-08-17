@@ -21,7 +21,9 @@ def test_ghz3_frontier_baseline_discovers_the_known_optimal_witness(tmp_path: Pa
         {"gate": "CNOT", "qubits": [0, 2]},
     ]
     assert report["state_preparation"]["fidelity"] >= 1.0 - 1e-12
-    assert report["optimality"]["matches_known_native_resource_baseline"]
+    assert report["resource_baseline"]["matches_known_native_resource_baseline"]
+    assert report["optimality"] == report["resource_baseline"]
+    assert "optimality" in report["deprecated_report_fields"]
 
     artifacts = report["artifacts"]
     for artifact_path in artifacts.values():

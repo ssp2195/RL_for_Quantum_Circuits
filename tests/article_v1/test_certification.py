@@ -17,9 +17,13 @@ from certification.article_v1 import (
 )
 from certification.base import CertStatus
 from certification.simulator import SynthesisTarget, unitary_from_gates
+from certification.unitary_phase_metrics import projective_unitary_metrics
 from circuit.dag import CircuitDAG
+from circuit.circuit_state import CircuitState
 from circuit.gate import Gate
+from ckt_types import ResourceBudget
 from enums import GateType
+from rl.article_features import ArticleTargetContext
 
 
 def _state(num_qubits: int, gates: tuple[Gate, ...] = ()) -> SimpleNamespace:
@@ -86,6 +90,22 @@ def test_threshold_is_inclusive_and_distinguishes_just_below_and_above() -> None
     assert below.passed
     assert above.delta_phi > tau
     assert not above.passed
+
+
+def test_frozen_production_threshold_brackets_just_below_and_above() -> None:
+    below = article_v1_certification_diagnostics(
+        _relative_phase_unitary(DEFAULT_TAU_CERT * 0.999),
+        np.eye(2),
+        tau_cert=DEFAULT_TAU_CERT,
+    )
+    above = article_v1_certification_diagnostics(
+        _relative_phase_unitary(DEFAULT_TAU_CERT * 1.001),
+        np.eye(2),
+        tau_cert=DEFAULT_TAU_CERT,
+    )
+
+    assert below.delta_phi < DEFAULT_TAU_CERT and below.passed
+    assert above.delta_phi > DEFAULT_TAU_CERT and not above.passed
 
 
 def test_diagnostics_are_frozen_and_json_ready() -> None:
@@ -182,3 +202,57 @@ def test_standalone_metric_has_the_frozen_default_formula() -> None:
     assert phase_frobenius_discrepancy(candidate, np.eye(2)) == pytest.approx(
         math.sqrt(1.0 - expected_c)
     )
+
+
+def test_shared_metric_never_hides_scaling_by_frobenius_normalization() -> None:
+    epsilon = 1e-8
+    metrics = projective_unitary_metrics(
+        (1.0 - epsilon) * np.eye(2),
+        np.eye(2),
+        unitarity_tolerance=1e-6,
+    )
+
+    assert metrics.normalized_trace_magnitude_raw == pytest.approx(1.0 - epsilon)
+    assert metrics.phase_frobenius_discrepancy > 0.0
+
+
+def test_shared_metric_rejects_slight_nonunitarity_under_production_tolerance() -> None:
+    with pytest.raises(ValueError, match="candidate must be unitary"):
+        projective_unitary_metrics((1.0 - 1e-8) * np.eye(2), np.eye(2))
+
+
+def test_shared_metric_rejects_non_power_of_two_dimensions() -> None:
+    with pytest.raises(ValueError, match="positive power of two"):
+        projective_unitary_metrics(np.eye(3), np.eye(3))
+
+
+def test_certifier_calls_the_shared_metric_implementation(monkeypatch) -> None:
+    calls: list[tuple[np.ndarray, np.ndarray]] = []
+
+    def recording_metric(candidate, target, *, unitarity_tolerance):
+        calls.append((np.asarray(candidate), np.asarray(target)))
+        return projective_unitary_metrics(
+            candidate, target, unitarity_tolerance=unitarity_tolerance
+        )
+
+    monkeypatch.setattr(
+        "certification.article_v1.projective_unitary_metrics", recording_metric
+    )
+    result = ArticleV1CertificationEngine(np.eye(2)).certify(_state(1))
+
+    assert result.status is CertStatus.SUCCESS
+    assert len(calls) == 1
+
+
+def test_corrupt_target_metric_cache_cannot_influence_final_certification() -> None:
+    gates = (Gate(GateType.H, (0,)),)
+    target = unitary_from_gates(1, gates)
+    state = CircuitState(
+        CircuitDAG.from_gates(1, gates),
+        ResourceBudget(4, 4, 4, 4),
+    )
+    context = ArticleTargetContext(target)
+    context._cache[context.cache_key(state)] = 1.0
+
+    assert context.distance(state) == 1.0
+    assert ArticleV1CertificationEngine(target).certify(state).status is CertStatus.SUCCESS

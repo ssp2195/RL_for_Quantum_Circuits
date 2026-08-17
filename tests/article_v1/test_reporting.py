@@ -45,7 +45,8 @@ def _run(
         "evaluation_seed": seed,
         "feature_schema_version": "article-v1-31d",
         "reward_schema_version": "article-v1-expansion-potential-amended",
-        "certification_schema_version": "phase-frobenius-v1",
+        "target_metric_schema_version": "projective-unitary-metrics-v2",
+        "certification_schema_version": "phase-frobenius-raw-v2",
         "code_version": "deadbeef",
         "source_worktree_digest": "sha256:source-a",
         "certified": certified,
@@ -98,6 +99,7 @@ def test_unique_run_key_is_canonical_and_covers_every_identity_coordinate() -> N
         {"feature_schema_version": "different-feature"},
         {"reward_schema_version": "different-reward"},
         {"reward_parameters": {"beta": 0.0}},
+        {"target_metric_schema_version": "different-target-metric"},
         {"certification_schema_version": "different-certifier"},
         {"certification_parameters": {"phase_frobenius_tolerance": 1e-8}},
         {
@@ -112,6 +114,18 @@ def test_unique_run_key_is_canonical_and_covers_every_identity_coordinate() -> N
     )
     for mutation in mutations:
         assert unique_run_key({**base, **mutation}) != unique_run_key(base)
+
+
+def test_store_rejects_pre_v2_raw_ledger_schema(tmp_path: Path) -> None:
+    store = AppendOnlyJSONLRunStore(tmp_path / "raw_runs.jsonl")
+    old = _run(
+        target="old", scheduler="fifo", seed=0, certified=False, expansions=1
+    )
+    old["schema_version"] = "article-v1-raw-run-v1"
+
+    with pytest.raises(ValueError, match="unsupported Article V1 raw-run schema"):
+        store.append(old)
+    assert not store.path.exists()
 
 
 def test_jsonl_store_resumes_repairs_partial_tail_and_preserves_failure(

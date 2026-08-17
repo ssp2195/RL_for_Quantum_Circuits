@@ -422,7 +422,11 @@ def run_ghz3_rl(
         "state_preparation": state_preparation,
         "validation": {
             "witness_structure_matches_canonical_ghz3": structure_match,
+            "resources_match_known_native_baseline": resource_match,
             "resources_match_optimal_native_contract": resource_match,
+            "deprecated_resource_claim_fields": [
+                "resources_match_optimal_native_contract"
+            ],
             "expected_resources": expected_resources,
             "accepted_wire_depths_for_commuting_cnot_order": accepted_wire_depths,
             "learned_improves_zero_policy": learned_improves_baseline,

@@ -454,11 +454,11 @@ def _positive_checks(
             resources.get("resource_accounting_correct", False)
         ),
         "fixed_resource_profile_matches": fixed_resources_match,
-        "known_optimal_t_count_reference": bool(
-            resources.get("matches_known_optimal_T_count", False)
+        "matches_published_t_lower_bound": bool(
+            resources.get("matches_published_t_lower_bound", False)
         ),
-        "known_optimal_cnot_count_reference": bool(
-            resources.get("matches_known_optimal_CNOT_count", False)
+        "matches_published_cnot_lower_bound": bool(
+            resources.get("matches_published_cnot_lower_bound", False)
         ),
     }
 

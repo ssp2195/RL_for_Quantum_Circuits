@@ -47,6 +47,7 @@ from env.rl_env import CircuitSynthesisEnv
 from evaluate import evaluate
 from experiments.profiles import ARTICLE_V1_PROFILE
 from reporting.article_v1 import (
+    ARTICLE_V1_RAW_RUN_SCHEMA,
     ArticleV1RunStore,
     unique_run_key,
     write_article_v1_report,
@@ -63,7 +64,7 @@ from rl.policy import LinearQPolicy
 from train import Trainer
 
 
-ARTICLE_V1_RUNNER_SCHEMA = "article-v1-publication-runner-v1"
+ARTICLE_V1_RUNNER_SCHEMA = "article-v1-publication-runner-v2"
 PRIMARY_SCHEDULERS = (
     "fifo",
     "lifo",
@@ -266,7 +267,7 @@ def _resource_budget_payload(case) -> dict[str, int]:
     }
 
 
-ARTICLE_V1_CHECKPOINT_SCHEMA = "article-v1-transferable-linear-checkpoint-v2"
+ARTICLE_V1_CHECKPOINT_SCHEMA = "article-v1-transferable-linear-checkpoint-v3"
 
 
 def _weights_digest(
@@ -643,8 +644,8 @@ class ArticleV1Checkpoint:
             raise ValueError("Article V1 checkpoint must contain a JSON object")
         if payload.get("checkpoint_schema") != ARTICLE_V1_CHECKPOINT_SCHEMA:
             raise ValueError("unsupported Article V1 checkpoint schema")
-        if payload.get("profile_name") != "article_v1":
-            raise ValueError("checkpoint profile is not article_v1")
+        if payload.get("profile_name") != ARTICLE_V1_PROFILE.name:
+            raise ValueError("checkpoint profile is not the frozen Article V1 profile")
         feature_schema = str(payload["feature_schema_version"])
         names = tuple(str(value) for value in payload["ordered_feature_names"])
         weights = tuple(float(value) for value in payload["weights"])
@@ -1023,7 +1024,7 @@ def evaluate_article_v1_run(
         if name.endswith("_time_ns")
     }
     raw: dict[str, object] = {
-        "schema_version": "article-v1-raw-run-v1",
+        "schema_version": ARTICLE_V1_RAW_RUN_SCHEMA,
         **_case_metadata(case),
         "scheduler": scheduler,
         "scheduler_semantics": report["scheduler_semantics"],
@@ -1189,6 +1190,9 @@ def evaluate_article_v1_matrix(
                         ),
                         "reward_schema_version": ARTICLE_V1_PROFILE.reward_schema,
                         "reward_parameters": {"beta": beta},
+                        "target_metric_schema_version": (
+                            ARTICLE_V1_PROFILE.target_metric_schema
+                        ),
                         "certification_schema_version": ARTICLE_V1_PROFILE.certification_schema,
                         "certification_parameters": {
                             "phase_frobenius_tolerance": certification_tolerance
@@ -1603,6 +1607,211 @@ def mini_ci_benchmark(
     return summary
 
 
+def campaign_plan(
+    config: str | Path,
+    *,
+    worker_count: int = 1,
+    pilot_seconds_per_expansion: float | None = None,
+) -> dict[str, object]:
+    """Return a deterministic, no-execution campaign cardinality report."""
+
+    if isinstance(worker_count, bool) or not isinstance(worker_count, int) or worker_count < 1:
+        raise ValueError("worker_count must be a positive integer")
+    if pilot_seconds_per_expansion is not None and (
+        not np.isfinite(pilot_seconds_per_expansion)
+        or pilot_seconds_per_expansion <= 0.0
+    ):
+        raise ValueError("pilot_seconds_per_expansion must be finite and positive")
+    resolved = load_article_v1_config(config)
+    corpus = build_article_v1_corpus(resolved)
+    experiment = resolved.experiment
+    splits = ("train", "validation", "test", "ood_test")
+    split_counts = {
+        split: len(corpus.cases(split=split))
+        for split in splits
+    }
+    learners = len(experiment["training_seeds"])
+    random_repeats = len(experiment["random_scheduler_seeds"])
+    scheduler_instances = 5 + random_repeats + learners
+    budget_grids = {
+        split: {
+            case.target_id: list(_budget_grid(case, experiment))
+            for case in corpus.cases(split=split)
+        }
+        for split in splits
+    }
+
+    def matrix_counts(split: str) -> tuple[int, int, int]:
+        grids = budget_grids[split].values()
+        runs = sum(len(grid) * scheduler_instances for grid in grids)
+        random_runs = sum(len(grid) * random_repeats for grid in grids)
+        expansions = sum(sum(grid) * scheduler_instances for grid in grids)
+        return runs, random_runs, expansions
+
+    standard_runs, standard_random_runs, standard_expansions = matrix_counts("test")
+    ood_runs, ood_random_runs, ood_expansions = matrix_counts("ood_test")
+    episodes_per_target = int(experiment["training_episodes_per_target"])
+    train_cases = corpus.cases(split="train")
+    ood_limit = int(resolved.ood_length_split.training_max_generator_length)
+    ood_train_cases = tuple(
+        case for case in train_cases if case.generator_length <= ood_limit
+    )
+    standard_training_episodes = len(train_cases) * learners * episodes_per_target
+    ood_training_episodes = len(ood_train_cases) * learners * episodes_per_target
+    standard_training_expansions = sum(
+        case.budget.expansion_budget * learners * episodes_per_target
+        for case in train_cases
+    )
+    ood_training_expansions = sum(
+        case.budget.expansion_budget * learners * episodes_per_target
+        for case in ood_train_cases
+    )
+    validation_cases = corpus.cases(split="validation")
+    ood_validation_cases = tuple(
+        case for case in validation_cases if case.generator_length <= ood_limit
+    )
+    primary_validation_runs = len(validation_cases) * learners
+    ood_validation_runs = len(ood_validation_cases) * learners
+    validation_expansions = sum(
+        case.budget.expansion_budget * learners
+        for case in validation_cases + ood_validation_cases
+    )
+
+    from experiments.article_v1_ablations import (
+        ARTICLE_V1_ABLATION_REGISTRY,
+        FULL_VALIDATION_SCOPE,
+        REQUIRED_ABLATION_IDS,
+    )
+
+    subset_count = sum(
+        1 for stratum in ("easy", "medium", "hard")
+        if corpus.cases(split="validation", difficulty=stratum)
+    )
+    ablation_runs = 0
+    ablation_expansions = 0
+    ablation_training_variants = 0
+    for ablation_id in REQUIRED_ABLATION_IDS:
+        ablation = ARTICLE_V1_ABLATION_REGISTRY[ablation_id]
+        case_count = (
+            len(validation_cases)
+            if ablation.evaluation_scope == FULL_VALIDATION_SCOPE
+            else subset_count
+        )
+        checkpoint_count = 1 if ablation.checkpoint_mode == "none" else learners
+        ablation_runs += case_count * checkpoint_count
+        cases = (
+            validation_cases
+            if ablation.evaluation_scope == FULL_VALIDATION_SCOPE
+            else tuple(
+                corpus.cases(split="validation", difficulty=stratum)[0]
+                for stratum in ("easy", "medium", "hard")
+                if corpus.cases(split="validation", difficulty=stratum)
+            )
+        )
+        ablation_expansions += sum(
+            case.budget.expansion_budget * checkpoint_count for case in cases
+        )
+        if ablation.checkpoint_mode == "train_variant":
+            ablation_training_variants += 1
+    ablation_training_episodes = (
+        ablation_training_variants * len(train_cases) * learners * episodes_per_target
+    )
+    ablation_training_expansions = (
+        ablation_training_variants * standard_training_expansions
+    )
+    expansion_breakdown = {
+        "standard_training": standard_training_expansions,
+        "ood_training": ood_training_expansions,
+        "validation": validation_expansions,
+        "standard_test": standard_expansions,
+        "ood_test": ood_expansions,
+        "ablation_training": ablation_training_expansions,
+        "ablation_evaluation": ablation_expansions,
+    }
+    worst_case_expansions = sum(expansion_breakdown.values())
+    expected_keys = standard_runs + ood_runs
+    estimated_disk_bytes = expected_keys * 16_384 + ablation_runs * 32_768
+    cpu_seconds = (
+        None
+        if pilot_seconds_per_expansion is None
+        else worst_case_expansions * float(pilot_seconds_per_expansion)
+    )
+    report = {
+        "schema_version": "article-v1-campaign-plan-v1",
+        "config_profile": resolved.profile,
+        "config_digest": resolved.digest,
+        "target_counts": split_counts,
+        "target_counts_by_split_stratum": {
+            split: {
+                stratum: len(corpus.cases(split=split, difficulty=stratum))
+                for stratum in ("easy", "medium", "hard")
+            }
+            for split in split_counts
+        },
+        "target_counts_by_split_stratum_qubits": {
+            split: {
+                stratum: {
+                    str(width): sum(
+                        case.num_qubits == width
+                        for case in corpus.cases(split=split, difficulty=stratum)
+                    )
+                    for width in resolved.qubits
+                }
+                for stratum in ("easy", "medium", "hard")
+            }
+            for split in splits
+        },
+        "learner_checkpoint_count": 2 * learners,
+        "learner_checkpoint_breakdown": {"standard": learners, "ood_length": learners},
+        "training_episodes": standard_training_episodes + ood_training_episodes + ablation_training_episodes,
+        "training_episode_breakdown": {
+            "standard": standard_training_episodes,
+            "ood_length": ood_training_episodes,
+            "ablation_variants": ablation_training_episodes,
+        },
+        "scheduler_instances": {
+            "deterministic_nonlearner": 5,
+            "seeded_random": random_repeats,
+            "article_sarsa": learners,
+            "total_per_target_budget": scheduler_instances,
+        },
+        "expansion_budget_multipliers": list(experiment["expansion_budget_multipliers"]),
+        "expansion_budgets": budget_grids,
+        "standard_test_run_count": standard_runs,
+        "ood_run_count": ood_runs,
+        "validation_run_count": primary_validation_runs + ood_validation_runs,
+        "validation_run_breakdown": {
+            "standard": primary_validation_runs,
+            "ood_length": ood_validation_runs,
+        },
+        "ablation_run_count": ablation_runs,
+        "ablation_configuration_count": len(REQUIRED_ABLATION_IDS),
+        "repeated_random_run_count": standard_random_runs + ood_random_runs,
+        "expected_raw_ledger_keys": expected_keys,
+        "expected_raw_ledger_key_breakdown": {
+            "standard_test": standard_runs,
+            "ood_test": ood_runs,
+        },
+        "worst_case_expansion_count": worst_case_expansions,
+        "worst_case_expansion_breakdown": expansion_breakdown,
+        "estimated_disk_use": {
+            "bytes": estimated_disk_bytes,
+            "method": "16384 bytes per primary raw JSONL record plus 32768 bytes per ablation record",
+        },
+        "estimated_cpu_time_from_pilot": {
+            "seconds": cpu_seconds,
+            "wall_seconds_at_selected_workers": (
+                None if cpu_seconds is None else cpu_seconds / worker_count
+            ),
+            "pilot_seconds_per_expansion": pilot_seconds_per_expansion,
+            "status": "awaiting-pilot-measurement" if cpu_seconds is None else "estimated",
+        },
+        "selected_worker_count": worker_count,
+        "executes_search": False,
+    }
+    return report
+
+
 def main(argv: Iterable[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -1623,6 +1832,14 @@ def main(argv: Iterable[str] | None = None) -> int:
     mini.add_argument("--output-root", type=Path, default=Path("outputs") / "article_v1")
     mini.add_argument("--run-id", default="mini-ci")
     mini.add_argument("--force-retrain", action="store_true")
+    calibrate = subparsers.add_parser("calibrate-certifier")
+    calibrate.add_argument("--config", type=Path, required=True)
+    calibrate.add_argument("--output-root", type=Path, default=Path("outputs") / "article_v1")
+    calibrate.add_argument("--run-id", default="article-v1-raw-metric-calibration")
+    plan_parser = subparsers.add_parser("plan")
+    plan_parser.add_argument("--config", type=Path, required=True)
+    plan_parser.add_argument("--workers", type=int, default=1)
+    plan_parser.add_argument("--pilot-seconds-per-expansion", type=float)
     args = parser.parse_args(argv)
 
     if args.command == "mini-ci":
@@ -1633,6 +1850,20 @@ def main(argv: Iterable[str] | None = None) -> int:
         )
         print(json.dumps(_json_ready(result), indent=2, sort_keys=True))
         return 0 if result["passed"] else 1
+    if args.command == "calibrate-certifier":
+        from benchmarks.article_v1_calibration import calibrate_certifier
+
+        path = args.output_root / args.run_id / "certifier_calibration.json"
+        result = calibrate_certifier(args.config, path)
+        print(json.dumps(_json_ready(result), indent=2, sort_keys=True))
+        return 0 if result["passed"] else 1
+    if args.command == "plan":
+        print(json.dumps(_json_ready(campaign_plan(
+            args.config,
+            worker_count=args.workers,
+            pilot_seconds_per_expansion=args.pilot_seconds_per_expansion,
+        )), indent=2, sort_keys=True))
+        return 0
 
     destination, corpus = initialize_run(
         args.config, output_root=args.output_root, run_id=args.run_id
@@ -1806,6 +2037,7 @@ __all__ = [
     "initialize_run",
     "main",
     "mini_ci_benchmark",
+    "campaign_plan",
     "train_article_v1_checkpoint",
     "validate_article_v1_checkpoints",
 ]

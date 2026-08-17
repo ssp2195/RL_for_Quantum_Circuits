@@ -31,6 +31,7 @@ from experiments.article_v1_runner import (
     _mini_ci_semantic_checks,
     evaluate_article_v1_run,
     git_provenance,
+    initialize_run,
     mini_ci_benchmark,
 )
 from experiments.profiles import ARTICLE_V1_PROFILE
@@ -560,6 +561,47 @@ def test_checkpoint_resume_rejects_corruption_and_force_is_explicit(
     assert trained is True
     assert loaded == replacement
     assert ArticleV1Checkpoint.load(path) == replacement
+
+
+def test_checkpoint_resume_rejects_pre_v2_scientific_schema(tmp_path: Path) -> None:
+    path = tmp_path / "old-checkpoint.json"
+    _checkpoint().save(path)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["checkpoint_schema"] = "article-v1-transferable-linear-checkpoint-v2"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    old_bytes = path.read_bytes()
+    trainer_called = False
+
+    def forbidden_trainer() -> ArticleV1Checkpoint:
+        nonlocal trainer_called
+        trainer_called = True
+        return _checkpoint()
+
+    with pytest.raises(ValueError, match="new run ID or explicitly force"):
+        _load_or_train_article_v1_checkpoint(
+            path,
+            scope=_scope(),
+            expected_training_seed=17,
+            train_callback=forbidden_trainer,
+        )
+    assert trainer_called is False
+    assert path.read_bytes() == old_bytes
+
+
+def test_run_resume_rejects_pre_v2_manifest_without_rewriting(tmp_path: Path) -> None:
+    destination, _ = initialize_run(
+        "pilot", output_root=tmp_path, run_id="old-manifest"
+    )
+    path = destination / "run_manifest.json"
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    payload["schema_version"] = "article-v1-publication-runner-v1"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+    old_bytes = path.read_bytes()
+
+    with pytest.raises(ValueError, match="run manifest conflicts"):
+        initialize_run("pilot", output_root=tmp_path, run_id="old-manifest")
+    assert path.read_bytes() == old_bytes
 
 
 def test_mini_ci_writes_artifacts_resumes_and_never_falls_back_to_reference_witness(

@@ -25,6 +25,7 @@ from certification.simulator import (
     SynthesisTarget,
     unitary_from_gates,
 )
+from certification.unitary_phase_metrics import projective_unitary_metrics
 from circuit.circuit_state import CircuitState
 
 
@@ -412,22 +413,9 @@ class DenseTargetContext:
             return cached
 
         candidate = unitary_from_gates(self.num_qubits, state.dag.gates)
-        target_overlap = np.trace(self.target_unitary.conj().T @ candidate)
-        dimension = candidate.shape[0]
-        process_fidelity = _bounded_unit_interval(
-            float(abs(target_overlap) ** 2 / (dimension * dimension)),
-            name="process fidelity",
-        )
-
-        if abs(target_overlap) > _ROUND_OFF_TOLERANCE:
-            phase = target_overlap / abs(target_overlap)
-        else:
-            phase = 1.0 + 0.0j
-        residual = candidate - phase * self.target_unitary
-        phase_aligned_frobenius_distance = _bounded_unit_interval(
-            float(np.linalg.norm(residual, ord="fro") / sqrt(2.0 * dimension)),
-            name="phase-aligned Frobenius distance",
-        )
+        shared = projective_unitary_metrics(candidate, self.target_unitary)
+        process_fidelity = shared.process_fidelity
+        phase_aligned_frobenius_distance = shared.phase_frobenius_discrepancy
 
         candidate_probe = candidate @ self.probe_state
         probe_state_fidelity = _bounded_unit_interval(

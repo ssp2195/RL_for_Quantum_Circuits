@@ -21,14 +21,15 @@ from typing import Any, Iterable, Mapping, Sequence
 import numpy as np
 
 from certification.simulator import SynthesisTarget, unitary_from_gates
+from certification.unitary_phase_metrics import phase_frobenius_discrepancy
 from circuit.gate import Gate
 from ckt_types import ResourceBudget
 from enums import GateType
 
 
-ARTICLE_V1_CORPUS_SCHEMA = "article-v1-native-corpus-v1"
-ARTICLE_V1_CONFIG_SCHEMA = "article-v1-corpus-config-v1"
-ARTICLE_V1_IDENTITY_SCHEMA = "article-v1-phase-normalized-dense-sha256-v1"
+ARTICLE_V1_CORPUS_SCHEMA = "article-v1-native-corpus-v2"
+ARTICLE_V1_CONFIG_SCHEMA = "article-v1-corpus-config-v2"
+ARTICLE_V1_IDENTITY_SCHEMA = "projective-identity-shared-metric-v2"
 ARTICLE_V1_EVALUATION_SCHEMA = "article-v1-evaluation-target-v1"
 ARTICLE_V1_CHECKPOINT_SCOPE_SCHEMA = "article-v1-checkpoint-evaluation-scope-v1"
 
@@ -102,20 +103,7 @@ def article_delta_phi(left: np.ndarray, right: np.ndarray) -> float:
     it does not introduce a second identity tolerance.
     """
 
-    candidate = np.asarray(left, dtype=np.complex128)
-    target = np.asarray(right, dtype=np.complex128)
-    if (
-        candidate.ndim != 2
-        or target.ndim != 2
-        or candidate.shape[0] != candidate.shape[1]
-        or candidate.shape != target.shape
-    ):
-        raise ValueError("delta_phi requires equal-size square matrices")
-    if not np.isfinite(candidate).all() or not np.isfinite(target).all():
-        raise ValueError("delta_phi inputs must contain only finite values")
-    dimension = candidate.shape[0]
-    overlap = abs(np.trace(target.conj().T @ candidate)) / float(dimension)
-    return float(np.sqrt(np.clip(1.0 - overlap, 0.0, 1.0)))
+    return phase_frobenius_discrepancy(left, right)
 
 
 def _phase_normalized_matrix(unitary: np.ndarray, *, decimals: int) -> np.ndarray:
@@ -449,11 +437,11 @@ class ArticleV1CorpusConfig:
         if not isinstance(experiment, Mapping):
             raise ValueError("experiment must be a JSON object")
         required_experiment = {
-            "profile_name": "article_v1",
+            "profile_name": "article_v1_raw_metric_v2",
             "feature_schema": "article-v1-31d",
             "reward_schema": "article-v1-expansion-potential-amended",
-            "target_metric_schema": "process-infidelity-v1",
-            "certification_schema": "phase-frobenius-v1",
+            "target_metric_schema": "projective-unitary-metrics-v2",
+            "certification_schema": "phase-frobenius-raw-v2",
         }
         for key, expected in required_experiment.items():
             if experiment.get(key) != expected:
@@ -983,6 +971,7 @@ class ArticleV1TargetCase:
             "target_identity_digest": self.target_id,
             "target_matrix_shape": list(self.unitary.shape),
             "split": self.split,
+            "stratum": self.difficulty,
             "difficulty": self.difficulty,
             "split_seed": self.split_seed,
             "generator_seed": self.generator_seed,
@@ -1002,6 +991,10 @@ class ArticleV1TargetCase:
                     for gate in self.generator_witness
                 ],
             },
+            "generator_witness": [
+                {"gate": gate.gate_type.name, "qubits": list(gate.qubits)}
+                for gate in self.generator_witness
+            ],
             "generator_witness_provenance": "reachability-and-replay-audit-only",
             "generator_witness_evaluation_prohibited": True,
             "target_specific_reachability_oracle": False,
@@ -1183,6 +1176,7 @@ class ArticleV1Corpus:
             "config_digest": self.config.digest,
             "identity_schema": ARTICLE_V1_IDENTITY_SCHEMA,
             "tau_identity": self.config.tau_identity,
+            "identity_tolerance": self.config.tau_identity,
             "digest_decimals": self.config.digest_decimals,
             "qubits": list(self.config.qubits),
             "native_gate_grammar": list(NATIVE_GATE_NAMES),

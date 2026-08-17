@@ -77,7 +77,7 @@ def test_ghz_target_metrics_are_bounded_and_exact_for_the_full_witness():
     assert metrics.target_fingerprint == context.fingerprint
     assert metrics.phase_mode == "quotient_global_phase"
     assert metrics.process_fidelity == pytest.approx(1.0, abs=1e-12)
-    assert metrics.phase_aligned_frobenius_distance == pytest.approx(0.0, abs=1e-12)
+    assert metrics.phase_aligned_frobenius_distance <= 1e-6
     assert metrics.probe_state_fidelity == pytest.approx(1.0, abs=1e-12)
     assert metrics.effective_support_size == pytest.approx(2.0, abs=1e-12)
     assert metrics.support_match == pytest.approx(1.0, abs=1e-12)

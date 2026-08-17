@@ -618,6 +618,10 @@ def toffoli_resource_summary(state: CircuitState) -> dict[str, object]:
     # All values are native JSON scalars, lists, and mappings.  The known
     # resource claims refer only to this fixed reference witness, never to a
     # lower-bound proof or a search result.
+    matches_t_baseline = actual_profile["t_count"] == 7
+    matches_cnot_baseline = actual_profile["cnot_count"] == 6
+    matches_published_baseline = matches_t_baseline and matches_cnot_baseline
+    resource_accounting_correct = actual_profile == expected_profile
     return {
         **actual_profile,
         "wire_depths": list(wire_depths),
@@ -633,9 +637,28 @@ def toffoli_resource_summary(state: CircuitState) -> dict[str, object]:
             **expected_profile,
             "wire_depths": list(expected_profile["wire_depths"]),
         },
-        "resource_accounting_correct": actual_profile == expected_profile,
-        "matches_known_optimal_T_count": actual_profile["t_count"] == 7,
-        "matches_known_optimal_CNOT_count": actual_profile["cnot_count"] == 6,
+        "resource_accounting_correct": resource_accounting_correct,
+        "matches_known_resource_baseline": matches_published_baseline,
+        "matches_published_lower_bound": matches_published_baseline,
+        "matches_published_t_lower_bound": matches_t_baseline,
+        "matches_published_cnot_lower_bound": matches_cnot_baseline,
+        "resource_regression_passed": (
+            resource_accounting_correct and matches_published_baseline
+        ),
+        "published_resource_baseline": {
+            "t_count": 7,
+            "cnot_count": 6,
+            "scope": "external published Toffoli result",
+            "proved_by_this_search_run": False,
+        },
+        # Compatibility aliases; consumers should migrate to the explicit
+        # baseline/lower-bound fields above.
+        "matches_known_optimal_T_count": matches_t_baseline,
+        "matches_known_optimal_CNOT_count": matches_cnot_baseline,
+        "deprecated_resource_claim_fields": [
+            "matches_known_optimal_T_count",
+            "matches_known_optimal_CNOT_count",
+        ],
     }
 
 

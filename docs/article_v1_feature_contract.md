@@ -1,5 +1,9 @@
 # Article V1 feature contract
 
+## V2 target metric binding
+
+Process infidelity and direct target-distance scheduling are bound to `projective-unitary-metrics-v2`, which validates and compares the original matrices without normalization. Feature caching remains keyed by target fingerprint plus complete ordered DAG witness; terminal certification reconstructs a fresh DAG unitary and does not consume that cache.
+
 `article-v1-31d` is the publication feature schema. It is distinct from the
 pre-existing extended 37-coordinate and composite target-aware schemas.
 

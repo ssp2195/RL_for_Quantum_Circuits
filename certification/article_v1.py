@@ -18,11 +18,14 @@ import numpy as np
 from certification.base import CertResult, CertStatus
 from certification.base_engine import CertificationEngine
 from certification.simulator import SynthesisTarget, unitary_from_gates
+from certification.unitary_phase_metrics import (
+    DEFAULT_UNITARITY_TOLERANCE,
+    projective_unitary_metrics,
+)
 
 
-ARTICLE_V1_CERTIFICATION_SCHEMA = "phase-frobenius-v1"
-DEFAULT_TAU_CERT = 1e-9
-DEFAULT_UNITARITY_TOLERANCE = 1e-9
+ARTICLE_V1_CERTIFICATION_SCHEMA = "phase-frobenius-raw-v2"
+DEFAULT_TAU_CERT = 1e-6
 
 
 def _nonnegative_finite_float(value: float, *, name: str) -> float:
@@ -159,77 +162,39 @@ def article_v1_certification_diagnostics(
         unitarity_tolerance,
         name="unitarity_tolerance",
     )
-    candidate_unitary = _validated_unitary(
-        candidate,
-        name="candidate",
-        unitarity_tolerance=validation_tolerance,
+    metrics = projective_unitary_metrics(
+        candidate, target, unitarity_tolerance=validation_tolerance
     )
-    target_unitary = _validated_unitary(
-        target,
-        name="target",
-        unitarity_tolerance=validation_tolerance,
-    )
-    if candidate_unitary.dimension != target_unitary.dimension:
-        raise ValueError(
-            "candidate and target dimensions must match; "
-            f"got {candidate_unitary.dimension} and {target_unitary.dimension}"
-        )
-
-    dimension = candidate_unitary.dimension
-    # The article's formula assumes exact unitaries, for which the Frobenius
-    # norm is exactly sqrt(d).  Dense gate replay uses complex128 constants
-    # (notably 1/sqrt(2)), so even two freshly reconstructed copies of H can
-    # otherwise produce c_phi = 1 - O(machine epsilon) and, after the square
-    # root in Delta_phi, a spurious O(1e-8) discrepancy.  Restore only this
-    # exact unitary norm invariant after the strict validation above.  This is
-    # a numerical representation correction, not an extra acceptance rule.
-    candidate_matrix = candidate_unitary.matrix * (
-        math.sqrt(dimension)
-        / float(np.linalg.norm(candidate_unitary.matrix, ord="fro"))
-    )
-    target_matrix = target_unitary.matrix * (
-        math.sqrt(dimension)
-        / float(np.linalg.norm(target_unitary.matrix, ord="fro"))
-    )
-    overlap = np.trace(target_matrix.conj().T @ candidate_matrix)
-    raw_c_phi = float(abs(overlap) / dimension)
-    c_phi = min(1.0, max(0.0, raw_c_phi))
-    delta_phi = math.sqrt(max(0.0, 1.0 - c_phi))
-    process_fidelity = min(1.0, max(0.0, c_phi * c_phi))
-    process_infidelity = min(1.0, max(0.0, 1.0 - process_fidelity))
-
-    if abs(overlap) == 0.0:
-        optimal_phase = 1.0 + 0.0j
-    else:
-        optimal_phase = complex(overlap / abs(overlap))
-    aligned_error = candidate_matrix - optimal_phase * target_matrix
-    frobenius_norm = float(np.linalg.norm(aligned_error, ord="fro"))
+    dimension = metrics.dimension
+    c_phi = metrics.normalized_trace_magnitude
+    delta_phi = metrics.phase_frobenius_discrepancy
+    optimal_phase = metrics.optimal_global_phase
+    frobenius_norm = metrics.phase_aligned_frobenius_norm
     normalized_matrix_error = float(frobenius_norm / math.sqrt(2.0 * dimension))
-    maximum_entry_error = float(np.max(np.abs(aligned_error)))
 
     return ArticleV1CertificationDiagnostics(
         schema_version=ARTICLE_V1_CERTIFICATION_SCHEMA,
         normalized_trace_magnitude=c_phi,
-        process_fidelity=process_fidelity,
-        process_infidelity=process_infidelity,
+        process_fidelity=metrics.process_fidelity,
+        process_infidelity=metrics.process_infidelity,
         phase_frobenius_discrepancy=delta_phi,
         tau_cert=tau,
         passed=bool(delta_phi <= tau),
         optimal_global_phase=(float(optimal_phase.real), float(optimal_phase.imag)),
         phase_aligned_matrix_error=normalized_matrix_error,
         phase_aligned_frobenius_norm=frobenius_norm,
-        maximum_phase_aligned_entry_error=maximum_entry_error,
-        candidate_unitarity_error=candidate_unitary.unitarity_error,
-        target_unitarity_error=target_unitary.unitarity_error,
+        maximum_phase_aligned_entry_error=metrics.maximum_phase_aligned_entry_error,
+        candidate_unitarity_error=metrics.candidate_unitarity_error,
+        target_unitarity_error=metrics.target_unitarity_error,
         unitarity_tolerance=validation_tolerance,
-        candidate_dimension=candidate_unitary.dimension,
-        target_dimension=target_unitary.dimension,
-        candidate_num_qubits=candidate_unitary.num_qubits,
-        target_num_qubits=target_unitary.num_qubits,
-        candidate_finite=candidate_unitary.finite,
-        target_finite=target_unitary.finite,
-        candidate_unitary=candidate_unitary.unitary,
-        target_unitary=target_unitary.unitary,
+        candidate_dimension=dimension,
+        target_dimension=dimension,
+        candidate_num_qubits=dimension.bit_length() - 1,
+        target_num_qubits=dimension.bit_length() - 1,
+        candidate_finite=True,
+        target_finite=True,
+        candidate_unitary=True,
+        target_unitary=True,
     )
 
 

@@ -1,5 +1,9 @@
 # Article V1 experiment protocol
 
+## Raw-metric V2 amendment
+
+The frozen finalization profile is `article_v1_raw_metric_v2`. Finite/unitary matrices are compared without Frobenius rescaling using `projective-unitary-metrics-v2`: `c_phi=clip(|Tr(V†U)|/d,0,1)`, `d_tar=1-c_phi²`, and `Delta_phi=sqrt(max(0,1-c_phi))`. Calibration measured an equivalent floor of `2.5809568279517847e-8`; the mandated rule freezes `tau_cert=1e-6`. The smallest declared adversarial discrepancy, including the localized unitary perturbation fixture, was `0.00023385357996901645`. Corpus identity calls the same formula with separate `tau_identity=1e-7`.
+
 ## Status and source boundary
 
 This document is the preregistered repository protocol for Article V1. It
@@ -182,7 +186,7 @@ c_\phi(U,V)=|\operatorname{Tr}(V^\dagger U)|/d,
 
 `certification/article_v1.py` accepts only when
 \(\Delta_\phi\le\tau_{\mathrm{cert}}\) after fresh DAG replay. The checked-in
-profiles set `tau_cert=1e-9` through `experiment.certification_tolerance` and
+profiles set `tau_cert=1e-6` through `experiment.certification_tolerance` and
 set corpus `tau_identity=1e-7`. These tolerances have separate scientific
 roles and must not be treated as interchangeable. Also,
 \(d_{\mathrm{tar}}=1-c_\phi^2\) is not \(\Delta_\phi\).

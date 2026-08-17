@@ -16,6 +16,7 @@ from rl.article_features import (
     ArticleTargetContext,
     process_infidelity,
 )
+from certification.unitary_phase_metrics import projective_unitary_metrics
 from search.node import SearchNode
 
 
@@ -61,7 +62,7 @@ def test_process_infidelity_validates_shape_finiteness_and_roundoff():
     # Tiny nonunitary scaling exercises only the specified roundoff clamp.
     almost_identity = (1.0 + 1e-12) * identity
     assert process_infidelity(identity, almost_identity) == 0.0
-    with pytest.raises(ArithmeticError, match="physical"):
+    with pytest.raises(ValueError, match="candidate must be unitary"):
         process_infidelity(identity, 2.0 * identity)
 
 
@@ -83,7 +84,7 @@ def test_context_reconstructs_from_full_dag_and_counts_cache_events():
     assert context.cache_size == 2
     assert context.metric_time_ns > 0
     assert context.cache_metrics() == {
-        "target_metric_schema_version": "process-infidelity-v1",
+        "target_metric_schema_version": "projective-unitary-metrics-v2",
         "target_metric_evaluation_count": 2,
         "target_metric_cache_hits": 1,
         "target_metric_cache_misses": 2,
@@ -119,3 +120,18 @@ def test_context_can_be_constructed_from_the_certification_engine_target():
 
     assert context.fingerprint.startswith("sha256:")
     assert context.distance(state(1)) == 0.0
+
+
+def test_article_d_tar_calls_shared_projective_metric(monkeypatch) -> None:
+    calls: list[tuple[np.ndarray, np.ndarray]] = []
+
+    def recording_metric(candidate, target):
+        calls.append((np.asarray(candidate), np.asarray(target)))
+        return projective_unitary_metrics(candidate, target)
+
+    monkeypatch.setattr("rl.article_features.projective_unitary_metrics", recording_metric)
+    context = ArticleTargetContext(np.eye(2, dtype=np.complex128))
+
+    assert context.distance(state(1, Gate(GateType.T, (0,)))) > 0.0
+    assert len(calls) == 1
+    assert context.schema_version == "projective-unitary-metrics-v2"
