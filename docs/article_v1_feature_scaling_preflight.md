@@ -139,6 +139,14 @@ python article_benchmark.py benchmark-features `
   --run-id article-v1-feature-index-v2
 ```
 
+The default steady-state microbenchmark policy is 31 timed repetitions after
+five untimed warmups at every frontier size. This makes the median-based
+512-to-1,024 compact-score scaling gate robust to short scheduler, cache, and
+clock noise; it replaces the earlier three-sample/one-warmup engineering
+diagnostic, which was insufficiently stable for a launch gate. Command-line
+overrides remain visible in the artifact metadata and must be justified during
+review.
+
 The command produced the passing engineering bundle
 `outputs/article_v1/article-v1-feature-index-v2-local-20260818-a`. Its canonical
 pilot configuration and source remained unchanged across the run, and the final

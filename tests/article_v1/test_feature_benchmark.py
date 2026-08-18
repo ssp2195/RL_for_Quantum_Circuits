@@ -15,6 +15,8 @@ from experiments.article_v1_feature_benchmark import (
     ARTICLE_V1_FEATURE_BASELINE_SCHEMA,
     ARTICLE_V1_FEATURE_PROJECTION_SCHEMA,
     DEFAULT_FRONTIER_SIZES,
+    DEFAULT_MICROBENCHMARK_REPETITIONS,
+    DEFAULT_MICROBENCHMARK_WARMUPS,
     DEFAULT_STAGED_EXPANSION_CAPS,
     CorrectnessGate,
     EndToEndMeasurement,
@@ -174,6 +176,15 @@ def test_repository_adapter_binds_exact_hard_workload_and_cap_one_parity(
     assert (tmp_path / "profiles" / "hard-3q-cap-1-optimized.txt").is_file()
     assert (tmp_path / "profiles" / "frontier-F32-optimized.prof").is_file()
     assert (tmp_path / "profiles" / "frontier-F32-optimized.txt").is_file()
+
+
+def test_repository_adapter_defaults_use_stable_microbenchmark_sampling() -> None:
+    adapter = create_repository_feature_benchmark_adapter()
+
+    assert adapter.microbenchmark_repetitions == DEFAULT_MICROBENCHMARK_REPETITIONS
+    assert adapter.microbenchmark_warmups == DEFAULT_MICROBENCHMARK_WARMUPS
+    assert adapter.microbenchmark_repetitions == 31
+    assert adapter.microbenchmark_warmups == 5
 
 
 def test_optimized_frontier_profile_excludes_reference_all_pairs_work(
@@ -1007,3 +1018,5 @@ def test_benchmark_features_cli_dispatches_through_both_entry_points(
     assert config == Path("configs/article_v1_pilot.json")
     assert keywords["run_id"] == "cli-test"
     assert keywords["write_profiles"] is False
+    assert keywords["microbenchmark_repetitions"] == 31
+    assert keywords["microbenchmark_warmups"] == 5

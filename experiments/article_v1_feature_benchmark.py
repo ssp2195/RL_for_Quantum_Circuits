@@ -47,6 +47,8 @@ DEFAULT_STAGED_EXPANSION_CAPS = (32, 64, 128, 256, 512, 1024)
 DEFAULT_REFERENCE_SAFE_FRONTIER_SIZE = 1024
 DEFAULT_REFERENCE_TRACE_CAPS = (32, 64)
 DEFAULT_HARD_EXPANSION_CAP = 8192
+DEFAULT_MICROBENCHMARK_REPETITIONS = 31
+DEFAULT_MICROBENCHMARK_WARMUPS = 5
 PRODUCTION_DOMINANCE_IMPLEMENTATION_CHECK = (
     "no_python_nested_frontier_record_loop"
 )
@@ -1056,8 +1058,8 @@ class RepositoryArticleV1FeatureBenchmarkAdapter:
         config: str | Path = "pilot",
         *,
         target_id: str = PILOT_HARD_3Q_TARGET_ID,
-        microbenchmark_repetitions: int = 3,
-        microbenchmark_warmups: int = 1,
+        microbenchmark_repetitions: int = DEFAULT_MICROBENCHMARK_REPETITIONS,
+        microbenchmark_warmups: int = DEFAULT_MICROBENCHMARK_WARMUPS,
         reference_safe_frontier_size: int = DEFAULT_REFERENCE_SAFE_FRONTIER_SIZE,
         frontier_capture_expansion_limit: int = 512,
         profile_caps: Sequence[int] = (32, 64),
@@ -2623,6 +2625,8 @@ __all__ = [
     "CorrectnessGate",
     "DEFAULT_CORRECTNESS_TEST_NODE_IDS",
     "DEFAULT_FRONTIER_SIZES",
+    "DEFAULT_MICROBENCHMARK_REPETITIONS",
+    "DEFAULT_MICROBENCHMARK_WARMUPS",
     "DEFAULT_HARD_EXPANSION_CAP",
     "DEFAULT_REFERENCE_SAFE_FRONTIER_SIZE",
     "DEFAULT_REFERENCE_TRACE_CAPS",

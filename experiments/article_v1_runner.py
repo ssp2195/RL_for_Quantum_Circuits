@@ -62,6 +62,10 @@ from experiments.article_v1_progress import (
     ProgressCadence,
     utc_timestamp,
 )
+from experiments.article_v1_feature_benchmark import (
+    DEFAULT_MICROBENCHMARK_REPETITIONS,
+    DEFAULT_MICROBENCHMARK_WARMUPS,
+)
 from experiments.article_v1_replay_timing import (
     REPLAY_TIMING_EXPECTED_EXPANSIONS,
     ArticleV1ReplayTimingEvidence,
@@ -4464,8 +4468,8 @@ def benchmark_article_v1_features(
     output_root: str | Path = Path("outputs") / "article_v1",
     run_id: str = "article-v1-feature-index-v2",
     reference_safe_frontier_size: int = 1024,
-    microbenchmark_repetitions: int = 3,
-    microbenchmark_warmups: int = 1,
+    microbenchmark_repetitions: int = DEFAULT_MICROBENCHMARK_REPETITIONS,
+    microbenchmark_warmups: int = DEFAULT_MICROBENCHMARK_WARMUPS,
     frontier_capture_expansion_limit: int = 512,
     correctness_timeout_seconds: float = 300.0,
     maximum_hard_episode_seconds: float | None = None,
@@ -4952,9 +4956,17 @@ def main(argv: Iterable[str] | None = None) -> int:
         help="current-host reference is required through F=1024; F=2048 is skipped",
     )
     feature_benchmark.add_argument(
-        "--microbenchmark-repetitions", type=int, default=3
+        "--microbenchmark-repetitions",
+        type=int,
+        default=DEFAULT_MICROBENCHMARK_REPETITIONS,
+        help="steady-state samples per frontier size; default is 31 for robust medians",
     )
-    feature_benchmark.add_argument("--microbenchmark-warmups", type=int, default=1)
+    feature_benchmark.add_argument(
+        "--microbenchmark-warmups",
+        type=int,
+        default=DEFAULT_MICROBENCHMARK_WARMUPS,
+        help="untimed steady-state warmups per frontier size; default is 5",
+    )
     feature_benchmark.add_argument(
         "--frontier-capture-expansion-limit", type=int, default=512
     )
