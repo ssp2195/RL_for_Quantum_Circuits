@@ -9,6 +9,7 @@ import pytest
 
 from experiments.article_v1_progress import (
     ARTICLE_V1_PROGRESS_EVENT_SCHEMA,
+    ARTICLE_V1_PROGRESS_STATUS_SCHEMA,
     ArticleV1ProgressEvent,
     ArticleV1ProgressReporter,
     ProgressCadence,
@@ -24,6 +25,7 @@ def _event(expansion: int = 0, *, checkpoint_path: str | None = None):
         timestamp_utc="2026-08-17T12:34:56.789Z",
         run_id="bounded-progress-test",
         phase="training",
+        feature_evaluator_schema_version="article-v1-exact-incremental-v2",
         training_seed=7,
         target_index=0,
         target_count=2,
@@ -55,6 +57,11 @@ def test_progress_event_is_immutable_schema_strict_and_round_trips() -> None:
     payload = event.to_payload()
     assert payload["progress_event_schema"] == ARTICLE_V1_PROGRESS_EVENT_SCHEMA
     assert ArticleV1ProgressEvent.from_payload(payload) == event
+
+    with pytest.raises(ProgressFormatError, match="unsupported"):
+        ArticleV1ProgressEvent.from_payload(
+            {**payload, "progress_event_schema": "article-v1-progress-event-v1"}
+        )
 
     with pytest.raises(ProgressFormatError, match="members mismatch"):
         ArticleV1ProgressEvent.from_payload({**payload, "timing_is_scientific": False})
@@ -115,6 +122,8 @@ def test_reporter_writes_flushed_jsonl_atomic_status_and_concise_stdout(
     assert load_progress_status(reporter.status_path) == _event(
         2, checkpoint_path="checkpoints/latest.json"
     )
+    status = json.loads(reporter.status_path.read_text(encoding="utf-8"))
+    assert status["progress_status_schema"] == ARTICLE_V1_PROGRESS_STATUS_SCHEMA
     line = output.getvalue()
     assert "target=1/2:train-2q-000" in line
     assert "expansion=2/100" in line

@@ -11,13 +11,13 @@ raw scientific results.
 The portable event schema is:
 
 ```text
-article-v1-progress-event-v1
+article-v1-progress-event-v2
 ```
 
 The atomic latest-status schema is:
 
 ```text
-article-v1-progress-status-v1
+article-v1-progress-status-v2
 ```
 
 The implementation is in `experiments/article_v1_progress.py`.
@@ -30,6 +30,7 @@ The implementation is in `experiments/article_v1_progress.py`.
 timestamp_utc
 run_id
 phase
+feature_evaluator_schema_version
 training_seed
 target_index, target_count, target_id
 split, stratum, num_qubits
@@ -43,6 +44,26 @@ rolling_feature_batch_seconds
 elapsed_seconds
 expansions_per_second
 checkpoint_path
+```
+
+On the wire, the schema field is named `progress_event_schema`, not
+`schema_version`. The event object therefore has exactly these 26 JSON members:
+
+```text
+progress_event_schema
+timestamp_utc, run_id, phase, feature_evaluator_schema_version, training_seed
+target_index, target_count, target_id, split, stratum, num_qubits
+episode_index, episode_count, expansion, expansion_cap
+frontier_size, frontier_peak, archive_records, active_archive_records
+unique_resource_groups
+last_feature_batch_seconds, rolling_feature_batch_seconds
+elapsed_seconds, expansions_per_second, checkpoint_path
+```
+
+`status.json` has exactly:
+
+```text
+progress_status_schema, latest_event_digest, latest_event
 ```
 
 Target and episode indexes are zero-based in the JSON event. The concise console
@@ -68,10 +89,12 @@ The default is whichever happens first:
 
 Configure it with `ProgressCadence`. Either trigger may be disabled by setting it
 to `None`, but at least one trigger is required. Use `force=True` for useful
-boundaries such as start, episode end, target end, handled interrupt, and clean
-exit. Call `reset_cadence(expansion=0)` when a new episode resets its expansion
-counter. Cadence decisions use a monotonic clock and must not inspect or alter
-scientific state.
+boundaries. The current runner forces episode end and a handled interrupt. At a
+handled interrupt it saves the latest safe checkpoint first and then emits the
+forced event, so `checkpoint_path` names the recoverable artifact. Call
+`reset_cadence(expansion=0)` when a new episode resets its expansion counter.
+Cadence decisions use a monotonic clock and must not inspect or alter scientific
+state.
 
 Suggested CLI mapping:
 
@@ -134,7 +157,7 @@ At each callback, the runner adapts the immutable trainer boundary and run/targe
 context into `ArticleV1ProgressEvent`, then invokes:
 
 ```python
-emitted = reporter.maybe_emit(event)
+emitted = reporter.maybe_emit(event, force=force_boundary)
 ```
 
 Progress construction must not trigger another feature batch, policy ranking,
@@ -164,6 +187,46 @@ The trainer additionally exposes `progress_callback_time_ns` and
 `checkpoint_callback_time_ns`. These measure adapter callback wall time and must
 not be added to the reporter/store counters as if they were disjoint; report the
 layer being measured explicitly.
+
+## Current runner integration
+
+The committed starting point `bd251b9` provided the durable reporter and CLI
+cadence. The current uncommitted qualification worktree advances the portable
+event/status contract to v2 and keeps the same `pilot` and `train` flags:
+
+```text
+--progress-every-expansions (default 25)
+--progress-every-seconds    (default 10.0)
+--quiet
+```
+
+The runner emits after completed trainer boundaries and forces an episode-end
+event. It records current frontier/archive/group counters, evaluator identity,
+episode-local elapsed time/rate, and the last committed checkpoint path. The
+feature index records every completed compact-batch duration and retains the
+exact latest 25. `last_feature_batch_seconds` is the most recent complete
+compact-batch duration; `rolling_feature_batch_seconds` is the arithmetic mean
+of the latest `min(25, completed batches)` durations in the current episode.
+Re-observing the same provider count at episode end does not double-count the
+last batch. If a callback first observes a gap larger than the retained history,
+the retained 25 values are still the exact requested rolling-25 suffix.
+
+`elapsed_seconds` starts at the current episode boundary and
+`expansions_per_second` is the current episode expansion count divided by that
+elapsed time. Both reset only after the forced final event for an episode has
+been published. A handled interrupt writes a latest safe checkpoint and then
+forces one progress event even when neither ordinary cadence trigger is due.
+
+The focused v2 progress/resume/compact/runner command passed 95 tests in 17.65
+seconds in the current uncommitted worktree. It covers cadence, durable JSONL,
+atomic status, strict v1 rejection, evaluator provenance, quiet mode, separate
+reporter timing, exact rolling timing without duplicate episode-end samples,
+episode clock reset, mini-CI event/status evaluator provenance, and a real
+bounded forced-interrupt event with positive measured feature timings and a
+valid checkpoint path. Benchmark,
+clean-schema mini-CI, pilot, and publication campaign sample artifacts remain
+pending. The runner does not emit a second target-specific event in addition to
+the forced final episode event.
 
 ## Example console line
 

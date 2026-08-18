@@ -9,7 +9,7 @@ transitions.  Raw pickle is neither produced nor accepted.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, fields
+from dataclasses import dataclass, fields, replace
 import hashlib
 import json
 import math
@@ -24,10 +24,10 @@ from typing import Any, Callable, Iterable, Mapping, Sequence
 
 ARTICLE_V1_TRAINING_PROGRESS_SCHEMA = "article-v1-training-progress-v1"
 ARTICLE_V1_MID_EPISODE_CHECKPOINT_SCHEMA = (
-    "article-v1-mid-episode-replay-checkpoint-v1"
+    "article-v1-mid-episode-replay-checkpoint-v2"
 )
-ARTICLE_V1_EVENT_JOURNAL_SCHEMA = "article-v1-training-event-journal-v1"
-ARTICLE_V1_EVENT_SCHEMA = "article-v1-training-expansion-event-v1"
+ARTICLE_V1_EVENT_JOURNAL_SCHEMA = "article-v1-training-event-journal-v2"
+ARTICLE_V1_EVENT_SCHEMA = "article-v1-training-expansion-event-v2"
 ARTICLE_V1_CHECKPOINT_MANIFEST_SCHEMA = "article-v1-training-checkpoint-manifest-v1"
 
 INTERNAL_TRAINING_CHECKPOINT_SCHEMAS = frozenset(
@@ -230,9 +230,10 @@ class ArticleV1JournalEntry:
     terminated: bool
     truncated: bool
     frontier_revision: int
-    frontier_active_ids_digest: str
-    archive_digest: str
-    generation_count_digest: str
+    state_digest_verified: bool
+    frontier_active_ids_digest: str | None
+    archive_digest: str | None
+    generation_count_digest: str | None
     policy_weight_digest_after_update: str
     pending_next_record_id: int | None
     schema_version: str = ARTICLE_V1_EVENT_SCHEMA
@@ -249,13 +250,24 @@ class ArticleV1JournalEntry:
         if self.terminated and self.truncated:
             raise CheckpointFormatError("an expansion cannot terminate and truncate together")
         _integer("frontier_revision", self.frontier_revision)
-        for name in (
+        if type(self.state_digest_verified) is not bool:
+            raise CheckpointFormatError("state_digest_verified must be a boolean")
+        state_digest_names = (
             "frontier_active_ids_digest",
             "archive_digest",
             "generation_count_digest",
+        )
+        if self.state_digest_verified:
+            for name in state_digest_names:
+                _digest(name, getattr(self, name))
+        elif any(getattr(self, name) is not None for name in state_digest_names):
+            raise CheckpointFormatError(
+                "unverified journal entry must omit all full-state digests"
+            )
+        _digest(
             "policy_weight_digest_after_update",
-        ):
-            _digest(name, getattr(self, name))
+            self.policy_weight_digest_after_update,
+        )
         if self.pending_next_record_id is not None:
             _integer("pending_next_record_id", self.pending_next_record_id)
         if (self.terminated or self.truncated) and self.pending_next_record_id is not None:
@@ -341,6 +353,39 @@ class ArticleV1EventJournal:
             raise CheckpointFormatError("cannot append after a terminal journal entry")
         self._entries.append(entry)
 
+    def bind_latest_state_digests(
+        self,
+        *,
+        frontier_active_ids_digest: str,
+        archive_digest: str,
+        generation_count_digest: str,
+    ) -> ArticleV1JournalEntry:
+        """Bind a full-state verification point to the latest expansion.
+
+        This is used immediately before publishing a mid-episode checkpoint when
+        an asynchronous interrupt lands between ordinary cadence boundaries.
+        Earlier entries remain immutable values and the journal remains ordered.
+        """
+
+        if self._sealed:
+            raise CheckpointFormatError("cannot mutate a sealed checkpoint journal")
+        if not self._entries:
+            raise CheckpointFormatError("cannot bind digests to an empty journal")
+        latest = self._entries[-1]
+        replacement = replace(
+            latest,
+            state_digest_verified=True,
+            frontier_active_ids_digest=_digest(
+                "frontier_active_ids_digest", frontier_active_ids_digest
+            ),
+            archive_digest=_digest("archive_digest", archive_digest),
+            generation_count_digest=_digest(
+                "generation_count_digest", generation_count_digest
+            ),
+        )
+        self._entries[-1] = replacement
+        return replacement
+
     def frozen_copy(self) -> "ArticleV1EventJournal":
         return ArticleV1EventJournal(
             self._entries, base_expansion=self.base_expansion, _sealed=True
@@ -356,7 +401,7 @@ class ArticleV1EventJournal:
     @property
     def digest(self) -> str:
         return portable_digest(
-            self.to_payload(), domain="article-v1-training-event-journal-digest-v1"
+            self.to_payload(), domain="article-v1-training-event-journal-digest-v2"
         )
 
     @classmethod
@@ -475,6 +520,10 @@ class MidEpisodeCheckpoint:
             if final.terminated or final.truncated:
                 raise CheckpointFormatError(
                     "mid-episode checkpoint cannot end at a terminal journal entry"
+                )
+            if not final.state_digest_verified:
+                raise CheckpointFormatError(
+                    "mid-episode checkpoint must end at a full-state digest boundary"
                 )
             checks = {
                 "pending next record": (
@@ -863,7 +912,14 @@ def reject_internal_checkpoint_for_evaluation(
     if not isinstance(checkpoint, Mapping):
         raise TypeError("checkpoint must be an internal checkpoint or JSON object")
     schema = checkpoint.get("checkpoint_schema")
-    if schema in INTERNAL_TRAINING_CHECKPOINT_SCHEMAS:
+    internal_schema_prefixes = (
+        "article-v1-mid-episode-replay-checkpoint-",
+        "article-v1-training-progress-",
+    )
+    if schema in INTERNAL_TRAINING_CHECKPOINT_SCHEMAS or (
+        isinstance(schema, str)
+        and schema.startswith(internal_schema_prefixes)
+    ):
         raise IncompleteTrainingCheckpointError(
             f"internal checkpoint schema {schema!r} is not transferable for evaluation"
         )
@@ -939,9 +995,10 @@ class ReplayObservation:
     terminated: bool
     truncated: bool
     frontier_revision: int
-    frontier_active_ids_digest: str
-    archive_digest: str
-    generation_count_digest: str
+    state_digest_verified: bool
+    frontier_active_ids_digest: str | None
+    archive_digest: str | None
+    generation_count_digest: str | None
     policy_weight_digest_after_update: str
     pending_next_record_id: int | None
 

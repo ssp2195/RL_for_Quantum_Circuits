@@ -9,6 +9,8 @@ from types import SimpleNamespace
 import pytest
 import numpy as np
 
+import experiments.article_v1_runner as runner_module
+
 from benchmarks.article_native_corpus import ArticleV1Budget, ArticleV1EvaluationTarget
 from certification.simulator import SynthesisTarget, unitary_from_gates
 from circuit.gate import Gate
@@ -38,6 +40,12 @@ from experiments.article_v1_training_checkpoint import (
     validate_pending_resume_state,
     validate_replay_observation,
     validate_resume_compatibility,
+)
+from experiments.article_v1_progress import (
+    ARTICLE_V1_PROGRESS_EVENT_SCHEMA,
+    ArticleV1ProgressReporter,
+    ProgressCadence,
+    load_progress_events,
 )
 from rl.policy import LinearQPolicy
 from train import Trainer, TrainerBoundaryEvent
@@ -81,6 +89,7 @@ def _journal(
                 terminated=False,
                 truncated=False,
                 frontier_revision=100 + expansion,
+                state_digest_verified=True,
                 frontier_active_ids_digest=_d(["frontier", expansion]),
                 archive_digest=_d(["archive", expansion]),
                 generation_count_digest=_d(["generation", expansion]),
@@ -181,6 +190,22 @@ def test_mid_episode_checkpoint_roundtrip_is_portable_and_journal_is_sealed(
         restored.journal.append(restored.journal.entries[-1])
 
 
+def test_interval_v2_checkpoint_and_journal_reject_v1_artifacts_fail_closed() -> None:
+    checkpoint_payload = _mid_checkpoint().to_payload()
+    checkpoint_payload["checkpoint_schema"] = (
+        "article-v1-mid-episode-replay-checkpoint-v1"
+    )
+    with pytest.raises(CheckpointFormatError, match="unsupported.*checkpoint schema"):
+        checkpoint_from_payload(checkpoint_payload)
+    with pytest.raises(IncompleteTrainingCheckpointError, match="not transferable"):
+        reject_internal_checkpoint_for_evaluation(checkpoint_payload)
+
+    journal_payload = _journal(1).to_payload()
+    journal_payload["event_journal_schema"] = "article-v1-training-event-journal-v1"
+    with pytest.raises(CheckpointFormatError, match="unsupported.*journal schema"):
+        ArticleV1EventJournal.from_payload(journal_payload)
+
+
 def test_store_rotates_latest_previous_and_episode_final(tmp_path: Path) -> None:
     store = ArticleV1TrainingCheckpointStore(tmp_path)
     first = _mid_checkpoint(theta=(0.25, -0.5))
@@ -233,7 +258,7 @@ def test_duplicate_json_members_are_rejected_even_with_matching_manifest(
     checkpoint_path = store.checkpoint_path("latest")
     raw = checkpoint_path.read_bytes()
     forged = (
-        b'{"checkpoint_schema":"article-v1-mid-episode-replay-checkpoint-v1",'
+        b'{"checkpoint_schema":"article-v1-mid-episode-replay-checkpoint-v2",'
         + raw[1:]
     )
     checkpoint_path.write_bytes(forged)
@@ -374,6 +399,48 @@ def test_replay_observation_validation_is_type_and_value_strict() -> None:
         validate_replay_observation(entry, replace(observation, reward=entry.reward + 1.0))
 
 
+def test_interval_state_digests_are_all_or_none_and_can_bind_latest() -> None:
+    complete = _journal(1).entries[0]
+    interval = replace(
+        complete,
+        state_digest_verified=False,
+        frontier_active_ids_digest=None,
+        archive_digest=None,
+        generation_count_digest=None,
+    )
+    journal = ArticleV1EventJournal((interval,))
+    payload = journal.to_payload()
+    entry_payload = payload["entries"][0]
+    assert entry_payload["state_digest_verified"] is False
+    assert entry_payload["frontier_active_ids_digest"] is None
+    assert ArticleV1EventJournal.from_payload(payload) == journal
+    interval_observation = ReplayObservation(
+        **{
+            field: getattr(interval, field)
+            for field in ReplayObservation.__dataclass_fields__
+        }
+    )
+    validate_replay_observation(interval, interval_observation)
+
+    rebound = journal.bind_latest_state_digests(
+        frontier_active_ids_digest=complete.frontier_active_ids_digest,
+        archive_digest=complete.archive_digest,
+        generation_count_digest=complete.generation_count_digest,
+    )
+    assert rebound.state_digest_verified is True
+    assert journal.entries[-1] == rebound
+
+    with pytest.raises(CheckpointFormatError, match="omit all"):
+        replace(interval, archive_digest=_d("partial"))
+    with pytest.raises(CheckpointFormatError, match="nonempty string"):
+        replace(interval, state_digest_verified=True)
+
+    unbound = ArticleV1EventJournal((interval,))
+    checkpoint = _mid_checkpoint(count=1)
+    with pytest.raises(CheckpointFormatError, match="full-state digest boundary"):
+        replace(checkpoint, journal=unbound)
+
+
 def test_internal_training_checkpoints_can_never_be_evaluated() -> None:
     for checkpoint in (_mid_checkpoint(), _progress_checkpoint()):
         with pytest.raises(IncompleteTrainingCheckpointError, match="not transferable"):
@@ -417,6 +484,14 @@ def test_checkpoint_cadence_uses_expansion_or_time_and_supports_forced_boundarie
     assert gate.due(65, force=True, now=161.0)
     gate.reset(expansion=0, now=200.0)
     assert not gate.due(1, now=201.0)
+
+    resumed = CheckpointCadenceGate(
+        CheckpointCadence(every_expansions=64, every_seconds=None),
+        clock=lambda: 300.0,
+        initial_expansion=64,
+    )
+    assert not resumed.due(127, now=301.0)
+    assert resumed.due(128, now=301.0)
 
 
 # A bounded deterministic fixture proves the recovery API without depending on
@@ -486,6 +561,7 @@ def _fixture_entry(
         terminated=terminal,
         truncated=False,
         frontier_revision=env.expansions,
+        state_digest_verified=True,
         frontier_active_ids_digest=frontier_digest,
         archive_digest=archive_digest,
         generation_count_digest=generation_digest,
@@ -777,6 +853,84 @@ def test_trainer_callback_failure_aborts_instead_of_claiming_success() -> None:
         trainer.train(1)
 
 
+def test_training_without_recovery_does_not_build_journal_state_digests(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    case = ArticleV1EvaluationTarget(
+        target_id="train-no-recovery-digest",
+        split="train",
+        difficulty="easy",
+        num_qubits=2,
+        generator_length=2,
+        budget=ArticleV1Budget(
+            max_t_count=0,
+            max_two_qubit_count=1,
+            max_gates=3,
+            max_depth=3,
+            expansion_budget=1,
+        ),
+        target=SynthesisTarget(
+            unitary_from_gates(2, (Gate(GateType.X, (0,)),))
+        ),
+    )
+
+    def forbidden_digest(_environment: object) -> tuple[str, str, str]:
+        raise AssertionError("no-recovery training must not serialize full state")
+
+    monkeypatch.setattr(runner_module, "_training_state_digests", forbidden_digest)
+    checkpoint = train_article_v1_checkpoint(
+        (case,),
+        corpus_config_digest=_d("no-recovery-corpus"),
+        training_seed=7,
+        episodes_per_target=1,
+        learning_rate=1e-3,
+        epsilon_start=0.2,
+        epsilon_minimum=0.05,
+        epsilon_decay=0.995,
+        beta=1.0,
+        expansion_cap=1,
+        certification_tolerance=1e-9,
+    )
+    history = checkpoint.training_histories[0]
+    assert history["checkpoint_callback_time_ns"] == 0
+    assert history["checkpoint_state_digest_time_ns"] == 0
+    assert history["checkpoint_io_time_ns"] == 0
+
+
+def test_replay_capture_never_accepts_interrupt_without_valid_mid_checkpoint(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class InvalidStore:
+        def __init__(self, _directory: object) -> None:
+            self.loads = 0
+
+        def load(self, _slot: str = "latest") -> object:
+            self.loads += 1
+            if self.loads == 1:
+                raise FileNotFoundError
+            return object()
+
+    def interrupt(*_args: object, **_kwargs: object) -> None:
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(
+        runner_module, "ArticleV1TrainingCheckpointStore", InvalidStore
+    )
+    monkeypatch.setattr(runner_module, "train_article_v1_checkpoint", interrupt)
+    with pytest.raises(
+        CheckpointCompatibilityError,
+        match="internal mid-episode checkpoint",
+    ):
+        runner_module.capture_article_v1_replay_checkpoint(
+            tmp_path / "invalid-interrupt",
+            quiet=True,
+        )
+    assert not (
+        tmp_path / "invalid-interrupt" / "replay_checkpoint_capture.json"
+    ).exists()
+
+
 def test_real_article_training_interrupt_replays_and_resumes_identically(
     tmp_path: Path,
 ) -> None:
@@ -808,6 +962,7 @@ def test_real_article_training_interrupt_replays_and_resumes_identically(
         "beta": 1.0,
         "expansion_cap": 4,
         "certification_tolerance": 1e-9,
+        "runtime_snapshot_every_expansions": 1,
     }
     uninterrupted = train_article_v1_checkpoint(
         (case,),
@@ -815,16 +970,46 @@ def test_real_article_training_interrupt_replays_and_resumes_identically(
         **common,
     )
     interrupted_state = tmp_path / "interrupted-state"
+    progress_directory = tmp_path / "interrupted-progress"
+    progress_reporter = ArticleV1ProgressReporter(
+        progress_directory,
+        cadence=ProgressCadence(every_expansions=25, every_seconds=None),
+        quiet=True,
+    )
     with pytest.raises(KeyboardInterrupt):
         train_article_v1_checkpoint(
             (case,),
             training_checkpoint_dir=interrupted_state,
+            progress_reporter=progress_reporter,
+            run_id="bounded-real-resume",
             interrupt_after_expansions=1,
             **common,
         )
     stored = ArticleV1TrainingCheckpointStore(interrupted_state).load("latest")
     assert isinstance(stored, MidEpisodeCheckpoint)
     assert stored.expansion_count == 1
+    assert stored.journal.entries[-1].state_digest_verified is True
+    assert stored.journal.entries[-1].frontier_active_ids_digest is not None
+    assert (interrupted_state / "runtime-snapshot-latest.pickle").is_file()
+    assert (
+        interrupted_state / "runtime-snapshot-latest.manifest.json"
+    ).is_file()
+    events = load_progress_events(progress_directory / "progress.jsonl")
+    assert len(events) == 1
+    interrupt_event = events[0]
+    assert interrupt_event.schema_version == ARTICLE_V1_PROGRESS_EVENT_SCHEMA
+    assert interrupt_event.feature_evaluator_schema_version == (
+        "article-v1-exact-incremental-v2"
+    )
+    assert interrupt_event.expansion == 1
+    assert interrupt_event.checkpoint_path is not None
+    assert Path(interrupt_event.checkpoint_path).name == "latest.json"
+    assert interrupt_event.last_feature_batch_seconds > 0.0
+    assert interrupt_event.rolling_feature_batch_seconds > 0.0
+    assert interrupt_event.elapsed_seconds > 0.0
+    assert interrupt_event.expansions_per_second == pytest.approx(
+        interrupt_event.expansion / interrupt_event.elapsed_seconds
+    )
 
     resumed = train_article_v1_checkpoint(
         (case,),
@@ -839,3 +1024,28 @@ def test_real_article_training_interrupt_replays_and_resumes_identically(
     assert resumed.training_histories[0]["episodes"][0]["search_metrics"] == (
         uninterrupted.training_histories[0]["episodes"][0]["search_metrics"]
     )
+    assert resumed.training_histories[0]["runtime_snapshot_base_expansion"] == 1
+    assert (
+        resumed.training_histories[0]["runtime_snapshot_schema_version"]
+        == "article-v1-trusted-runtime-snapshot-v1"
+    )
+    for timing_name in (
+        "checkpoint_callback_time_ns",
+        "checkpoint_state_digest_time_ns",
+        "checkpoint_io_time_ns",
+        "runtime_snapshot_restore_time_ns",
+        "recovery_replay_time_ns",
+        "runtime_snapshot_io_time_ns",
+    ):
+        assert int(resumed.training_histories[0][timing_name]) >= 0
+    final_store = ArticleV1TrainingCheckpointStore(interrupted_state)
+    episode_final = final_store.load("episode-final")
+    clean_exit = final_store.load("latest")
+    assert isinstance(episode_final, TrainingProgressCheckpoint)
+    assert isinstance(clean_exit, TrainingProgressCheckpoint)
+    assert episode_final.target_cursor == episode_final.target_count == 1
+    assert clean_exit.target_cursor == clean_exit.target_count == 1
+    assert episode_final.all_targets_completed
+    assert clean_exit.all_targets_completed
+    assert episode_final.completed_target_ids == (case.target_id,)
+    assert clean_exit.completed_target_ids == (case.target_id,)

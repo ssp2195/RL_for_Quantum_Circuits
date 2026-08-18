@@ -131,6 +131,54 @@ This is algebraically identical to `dot(theta, phi(v))`. The optimized evaluator
 
 The no-target and no-standardization ablations apply the corresponding exact reduced block algebra; they do not fall back to approximate features.
 
+## Exact production batch and instrumentation surface
+
+`CompactArticleDecisionBatch` binds the mathematical and evaluator schemas plus:
+
+```text
+frontier_revision, generation_count_revision
+records, frontier_nodes, record_ids
+candidate_matrix, mean, std, remaining_budget_fraction
+target_fingerprint, expansions_completed, expansion_budget
+include_frontier_context, standardization_eta, snapshot_id
+```
+
+Its internal row map and timing observers are implementation details. Public
+ranking/materialization methods are `scores`, `effective_linear_terms`,
+`greedy_row`, `select_greedy_record_id`, `select_greedy`,
+`features_for_record`, `candidate_for_record`, and the debug/reference helpers
+`materialize_feature_matrix` and `full_dot_scores`.
+
+`ArticleV1FeatureProvider.instrumentation()` returns exactly:
+
+```text
+feature_evaluator_schema_version
+feature_static_cache_hits, feature_static_cache_misses
+frontier_index_additions, frontier_index_removals, frontier_index_rebuilds
+unique_resource_group_count, resource_group_peak
+dominance_update_time_ns, compact_batch_time_ns
+compact_batch_count, last_compact_batch_time_ns
+candidate_gather_time_ns, standardization_time_ns
+score_time_ns, selected_row_materialization_time_ns
+feature_index_memory_bytes
+frontier_revision, generation_count_revision
+```
+
+These are engineering counters/timers. They are not policy inputs and timing
+members are excluded from deterministic parity.
+
+`ArticleV1FeatureProvider.recent_compact_batch_times_ns()` returns the exact
+oldest-to-newest suffix of at most 25 completed compact-batch durations for the
+current index. Progress reporting uses the count, last duration, and retained
+suffix without building another feature batch. Re-observing an unchanged count
+does not add another sample.
+
+Production raw-run auditing treats `compact_batch_count` as a required counter
+and serializes both `compact_batch_time_seconds` (cumulative) and
+`last_compact_batch_time_seconds` (latest completed batch) with exact
+nanosecond/second agreement. A zero batch count requires both nanosecond timing
+fields to be zero, and the latest duration cannot exceed the cumulative value.
+
 ## Deterministic standardization
 
 The first optimized version retains the reference reduction order:
@@ -145,43 +193,71 @@ Incremental floating sums are outside this evaluator version because a different
 
 ## Benchmark integration API
 
-`experiments.article_v1_feature_benchmark` intentionally has no CLI. The runner supplies an object implementing:
+The repository exposes a generic adapter protocol and a repository-backed
+adapter. The generic protocol implements:
 
 ```python
 measure_microbenchmark(frontier_size, *, include_reference)
 measure_end_to_end(expansion_cap, *, include_reference)
 ```
 
-and calls:
+The public entry points are:
 
 ```python
+run_focused_correctness_gate(output_directory, ...)
+inspect_production_dominance_update(source_path=None)
+write_implementation_check_evidence(output_directory, report)
 benchmark_feature_evaluator(
-    adapter,
-    output_directory,
-    correctness_gate=gate,
-    implementation_checks={
-        "no_python_nested_frontier_record_loop": True,
-    },
-    profile_writer=write_profiles,
-    feasibility_criteria=criteria,
-    pilot_relaunch_checks={
-        "source_revision_committed_and_clean": True,
-        "structured_progress_verified": True,
-        "checkpoint_recovery_verified": True,
-        "new_schema_mini_ci_passed_twice_byte_stable": True,
-        "no_held_out_publication_test_outcomes_inspected": True,
-    },
-    benchmark_provenance={
-        "code_version": commit,
-        "source_worktree_digest": source_digest,
-        "worktree_clean": True,
-    },
+    adapter, output_directory, *, correctness_gate, implementation_checks, ...
+)
+run_repository_feature_benchmark(
+    output_directory, *, correctness_gate, implementation_checks,
+    config="pilot", adapter_kwargs=None, ...
 )
 ```
 
-The production integration uses `ArticleV1FeatureProvider.build_compact_batch(...)`, `CompactArticleDecisionBatch.scores(theta)`, `features_for_record(record_id)`, and provider `instrumentation()`. The oracle uses `ArticleV1ReferenceFeatureProvider.build_snapshot(...)`. `include_reference` is true only through the configured safe frontier size (256 by default) and for end-to-end trace caps 32 and 64.
+`run_focused_correctness_gate` executes fixed, reviewable pytest node IDs,
+parses their JUnit cases into the seven individual `CorrectnessGate` members,
+and fails every member when the exact subprocess fails or times out. It retains:
 
-The repository-backed factory is `create_repository_feature_benchmark_adapter(config="pilot", **kwargs)`. A thin CLI can call `run_repository_feature_benchmark(...)`; the latter constructs the adapter, runs the fixed axes, optionally writes profiles, and delegates artifact validation to the same generic harness. The fixed workload is the unique pilot `train/hard/3q` target `sha256:dfd960b7be1309661b720bb31eaf4fd97589b52fd3b11c7f25eb68dada3dafbf`, its transfer-corpus index is 5, and its effective policy/environment seed is `19 + 5 = 24`. The generator witness is stripped through `evaluation_target()` before the environment is constructed.
+```text
+profiles/correctness_gate.junit.xml
+profiles/correctness_gate.stdout.txt
+profiles/correctness_gate.stderr.txt
+profiles/correctness_gate.json
+```
+
+`inspect_production_dominance_update` parses
+`ExactArticleFrontierFeatureIndex._insert_resource` and `_remove_resource` with
+Python's AST. It requires the two methods, active-group and `np.all`
+vectorization, and zero Python loop/comprehension nodes in those production
+updates. The deliberately quadratic reference/debug oracles are outside this
+check. `write_implementation_check_evidence` retains the report as
+`profiles/implementation_check.json`.
+
+`CorrectnessGate` itself remains a strict data object, so direct low-level API
+callers are still responsible for supplying genuine evidence. The
+`benchmark-features` runner command uses the evidence-producing helpers above,
+aborts before constructing the timing adapter when either preflight fails, and
+never hard-codes success. It additionally requires the requested resolved
+configuration to equal the checked-in canonical pilot configuration, refuses a
+nonempty destination, and binds fresh uncached source-worktree snapshots plus
+the canonical config digest to the JUnit, AST, and final evidence. It rechecks
+source and config immediately before and after timing. The existence of this
+command is not evidence that it has passed; its post-optimization qualification
+run remains pending.
+
+The production integration uses `ArticleV1FeatureProvider.build_compact_batch(...)`, `CompactArticleDecisionBatch.scores(theta)`, `features_for_record(record_id)`, and provider `instrumentation()`. The oracle uses `ArticleV1ReferenceFeatureProvider.build_snapshot(...)`. `include_reference` is true through the required current-host safe frontier size of 1,024 (not 2,048) and for end-to-end trace caps 32 and 64.
+
+The repository-backed factory is
+`create_repository_feature_benchmark_adapter(config="pilot", **kwargs)`.
+`run_repository_feature_benchmark(...)` constructs that adapter, runs the fixed
+axes, optionally writes profiles, and delegates artifact validation to the same
+generic harness. The fixed workload is the unique pilot `train/hard/3q` target
+`sha256:dfd960b7be1309661b720bb31eaf4fd97589b52fd3b11c7f25eb68dada3dafbf`,
+its transfer-corpus index is 5, and its effective policy/environment seed is
+`19 + 5 = 24`. The generator witness is stripped through `evaluation_target()`
+before the environment is constructed.
 
 For microbenchmarks, one optimized rollout captures a shared representative frontier of at least 2,048 records; deterministic prefixes of that same frontier supply all requested sizes. The capture reached `F=2,053` after 139 expansions in the initial integration check. Static-cache construction and target-distance cache warmup occur outside the steady-state component timers. The reference batch and optimized synchronization, compact-batch, score, and selected-row calls then receive the same records, generation counts, completed-expansion value, and unchanged 8,192-step horizon.
 
@@ -189,7 +265,7 @@ For staged episodes, the environment config and budget-dependent feature coordin
 
 The adapter must time medians or another stated aggregation after adapter-owned warmup and return seconds for synchronization, compact-batch construction, vectorized scoring, and selected-row materialization separately. Memory is the evaluator/index structural memory, while process peak RSS is an additional optional field. Setup, target generation, and profile serialization must not be hidden inside a component timer.
 
-The harness emits:
+After a real gate has passed and timing is run, the harness emits:
 
 ```text
 baseline.json
@@ -198,9 +274,19 @@ end_to_end_scaling.csv
 profiles/
 scaling_report.md
 projected_pilot_cost.json
+benchmark_status.json
 ```
 
-It refuses to start timing by default unless all required correctness checks pass. The artifact writer can record failed-gate diagnostics, but marks qualification false and cannot authorize a pilot relaunch. Even passing timing and explicit cost bounds produce only `insufficient performance evidence to relaunch` until source cleanliness, structured progress, checkpoint recovery, clean-schema mini-CI, and no-held-out-access checks are supplied and true.
+It refuses to start timing unless the correctness and production-source checks
+pass. The high-level runner command produces those checks; a direct low-level
+caller remains responsible for trustworthy inputs. The
+artifact writer can record failed-gate diagnostics, but marks qualification
+false and cannot authorize a pilot relaunch. The high-level command writes
+`benchmark_status.json` last with hashes and byte lengths for the bundle and
+separate `engineering_qualification_passed` and `pilot_relaunch_ready` values.
+Even passing engineering timing and explicit cost bounds cannot set relaunch
+ready until source cleanliness, structured progress, checkpoint recovery,
+clean-schema mini-CI, and no-held-out-access checks are supplied and true.
 
 ## Required parity evidence
 
@@ -216,9 +302,17 @@ terminal-status equivalence
 witness and independent-certification equivalence
 ```
 
-Bounded cap-32 and cap-64 hard-target runs additionally require identical traces, weights, status, and deterministic counters. Timing fields are excluded from parity.
+Bounded cap-32 and cap-64 hard-target runs additionally require identical
+traces, weights, status, and deterministic counters, current-host end-to-end
+speedup of at least 2x, and explicit optimized/reference feature-time shares.
+Timing fields are excluded from deterministic parity.
 
-The fixed performance gates are at least 10× speedup near `F=1024`, no worse than 2.5× compact-batch-plus-score growth from 512 to 1,024, no production Python all-pairs record loop, and approximately linear index memory in `F+G`. A passing speed gate cannot override failed parity.
+The fixed performance gates are at least 10x current-host speedup at `F=1024`,
+no worse than 2.5x compact-batch-plus-score growth from 512 to 1,024, at least
+2x current-host end-to-end speedup at caps 32 and 64, no production Python
+all-pairs record loop, and approximately linear index memory in `F+G`.
+Historical reference timings are context only and never satisfy a current-host
+gate. A passing speed gate cannot override failed parity.
 
 ## Scientific boundary and limitations
 

@@ -203,6 +203,11 @@ def test_score_and_selected_row_instrumentation_are_separate():
     )
     batch = provider.build_compact_batch(records())
     before = dict(provider.instrumentation())
+    assert before["compact_batch_count"] == 1
+    assert 0 <= before["last_compact_batch_time_ns"] <= before["compact_batch_time_ns"]
+    assert provider.recent_compact_batch_times_ns() == (
+        before["last_compact_batch_time_ns"],
+    )
     batch.scores(np.ones(provider.dimension))
     batch.features_for_record(3)
     after = provider.instrumentation()

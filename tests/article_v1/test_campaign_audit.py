@@ -418,6 +418,16 @@ def test_every_component_timer_must_fit_inside_wall_time(
         _audit(tmp_path, campaign_fixture, records)
 
 
+def test_audit_rejects_incoherent_compact_batch_timing(
+    tmp_path: Path, campaign_fixture
+) -> None:
+    records = deepcopy(campaign_fixture[4])
+    records[0]["timings"]["last_compact_batch_time_seconds"] = 1e-9
+    records[0]["search_metrics"]["last_compact_batch_time_ns"] = 1
+    with pytest.raises(ValueError, match="compact-batch timing/count"):
+        _audit(tmp_path, campaign_fixture, records)
+
+
 @pytest.mark.parametrize(
     ("field", "match"),
     (
@@ -1003,6 +1013,10 @@ def test_real_evaluator_emits_the_exact_auditable_raw_shape(campaign_fixture) ->
     )
     assert set(row["timings"]) == set(_REQUIRED_TIMING_FIELDS)
     assert set(row["search_metrics"]) == _CANONICAL_SEARCH_METRIC_FIELDS
+    assert row["search_metrics"]["last_compact_batch_time_ns"] <= row[
+        "search_metrics"
+    ]["compact_batch_time_ns"]
+    assert row["search_metrics"]["compact_batch_count"] >= 0
 
     spec = _expected_matrix_runs(
         (specs[0].case,),

@@ -21,8 +21,8 @@ import time
 from typing import Any, Callable, Mapping, TextIO
 
 
-ARTICLE_V1_PROGRESS_EVENT_SCHEMA = "article-v1-progress-event-v1"
-ARTICLE_V1_PROGRESS_STATUS_SCHEMA = "article-v1-progress-status-v1"
+ARTICLE_V1_PROGRESS_EVENT_SCHEMA = "article-v1-progress-event-v2"
+ARTICLE_V1_PROGRESS_STATUS_SCHEMA = "article-v1-progress-status-v2"
 
 
 class ProgressFormatError(ValueError):
@@ -82,6 +82,7 @@ class ArticleV1ProgressEvent:
     timestamp_utc: str
     run_id: str
     phase: str
+    feature_evaluator_schema_version: str
     training_seed: int | None
     target_index: int
     target_count: int
@@ -109,7 +110,14 @@ class ArticleV1ProgressEvent:
         if self.schema_version != ARTICLE_V1_PROGRESS_EVENT_SCHEMA:
             raise ProgressFormatError("unsupported Article V1 progress-event schema")
         _parse_utc_timestamp(self.timestamp_utc)
-        for name in ("run_id", "phase", "target_id", "split", "stratum"):
+        for name in (
+            "run_id",
+            "phase",
+            "feature_evaluator_schema_version",
+            "target_id",
+            "split",
+            "stratum",
+        ):
             _require_nonempty_string(name, getattr(self, name))
         if self.training_seed is not None:
             _require_int("training_seed", self.training_seed)

@@ -20,9 +20,9 @@ raw pickle is neither written nor accepted.
 
 ```text
 episode/target progress: article-v1-training-progress-v1
-mid-episode recovery:   article-v1-mid-episode-replay-checkpoint-v1
-event journal:          article-v1-training-event-journal-v1
-journal entry:          article-v1-training-expansion-event-v1
+mid-episode recovery:   article-v1-mid-episode-replay-checkpoint-v2
+event journal:          article-v1-training-event-journal-v2
+journal entry:          article-v1-training-expansion-event-v2
 slot manifest:          article-v1-training-checkpoint-manifest-v1
 ```
 
@@ -37,7 +37,68 @@ transferable_for_evaluation = false
 `TrainingProgressCheckpoint` remains nontransferable even when its target cursor
 shows that every training target completed. `require_evaluation_eligible()` and
 `reject_internal_checkpoint_for_evaluation()` fail before an internal checkpoint
-can be dispatched to evaluation code.
+can be accepted as a transferable checkpoint. The campaign evaluator continues
+to load only `article-v1-transferable-linear-checkpoint-v4` artifacts from the
+separate `checkpoints/` directory; internal recovery artifacts live under
+`training_state/`.
+
+## Exact wire members
+
+The event journal object has exactly:
+
+```text
+event_journal_schema, base_expansion, entries
+```
+
+Each journal entry has exactly:
+
+```text
+journal_entry_schema
+expansion_index, selected_record_id, selected_feature_digest
+reward, terminated, truncated
+frontier_revision, state_digest_verified
+frontier_active_ids_digest
+archive_digest, generation_count_digest
+policy_weight_digest_after_update, pending_next_record_id
+```
+
+The mid-episode payload has exactly:
+
+```text
+checkpoint_schema, checkpoint_kind
+safe_sarsa_boundary, training_complete, transferable_for_evaluation
+provenance
+training_seed, episode_index, episode_count
+expansion_count, expansion_cap
+journal, journal_digest
+episode_initial_theta, episode_initial_weight_digest
+theta, policy_weight_digest, epsilon
+policy_rng_state, environment_rng_state
+pending_next_record_id, pending_next_feature_row, pending_next_feature_digest
+total_reward, training_aggregates, search_metrics
+frontier_revision, frontier_active_ids_digest
+archive_digest, generation_count_digest
+```
+
+The episode/target progress payload has exactly:
+
+```text
+checkpoint_schema, checkpoint_kind
+safe_sarsa_boundary, training_complete, transferable_for_evaluation
+provenance
+training_seed, target_cursor, target_count
+episode_cursor, episodes_per_target
+theta, policy_weight_digest, epsilon, policy_rng_state
+training_history, completed_target_ids, effective_budgets
+```
+
+`provenance` has exactly the eleven members listed in the next section. A slot
+manifest has exactly:
+
+```text
+checkpoint_manifest_schema, slot, checkpoint_schema
+checkpoint_sha256, checkpoint_byte_length
+```
 
 ## Required provenance
 
@@ -82,9 +143,11 @@ The target cursor equals the number of fully completed target IDs. The episode
 cursor identifies the next episode and resets to zero when a target (including
 the last target) completes.
 
-Write this layer after every episode, after every target, on handled interrupt,
-and before clean process exit. Episode-final writes use the dedicated
-`episode-final` slot as well as the rotating latest slot.
+Write this layer after every episode and target and before clean process exit.
+Episode-final writes use the dedicated `episode-final` slot as well as the
+rotating latest slot. A handled safe-boundary interrupt instead writes the
+mid-episode layer below to `latest`, because it must retain the journal and
+pending behavior action needed for exact continuation.
 
 ## Layer 2: safe mid-episode boundary
 
@@ -115,6 +178,8 @@ full provenance
 A mid-episode checkpoint must be nonterminal and strictly below its expansion
 cap. Its last journal entry must agree with the checkpoint's pending record,
 frontier/archive/generation digests, revision, and current policy-weight digest.
+That final entry must set `state_digest_verified=true` and contain all three
+full-state digests; a partial or unmarked final state fails closed.
 The checkpoint seals a copy of its journal so subsequent trainer mutations cannot
 alter already-bound bytes.
 
@@ -140,12 +205,23 @@ selected frozen-feature digest
 reward
 terminated and truncated flags
 frontier revision
-frontier active-ID digest
-archive digest
-generation-count digest
+state_digest_verified
+frontier active-ID digest or null
+archive digest or null
+generation-count digest or null
 policy-weight digest after update
 pending next persistent record ID
 ```
+
+Every entry binds the deterministic transition core: selected record/feature,
+reward and terminal flags, frontier revision, updated policy digest, and pending
+next record. Full frontier/archive/generation serialization is intentionally
+interval-based: the three state digests are either all present with
+`state_digest_verified=true` or all null with it false. They are mandatory at
+each published mid-episode checkpoint boundary, including a handled interrupt.
+This avoids serializing the complete growing archive after every expansion while
+preserving exact replay checks at configured intervals and at the final pending
+state.
 
 A nonterminal entry requires a pending next record. A terminal/truncated entry
 requires it to be null and is the last possible journal entry. Journal and
@@ -163,6 +239,13 @@ The default mid-episode checkpoint cadence is whichever happens first:
 `CheckpointCadenceGate` implements this engineering-only cadence. Callers also
 force checkpoints at episode end, target end, handled interrupt, and clean exit.
 Cadence must not influence search termination or policy behavior.
+
+The runner does not attach a recovery callback or construct journal entries when
+no checkpoint store and no controlled interrupt are requested. With recovery
+enabled, it computes full-state digests only when a nonterminal cadence or
+interrupt boundary is due. A resume initializes the cadence gate from the
+recovered expansion, so a checkpoint restored at expansion 64 is next due at
+128, not 65.
 
 ## Atomic slots and crash behavior
 
@@ -190,9 +273,10 @@ closed. `load_latest_or_previous()` may fall back to an independently valid
 previous slot after an interrupted latest publication; it never weakens
 validation of either slot.
 
-`checkpoint_io_time_ns` and each `CheckpointWriteReceipt.elapsed_ns` are separate
-engineering timings. They must not be added to feature, ranking, or environment
-step timers, although wall time includes them.
+`checkpoint_callback_time_ns`, `checkpoint_state_digest_time_ns`,
+`checkpoint_io_time_ns`, and each `CheckpointWriteReceipt.elapsed_ns` are
+separate engineering timings. They must not be added to feature, ranking, or
+environment step timers, although wall time includes them.
 
 ## Resume by deterministic replay
 
@@ -208,7 +292,9 @@ Resume follows this order:
    certification active.
 5. Construct a `ReplayObservation` after each transition and pass it to
    `validate_replay_observation`, or use `replay_and_validate(journal,
-   replay_step)`.
+   replay_step)`. Validate the deterministic transition core on every entry and
+   recompute/compare the three full-state digests exactly on entries marked
+   `state_digest_verified=true`.
 6. After the journal, call `validate_pending_resume_state` with current open IDs,
    the recomputed pending feature row, revision, and frontier/archive/generation
    digests.
@@ -239,13 +325,73 @@ frontier/archive/generation digests
 ```
 
 Timing is intentionally excluded. Full environment integration must retain this
-test and add a bounded real Article V1 target recovery test when the trainer and
-environment replay hooks are connected.
+test.
 
-## Optional compaction
+The same test module now also contains the real runner/environment acceptance
+test `test_real_article_training_interrupt_replays_and_resumes_identically`.
+It trains a bounded two-qubit X target for one episode at expansion cap 4,
+interrupts after expansion 1, verifies that `latest` is a
+`MidEpisodeCheckpoint`, resumes through `train_article_v1_checkpoint`, and
+requires equality with the uninterrupted run for final weights, transferable
+weight digest, serialized episode history, and deterministic search metrics.
+This test passed as part of the focused 84-test progress/resume/runner run at
+commit `bd251b9`. In the current uncommitted progress-v2 worktree it passed
+again inside a 95-test subset and additionally verified that the interrupt
+forces exactly one v2 progress event below ordinary cadence, after the latest
+safe checkpoint path is known. The current interval-digest/replay-timing
+follow-up also requires the interrupt checkpoint's final journal entry to carry
+all three full-state digests, checks target-final and clean-exit progress slots,
+and keeps the exact uninterrupted/resumed equality assertion. Focused final
+checkpoint/replay/runner/campaign-audit/progress validation passed 195 tests in
+67.87 seconds in the current uncommitted worktree. The clean authoritative
+suite is still pending.
 
-Measure replay time before adding binary caches. If replaying 1,024 expansions
-exceeds 60 seconds or 10% of projected full-episode time, a portable compact
-environment snapshot plus shorter journal may be added. Any trusted local binary
-cache remains optional; a portable manifest and deterministic replay fallback are
-mandatory.
+## Measured replay and optional trusted-local compaction
+
+The initial portable replay of 1,024 expansions took 360.3569 seconds. That
+exceeded both the 60-second limit and 10% of the projected 3,515.338-second
+full episode (351.5338 seconds), so the preregistered OR gate required a compact
+recovery cache.
+
+The implementation therefore writes an optional, hashed, two-slot
+`article-v1-trusted-runtime-snapshot-v1` cache at verified checkpoint
+boundaries. Its strict JSON manifest binds the payload bytes, portable journal
+prefix, provenance, policy/RNG state, pending action, visit counts, and full
+frontier/archive/generation digests. Pickle is confined to this explicitly
+trusted local cache; corrupt, torn, incompatible, or absent cache slots fall
+back to the authoritative portable JSON journal. The portable checkpoint and
+complete deterministic root-replay path are retained.
+
+The measurement path is now explicit:
+
+```text
+python article_benchmark.py capture-replay-checkpoint \
+  --output-root outputs/article_v1 \
+  --run-id article-v1-replay-capture-1024 --quiet
+
+python article_benchmark.py measure-replay-timing \
+  --checkpoint outputs/article_v1/article-v1-replay-capture-1024/training_state/latest.json \
+  --output outputs/article_v1/article-v1-replay-capture-1024/replay_timing.json \
+  --projected-full-episode-seconds 3515.337979379539
+```
+
+The capture command resolves only the checked-in pilot config and its fixed
+train/hard/3q target, preserves the 8,192 scientific horizon, and stops only at
+the safe expansion-1,024 boundary. It treats the expected interrupt as success
+only after strict slot-manifest, checkpoint schema, provenance, journal length,
+and final-digest validation. `measure-replay-timing` reloads that exact slot,
+loads the newest compatible runtime snapshot and replays only its journal
+suffix (zero entries for the measured expansion-1,024 boundary), validates the
+final pending state and five scientific digests, and atomically writes
+`article-v1-replay-timing-v2` evidence. The evidence
+binds source commit/worktree, config, target/fingerprint, evaluator schema,
+checkpoint bytes/schema, journal digest/count, elapsed time, both thresholds,
+and five validated final digests. Dirty-source measurements may be valid
+engineering timing but always set `pilot_relaunch_ready=false`.
+
+The validated local compact replay took **11.3827 seconds**, versus 360.3569
+seconds for portable root replay (about 31.7x faster). It is below both limits,
+so `compaction_required=false`; no further environment-state compaction is
+required. The measured snapshot was 18,308,485 bytes, based at expansion 1,024,
+with zero delta-journal entries. This is dirty-worktree engineering evidence,
+not pilot authorization.

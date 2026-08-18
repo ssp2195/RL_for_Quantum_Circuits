@@ -12,21 +12,25 @@ observations and must not be appended to the Article V1 scientific raw ledger.
 
 from __future__ import annotations
 
+import ast
 from collections.abc import Callable, Mapping, Sequence
 from contextlib import redirect_stdout
 import csv
 from dataclasses import dataclass
+from hashlib import sha256
 import io
 import json
 import math
 import os
 from pathlib import Path
 import platform
+import subprocess
 import statistics
 import sys
 import tempfile
 import time
 from typing import Any, Protocol, runtime_checkable
+import xml.etree.ElementTree as ElementTree
 
 import numpy as np
 
@@ -40,14 +44,18 @@ ARTICLE_V1_REFERENCE_EVALUATOR_SCHEMA = "article-v1-reference-all-pairs-v1"
 ENGINEERING_EVIDENCE_CLASS = "engineering-performance-diagnostic"
 DEFAULT_FRONTIER_SIZES = (32, 64, 128, 256, 512, 1024, 2048)
 DEFAULT_STAGED_EXPANSION_CAPS = (32, 64, 128, 256, 512, 1024)
-DEFAULT_REFERENCE_SAFE_FRONTIER_SIZE = 256
+DEFAULT_REFERENCE_SAFE_FRONTIER_SIZE = 1024
 DEFAULT_REFERENCE_TRACE_CAPS = (32, 64)
 DEFAULT_HARD_EXPANSION_CAP = 8192
+PRODUCTION_DOMINANCE_IMPLEMENTATION_CHECK = (
+    "no_python_nested_frontier_record_loop"
+)
 PILOT_HARD_3Q_TARGET_ID = (
     "sha256:dfd960b7be1309661b720bb31eaf4fd97589b52fd3b11c7f25eb68dada3dafbf"
 )
 
 MINIMUM_SPEEDUP_AT_1024 = 10.0
+MINIMUM_END_TO_END_SPEEDUP_AT_REFERENCE_CAP = 2.0
 MAXIMUM_512_TO_1024_COMPACT_SCORE_RATIO = 2.5
 MAXIMUM_MEMORY_SCALING_EXPONENT = 1.25
 
@@ -60,6 +68,63 @@ REQUIRED_CORRECTNESS_CHECKS = (
     "terminal_status_equivalence",
     "witness_certification_equivalence",
 )
+
+# These are deliberately exact, reviewable pytest selections rather than a
+# blanket success bit copied onto every semantic check.  A command run parses
+# JUnit cases back into the individual CorrectnessGate fields below.
+DEFAULT_CORRECTNESS_TEST_NODE_IDS = (
+    "tests/article_v1/test_incremental_feature_index.py",
+    "tests/article_v1/test_compact_linear_scoring.py",
+    "tests/article_v1/test_search_trace_equivalence.py::"
+    "test_real_hard_target_reference_trace_is_exact_at_caps_8_16_32_64",
+    "tests/article_v1/test_feature_benchmark_gate.py::"
+    "test_reference_and_optimized_success_witnesses_certify_identically",
+)
+
+_CORRECTNESS_TEST_IDENTITIES: Mapping[str, tuple[tuple[str, str], ...]] = {
+    "snapshot_equivalence": (
+        (
+            "tests.article_v1.test_incremental_feature_index",
+            "test_incremental_snapshot_is_exactly_equal_to_all_pairs_oracle",
+        ),
+    ),
+    "score_equivalence": (
+        (
+            "tests.article_v1.test_compact_linear_scoring",
+            "test_compact_effective_weight_scores_equal_explicit_full_feature_dot_products",
+        ),
+    ),
+    "selected_record_equivalence": (
+        (
+            "tests.article_v1.test_compact_linear_scoring",
+            "test_selected_row_materialization_matches_reference_31d_exactly",
+        ),
+    ),
+    "sarsa_trace_equivalence": (
+        (
+            "tests.article_v1.test_search_trace_equivalence",
+            "test_real_hard_target_reference_trace_is_exact_at_caps_8_16_32_64",
+        ),
+    ),
+    "final_weight_equivalence": (
+        (
+            "tests.article_v1.test_search_trace_equivalence",
+            "test_real_hard_target_reference_trace_is_exact_at_caps_8_16_32_64",
+        ),
+    ),
+    "terminal_status_equivalence": (
+        (
+            "tests.article_v1.test_search_trace_equivalence",
+            "test_real_hard_target_reference_trace_is_exact_at_caps_8_16_32_64",
+        ),
+    ),
+    "witness_certification_equivalence": (
+        (
+            "tests.article_v1.test_feature_benchmark_gate",
+            "test_reference_and_optimized_success_witnesses_certify_identically",
+        ),
+    ),
+}
 
 REQUIRED_PILOT_RELAUNCH_CHECKS = (
     "source_revision_committed_and_clean",
@@ -104,6 +169,9 @@ END_TO_END_COLUMNS = (
     "terminal_status",
     "reference_expected",
     "reference_runtime_seconds",
+    "reference_feature_time_seconds",
+    "reference_feature_time_share",
+    "end_to_end_speedup",
     "trace_equivalent",
     "final_weights_equivalent",
     "terminal_status_equivalent",
@@ -153,6 +221,12 @@ def _optional_positive_float(value: object, *, name: str) -> float | None:
     return _positive_float(value, name=name)
 
 
+def _optional_nonnegative_float(value: object, *, name: str) -> float | None:
+    if value is None:
+        return None
+    return _nonnegative_float(value, name=name)
+
+
 def _optional_nonnegative_int(value: object, *, name: str) -> int | None:
     if value is None:
         return None
@@ -176,6 +250,19 @@ def _strict_bool(value: object, *, name: str) -> bool:
 def _nonempty_string(value: object, *, name: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{name} must be a nonempty string")
+    return value
+
+
+def _json_compatible_copy(value: Any) -> Any:
+    if isinstance(value, Mapping):
+        return {
+            str(key): _json_compatible_copy(item) for key, item in value.items()
+        }
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes)):
+        return [_json_compatible_copy(item) for item in value]
+    item = getattr(value, "item", None)
+    if callable(item):
+        return _json_compatible_copy(item())
     return value
 
 
@@ -253,6 +340,463 @@ class CorrectnessGate:
             "command": self.command,
             "evidence": list(self.evidence),
         }
+
+
+def _xml_local_name(tag: str) -> str:
+    return tag.rsplit("}", 1)[-1]
+
+
+def _pytest_junit_cases(path: Path) -> tuple[list[dict[str, Any]], str | None]:
+    """Parse the small, inspectable subset of JUnit needed by the gate."""
+
+    if not path.is_file() or path.stat().st_size == 0:
+        return [], "pytest did not produce a nonempty JUnit document"
+    try:
+        root = ElementTree.parse(path).getroot()
+    except (ElementTree.ParseError, OSError) as exc:
+        return [], f"could not parse pytest JUnit evidence: {exc}"
+    cases: list[dict[str, Any]] = []
+    for testcase in root.iter():
+        if _xml_local_name(testcase.tag) != "testcase":
+            continue
+        status = "passed"
+        detail = ""
+        for child in testcase:
+            child_name = _xml_local_name(child.tag)
+            if child_name in {"failure", "error", "skipped"}:
+                status = child_name
+                detail = str(child.attrib.get("message", ""))
+                break
+        raw_time = testcase.attrib.get("time")
+        try:
+            duration_seconds = None if raw_time is None else float(raw_time)
+        except ValueError:
+            duration_seconds = None
+        cases.append(
+            {
+                "classname": str(testcase.attrib.get("classname", "")),
+                "name": str(testcase.attrib.get("name", "")),
+                "status": status,
+                "duration_seconds": duration_seconds,
+                "detail": detail,
+            }
+        )
+    if not cases:
+        return [], "pytest JUnit evidence contained no test cases"
+    return cases, None
+
+
+def _matching_junit_cases(
+    cases: Sequence[Mapping[str, Any]],
+    identity: tuple[str, str],
+) -> list[Mapping[str, Any]]:
+    classname, function_name = identity
+    return [
+        case
+        for case in cases
+        if case.get("classname") == classname
+        and (
+            case.get("name") == function_name
+            or str(case.get("name", "")).startswith(f"{function_name}[")
+        )
+    ]
+
+
+def run_focused_correctness_gate(
+    output_directory: str | Path,
+    *,
+    repository_root: str | Path | None = None,
+    python_executable: str | Path | None = None,
+    test_node_ids: Sequence[str] = DEFAULT_CORRECTNESS_TEST_NODE_IDS,
+    timeout_seconds: float = 300.0,
+    evidence_binding: Mapping[str, Any] | None = None,
+) -> tuple[CorrectnessGate, dict[str, Any]]:
+    """Run and parse the exact reference-equivalence pytest gate.
+
+    Every gate field comes from its mapped JUnit case(s).  A nonzero pytest
+    return code also fails every field, so an unrelated failure in this exact
+    focused invocation can never be hidden by the mapped cases passing.
+    Evidence is retained under ``profiles/`` even when the gate fails.
+    """
+
+    output = Path(output_directory).resolve()
+    profiles = output / "profiles"
+    profiles.mkdir(parents=True, exist_ok=True)
+    root = (
+        Path(__file__).resolve().parents[1]
+        if repository_root is None
+        else Path(repository_root).resolve()
+    )
+    executable = str(
+        Path(sys.executable if python_executable is None else python_executable)
+    )
+    selected = tuple(
+        _nonempty_string(item, name="correctness pytest node ID")
+        for item in test_node_ids
+    )
+    if not selected:
+        raise ValueError("correctness pytest node IDs must not be empty")
+    timeout = _positive_float(timeout_seconds, name="correctness timeout_seconds")
+
+    junit_path = profiles / "correctness_gate.junit.xml"
+    stdout_path = profiles / "correctness_gate.stdout.txt"
+    stderr_path = profiles / "correctness_gate.stderr.txt"
+    report_path = profiles / "correctness_gate.json"
+    # Never parse a stale success document after pytest failed before writing.
+    junit_path.unlink(missing_ok=True)
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=".correctness-gate-",
+        suffix=".xml",
+        dir=profiles,
+    )
+    os.close(descriptor)
+    temporary_junit = Path(temporary_name)
+    command = (
+        executable,
+        "-m",
+        "pytest",
+        "-q",
+        "--disable-warnings",
+        "--tb=short",
+        f"--junitxml={temporary_junit}",
+        *selected,
+    )
+    command_text = subprocess.list2cmdline(list(command))
+    started = time.perf_counter()
+    returncode: int | None = None
+    timed_out = False
+    execution_error: str | None = None
+    stdout = ""
+    stderr = ""
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=root,
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=timeout,
+        )
+        returncode = int(completed.returncode)
+        stdout = completed.stdout
+        stderr = completed.stderr
+    except subprocess.TimeoutExpired as exc:
+        timed_out = True
+        execution_error = f"focused correctness pytest timed out after {timeout:g}s"
+        stdout = "" if exc.stdout is None else str(exc.stdout)
+        stderr = "" if exc.stderr is None else str(exc.stderr)
+    except OSError as exc:
+        execution_error = f"could not execute focused correctness pytest: {exc}"
+    duration_seconds = float(time.perf_counter() - started)
+    if temporary_junit.is_file() and temporary_junit.stat().st_size > 0:
+        os.replace(temporary_junit, junit_path)
+    else:
+        temporary_junit.unlink(missing_ok=True)
+    _atomic_write(stdout_path, stdout.encode("utf-8", errors="replace"))
+    _atomic_write(stderr_path, stderr.encode("utf-8", errors="replace"))
+
+    cases, parse_error = _pytest_junit_cases(junit_path)
+    if parse_error is not None and execution_error is None:
+        execution_error = parse_error
+    suite_passed = returncode == 0 and not timed_out and execution_error is None
+    checks: dict[str, bool] = {}
+    check_evidence: dict[str, Any] = {}
+    for check_name in REQUIRED_CORRECTNESS_CHECKS:
+        identities = _CORRECTNESS_TEST_IDENTITIES.get(check_name, ())
+        identity_evidence: list[dict[str, Any]] = []
+        identity_passes: list[bool] = []
+        for identity in identities:
+            matches = _matching_junit_cases(cases, identity)
+            identity_passed = bool(matches) and all(
+                match.get("status") == "passed" for match in matches
+            )
+            identity_passes.append(identity_passed)
+            identity_evidence.append(
+                {
+                    "classname": identity[0],
+                    "test_name_prefix": identity[1],
+                    "matched_cases": [dict(match) for match in matches],
+                    "passed": identity_passed,
+                }
+            )
+        checks[check_name] = bool(
+            suite_passed and identities and all(identity_passes)
+        )
+        check_evidence[check_name] = identity_evidence
+
+    evidence_paths = [stdout_path, stderr_path, report_path]
+    if junit_path.is_file():
+        evidence_paths.insert(0, junit_path)
+    gate = CorrectnessGate(
+        checks=checks,
+        command=command_text,
+        evidence=tuple(str(path) for path in evidence_paths),
+    )
+    junit_digest = (
+        f"sha256:{sha256(junit_path.read_bytes()).hexdigest()}"
+        if junit_path.is_file()
+        else None
+    )
+    report: dict[str, Any] = {
+        "schema_version": "article-v1-feature-correctness-pytest-v1",
+        "passed": gate.passed,
+        "command": command_text,
+        "argv": list(command),
+        "repository_root": str(root),
+        "evidence_binding": _json_compatible_copy(evidence_binding or {}),
+        "returncode": returncode,
+        "timed_out": timed_out,
+        "execution_error": execution_error,
+        "duration_seconds": duration_seconds,
+        "junit": {
+            "path": str(junit_path),
+            "sha256": junit_digest,
+            "case_count": len(cases),
+        },
+        "cases": cases,
+        "check_evidence": check_evidence,
+        "correctness_gate": gate.as_dict(),
+    }
+    _atomic_write(report_path, _json_bytes(report))
+    return gate, report
+
+
+_PYTHON_LOOP_NODE_TYPES = (
+    ast.For,
+    ast.AsyncFor,
+    ast.ListComp,
+    ast.SetComp,
+    ast.DictComp,
+    ast.GeneratorExp,
+)
+
+
+def _call_attribute(node: ast.Call) -> tuple[str | None, str | None]:
+    function = node.func
+    if not isinstance(function, ast.Attribute):
+        return None, None
+    owner = function.value
+    if isinstance(owner, ast.Name):
+        return owner.id, function.attr
+    if isinstance(owner, ast.Attribute):
+        return owner.attr, function.attr
+    return None, function.attr
+
+
+def _nested_python_loop_lines(method: ast.AST) -> list[tuple[int, int]]:
+    nested: list[tuple[int, int]] = []
+    loops = [node for node in ast.walk(method) if isinstance(node, _PYTHON_LOOP_NODE_TYPES)]
+    for outer in loops:
+        for descendant in ast.walk(outer):
+            if descendant is outer:
+                continue
+            if isinstance(descendant, _PYTHON_LOOP_NODE_TYPES):
+                nested.append(
+                    (int(getattr(outer, "lineno", 0)), int(getattr(descendant, "lineno", 0)))
+                )
+    return sorted(set(nested))
+
+
+def _same_class_method_calls(method: ast.AST) -> set[str]:
+    calls: set[str] = set()
+    for node in ast.walk(method):
+        if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Attribute):
+            continue
+        owner = node.func.value
+        if isinstance(owner, ast.Name) and owner.id == "self":
+            calls.add(node.func.attr)
+    return calls
+
+
+def inspect_production_dominance_update(
+    source_path: str | Path | None = None,
+    *,
+    evidence_binding: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Conservatively verify vectorized production dominance updates by AST.
+
+    Only ``_insert_resource`` and ``_remove_resource`` are qualified.  The
+    deliberately quadratic reference evaluator and debug reconciliation
+    oracle are outside this production check.  The check is intentionally
+    stricter than the plan: any Python loop/comprehension in either update
+    fails, not merely a recognizable nested all-record loop.
+    """
+
+    path = (
+        Path(__file__).resolve().parents[1] / "rl" / "article_frontier_index.py"
+        if source_path is None
+        else Path(source_path).resolve()
+    )
+    required_methods = ("_insert_resource", "_remove_resource")
+    maximum_call_depth = 8
+    report: dict[str, Any] = {
+        "schema_version": "article-v1-dominance-source-check-v1",
+        "source_path": str(path),
+        "source_sha256": None,
+        "qualified_class": "ExactArticleFrontierFeatureIndex",
+        "qualified_methods": list(required_methods),
+        "maximum_same_class_call_depth": maximum_call_depth,
+        "debug_or_reference_oracles_excluded": True,
+        "evidence_binding": _json_compatible_copy(evidence_binding or {}),
+        "methods": {},
+        "checks": {},
+        "passed": False,
+        "error": None,
+    }
+    try:
+        source = path.read_text(encoding="utf-8")
+        report["source_sha256"] = f"sha256:{sha256(source.encode('utf-8')).hexdigest()}"
+        tree = ast.parse(source, filename=str(path))
+    except (OSError, SyntaxError, UnicodeError) as exc:
+        report["error"] = f"could not inspect dominance source: {exc}"
+        return report
+
+    class_nodes = [
+        node
+        for node in tree.body
+        if isinstance(node, ast.ClassDef)
+        and node.name == "ExactArticleFrontierFeatureIndex"
+    ]
+    all_methods: dict[str, ast.FunctionDef | ast.AsyncFunctionDef] = {}
+    if len(class_nodes) == 1:
+        all_methods = {
+            node.name: node
+            for node in class_nodes[0].body
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+        }
+    roots_found = {
+        name: all_methods[name] for name in required_methods if name in all_methods
+    }
+    reachable_depths: dict[str, int] = {}
+    call_graph: dict[str, list[str]] = {}
+    queue: list[tuple[str, int]] = [(name, 0) for name in required_methods]
+    call_graph_truncated = False
+    while queue:
+        name, depth = queue.pop(0)
+        if name not in all_methods:
+            continue
+        prior_depth = reachable_depths.get(name)
+        if prior_depth is not None and prior_depth <= depth:
+            continue
+        reachable_depths[name] = depth
+        callees = sorted(
+            candidate
+            for candidate in _same_class_method_calls(all_methods[name])
+            if candidate in all_methods
+        )
+        call_graph[name] = callees
+        if depth >= maximum_call_depth:
+            if any(candidate not in reachable_depths for candidate in callees):
+                call_graph_truncated = True
+            continue
+        queue.extend((candidate, depth + 1) for candidate in callees)
+
+    root_loop_count = 0
+    reachable_nested_count = 0
+    method_reports: dict[str, Any] = {}
+    for name in sorted(reachable_depths, key=lambda item: (reachable_depths[item], item)):
+        method = all_methods[name]
+        loop_nodes = [
+            node
+            for node in ast.walk(method)
+            if isinstance(node, _PYTHON_LOOP_NODE_TYPES)
+        ]
+        nested_lines = _nested_python_loop_lines(method)
+        calls = [node for node in ast.walk(method) if isinstance(node, ast.Call)]
+        numpy_all_lines = [
+            int(getattr(call, "lineno", 0))
+            for call in calls
+            if _call_attribute(call) == ("np", "all")
+        ]
+        active_group_lines = [
+            int(getattr(call, "lineno", 0))
+            for call in calls
+            if _call_attribute(call)[1] == "_active_group_indices"
+        ]
+        if name in required_methods:
+            root_loop_count += len(loop_nodes)
+        reachable_nested_count += len(nested_lines)
+        method_reports[name] = {
+            "found": True,
+            "call_depth": reachable_depths[name],
+            "same_class_callees": call_graph.get(name, []),
+            "line_start": int(method.lineno),
+            "line_end": int(getattr(method, "end_lineno", method.lineno)),
+            "python_loop_lines": sorted(
+                int(getattr(node, "lineno", 0)) for node in loop_nodes
+            ),
+            "nested_python_loop_lines": [list(item) for item in nested_lines],
+            "numpy_all_lines": numpy_all_lines,
+            "active_group_index_lines": active_group_lines,
+    }
+    report["methods"] = method_reports
+    report["same_class_call_graph"] = call_graph
+    report["reachable_methods"] = [
+        name
+        for name in sorted(
+            reachable_depths, key=lambda item: (reachable_depths[item], item)
+        )
+    ]
+    report["call_graph_truncated"] = call_graph_truncated
+    checks = {
+        "single_production_index_class_found": len(class_nodes) == 1,
+        "production_update_methods_found": set(roots_found) == set(required_methods),
+        "same_class_call_graph_fully_inspected": not call_graph_truncated,
+        "active_resource_group_vectorization_present": bool(roots_found)
+        and all(
+            method_reports.get(name, {}).get("active_group_index_lines")
+            for name in required_methods
+        ),
+        "numpy_all_vectorization_present": bool(roots_found)
+        and all(
+            method_reports.get(name, {}).get("numpy_all_lines")
+            for name in required_methods
+        ),
+        "no_python_loops_in_production_dominance_updates": root_loop_count == 0,
+        "no_reachable_python_nested_loop": reachable_nested_count == 0,
+        "no_python_all_open_record_nested_loop": reachable_nested_count == 0,
+    }
+    report["checks"] = checks
+    report["passed"] = all(checks.values())
+    return report
+
+
+def write_implementation_check_evidence(
+    output_directory: str | Path,
+    report: Mapping[str, Any],
+) -> Path:
+    """Persist the source/AST preflight alongside profiles and pytest evidence."""
+
+    if not isinstance(report, Mapping):
+        raise ValueError("implementation report must be a mapping")
+    path = Path(output_directory).resolve() / "profiles" / "implementation_check.json"
+    _atomic_write(path, _json_bytes(dict(report)))
+    return path
+
+
+def _require_pre_timing_gates(
+    correctness_gate: CorrectnessGate,
+    implementation_checks: Mapping[str, bool],
+    *,
+    require_correctness: bool = True,
+) -> dict[str, bool]:
+    if not isinstance(correctness_gate, CorrectnessGate):
+        raise TypeError("correctness_gate must be a CorrectnessGate")
+    if not isinstance(require_correctness, bool):
+        raise ValueError("require_correctness must be a bool")
+    if require_correctness and not correctness_gate.passed:
+        raise ValueError("reference-equivalence correctness gate must pass before timing")
+    if not isinstance(implementation_checks, Mapping):
+        raise ValueError("implementation_checks must be a mapping")
+    normalized: dict[str, bool] = {}
+    for name, value in implementation_checks.items():
+        key = _nonempty_string(name, name="implementation check name")
+        normalized[key] = _strict_bool(value, name=f"implementation check {key}")
+    if normalized.get(PRODUCTION_DOMINANCE_IMPLEMENTATION_CHECK) is not True:
+        raise ValueError(
+            "production dominance implementation check must pass before timing"
+        )
+    return normalized
 
 
 @dataclass(frozen=True, slots=True)
@@ -335,6 +879,7 @@ class EndToEndMeasurement:
     peak_feature_index_memory_bytes: int
     terminal_status: str
     reference_runtime_seconds: float | None = None
+    reference_feature_time_seconds: float | None = None
     trace_equivalent: bool | None = None
     final_weights_equivalent: bool | None = None
     terminal_status_equivalent: bool | None = None
@@ -366,6 +911,24 @@ class EndToEndMeasurement:
         _optional_positive_float(
             self.reference_runtime_seconds, name="reference_runtime_seconds"
         )
+        reference_feature_time = _optional_nonnegative_float(
+            self.reference_feature_time_seconds,
+            name="reference_feature_time_seconds",
+        )
+        if (
+            reference_feature_time is not None
+            and self.reference_runtime_seconds is None
+        ):
+            raise ValueError(
+                "reference feature time requires reference runtime seconds"
+            )
+        if (
+            reference_feature_time is not None
+            and reference_feature_time > float(self.reference_runtime_seconds)
+        ):
+            raise ValueError(
+                "reference_feature_time_seconds cannot exceed reference runtime"
+            )
         for field in (
             "trace_equivalent",
             "final_weights_equivalent",
@@ -381,16 +944,33 @@ class EndToEndMeasurement:
         return float(self.feature_time_seconds / self.runtime_seconds)
 
     @property
-    def reference_parity_passed(self) -> bool:
-        return all(
-            value is True
-            for value in (
-                self.trace_equivalent,
-                self.final_weights_equivalent,
-                self.terminal_status_equivalent,
-                self.deterministic_counters_equivalent,
-            )
+    def reference_feature_time_share(self) -> float | None:
+        if (
+            self.reference_runtime_seconds is None
+            or self.reference_feature_time_seconds is None
+        ):
+            return None
+        return float(
+            self.reference_feature_time_seconds / self.reference_runtime_seconds
         )
+
+    @property
+    def end_to_end_speedup(self) -> float | None:
+        if self.reference_runtime_seconds is None:
+            return None
+        return float(self.reference_runtime_seconds / self.runtime_seconds)
+
+    @property
+    def reference_parity_passed(self) -> bool | None:
+        values = (
+            self.trace_equivalent,
+            self.final_weights_equivalent,
+            self.terminal_status_equivalent,
+            self.deterministic_counters_equivalent,
+        )
+        if all(value is None for value in values):
+            return None
+        return all(value is True for value in values)
 
     @classmethod
     def from_value(
@@ -541,8 +1121,31 @@ class RepositoryArticleV1FeatureBenchmarkAdapter:
             )
 
     def metadata(self) -> dict[str, Any]:
+        experiment_fields = (
+            "profile_name",
+            "feature_schema",
+            "reward_schema",
+            "target_metric_schema",
+            "certification_schema",
+            "beta",
+            "gamma",
+            "learning_rate",
+            "epsilon",
+            "training_episodes_per_target",
+            "training_seeds",
+            "random_scheduler_seeds",
+            "validation_seeds",
+            "statistics_seed",
+            "certification_tolerance",
+            "canonicalization_enabled",
+            "pareto_dominance_enabled",
+            "absorb_clifford_angles",
+            "canonicalization_mode",
+        )
         return {
             "config_profile": self.corpus.config.profile,
+            "config_digest": self.corpus.config.digest,
+            "resolved_config": self.corpus.config.to_dict(),
             "target_id": self.case.target_id,
             "split": self.case.split,
             "difficulty": self.case.difficulty,
@@ -551,6 +1154,11 @@ class RepositoryArticleV1FeatureBenchmarkAdapter:
             "transfer_target_index": self.transfer_target_index,
             "effective_seed": self.effective_seed,
             "scientific_horizon": self.scientific_horizon,
+            "budget": self.case.budget.metadata(),
+            "experiment": {
+                name: _json_compatible_copy(self.experiment[name])
+                for name in experiment_fields
+            },
             "microbenchmark_repetitions": self.microbenchmark_repetitions,
             "microbenchmark_warmups": self.microbenchmark_warmups,
             "reference_safe_frontier_size": self.reference_safe_frontier_size,
@@ -900,8 +1508,10 @@ class RepositoryArticleV1FeatureBenchmarkAdapter:
         terminal_status_equivalent = None
         deterministic_counters_equivalent = None
         reference_runtime = None
+        reference_feature_time = None
         if reference is not None:
             reference_runtime = reference.runtime_seconds
+            reference_feature_time = reference.feature_time_seconds
             trace_equivalent = (
                 optimized.selected_record_ids == reference.selected_record_ids
                 and optimized.rewards == reference.rewards
@@ -927,6 +1537,7 @@ class RepositoryArticleV1FeatureBenchmarkAdapter:
             peak_feature_index_memory_bytes=optimized.feature_index_memory_bytes,
             terminal_status=optimized.terminal_status,
             reference_runtime_seconds=reference_runtime,
+            reference_feature_time_seconds=reference_feature_time,
             trace_equivalent=trace_equivalent,
             final_weights_equivalent=final_weights_equivalent,
             terminal_status_equivalent=terminal_status_equivalent,
@@ -965,7 +1576,10 @@ class RepositoryArticleV1FeatureBenchmarkAdapter:
             profiler.runcall(
                 self.measure_microbenchmark,
                 size,
-                include_reference=size <= self.reference_safe_frontier_size,
+                # This artifact is explicitly named "optimized". Reference
+                # all-pairs work is measured separately in the timed CSV and
+                # must not dominate or contaminate this diagnostic profile.
+                include_reference=False,
             )
             stem = f"frontier-F{size}-optimized"
             temporary = destination / f".{stem}.prof.tmp"
@@ -1016,6 +1630,7 @@ def run_repository_feature_benchmark(
         raise ValueError("write_profiles must be a bool")
     if adapter_kwargs is not None and not isinstance(adapter_kwargs, Mapping):
         raise ValueError("adapter_kwargs must be a mapping or None")
+    _require_pre_timing_gates(correctness_gate, implementation_checks)
     adapter = create_repository_feature_benchmark_adapter(
         config, **dict(adapter_kwargs or {})
     )
@@ -1083,6 +1698,19 @@ def baseline_f653193(
 ) -> dict[str, Any]:
     """Return the immutable baseline record supplied for the optimization."""
 
+    historical_environment = (
+        {
+            "captured": False,
+            "status": "unknown-not-captured-with-historical-baseline",
+            "note": (
+                "The f653193 timing environment was not preserved; current-host "
+                "metadata must not be retroactively attached to historical timings."
+            ),
+        }
+        if environment is None
+        else dict(environment)
+    )
+
     return {
         "schema_version": ARTICLE_V1_FEATURE_BASELINE_SCHEMA,
         "evidence_class": ENGINEERING_EVIDENCE_CLASS,
@@ -1132,7 +1760,7 @@ def baseline_f653193(
                 "cProfile table; new profile files belong under profiles/."
             ),
         },
-        "environment": dict(environment or capture_benchmark_environment()),
+        "environment": historical_environment,
     }
 
 
@@ -1202,15 +1830,12 @@ def _micro_rows(
     baseline: Mapping[str, Any],
     reference_safe_frontier_size: int,
 ) -> list[dict[str, Any]]:
+    del baseline  # historical timings are context only, never a current-host gate
     rows: list[dict[str, Any]] = []
     for item in measurements:
         reference_expected = item.frontier_size <= reference_safe_frontier_size
         effective_reference = item.reference_total_seconds
         reference_basis = "measured-current-reference" if effective_reference is not None else ""
-        if effective_reference is None and item.frontier_size == 1024:
-            effective_reference, reference_basis = _baseline_reference_near(
-                baseline, item.frontier_size
-            )
         speedup = (
             None
             if effective_reference is None
@@ -1262,6 +1887,9 @@ def _end_to_end_rows(
             "terminal_status": item.terminal_status,
             "reference_expected": item.expansion_cap in trace_caps,
             "reference_runtime_seconds": item.reference_runtime_seconds,
+            "reference_feature_time_seconds": item.reference_feature_time_seconds,
+            "reference_feature_time_share": item.reference_feature_time_share,
+            "end_to_end_speedup": item.end_to_end_speedup,
             "trace_equivalent": item.trace_equivalent,
             "final_weights_equivalent": item.final_weights_equivalent,
             "terminal_status_equivalent": item.terminal_status_equivalent,
@@ -1312,6 +1940,11 @@ def qualify_feature_benchmark(
 
     row_1024 = by_size.get(1024)
     speedup_1024 = None if row_1024 is None else row_1024.get("speedup")
+    checks["current_host_reference_measured_at_1024"] = bool(
+        row_1024 is not None
+        and row_1024.get("reference_measured") is True
+        and row_1024.get("reference_basis") == "measured-current-reference"
+    )
     checks["speedup_at_approximately_1024_at_least_10x"] = (
         isinstance(speedup_1024, (int, float))
         and not isinstance(speedup_1024, bool)
@@ -1369,6 +2002,28 @@ def qualify_feature_benchmark(
         for cap in trace_caps
     }
     checks["reference_trace_parity_at_32_and_64"] = all(parity_by_cap.values())
+    end_to_end_speedup_by_cap: dict[int, float | None] = {}
+    optimized_feature_share_by_cap: dict[int, float | None] = {}
+    reference_feature_share_by_cap: dict[int, float | None] = {}
+    for cap in trace_caps:
+        row = by_cap.get(cap, {})
+        raw_speedup = row.get("end_to_end_speedup")
+        end_to_end_speedup_by_cap[cap] = (
+            float(raw_speedup)
+            if isinstance(raw_speedup, (int, float))
+            and not isinstance(raw_speedup, bool)
+            and math.isfinite(float(raw_speedup))
+            else None
+        )
+        optimized_feature_share_by_cap[cap] = row.get("feature_time_share")
+        reference_feature_share_by_cap[cap] = row.get(
+            "reference_feature_time_share"
+        )
+    checks["end_to_end_speedup_at_32_and_64_at_least_2x"] = all(
+        speedup is not None
+        and speedup >= MINIMUM_END_TO_END_SPEEDUP_AT_REFERENCE_CAP
+        for speedup in end_to_end_speedup_by_cap.values()
+    )
     passed = all(checks.values())
     return {
         "passed": passed,
@@ -1381,6 +2036,9 @@ def qualify_feature_benchmark(
                 MAXIMUM_512_TO_1024_COMPACT_SCORE_RATIO
             ),
             "maximum_memory_scaling_exponent": MAXIMUM_MEMORY_SCALING_EXPONENT,
+            "minimum_end_to_end_speedup_at_reference_caps": (
+                MINIMUM_END_TO_END_SPEEDUP_AT_REFERENCE_CAP
+            ),
             "reference_safe_frontier_size": safe_size,
         },
         "observed": {
@@ -1388,6 +2046,9 @@ def qualify_feature_benchmark(
             "compact_score_ratio_512_to_1024": compact_score_ratio,
             "memory_scaling_exponent_vs_frontier_plus_groups": memory_exponent,
             "reference_trace_parity_by_cap": parity_by_cap,
+            "end_to_end_speedup_by_cap": end_to_end_speedup_by_cap,
+            "optimized_feature_time_share_by_cap": optimized_feature_share_by_cap,
+            "reference_feature_time_share_by_cap": reference_feature_share_by_cap,
         },
         "policy": (
             "A failed or incomplete correctness gate invalidates performance "
@@ -1678,8 +2339,8 @@ def _scaling_report(
             "",
             "## Staged hard-target measurements",
             "",
-            "| Cap | Expansions | Runtime (s) | Feature share | Peak F | Peak groups | Trace parity |",
-            "|---:|---:|---:|---:|---:|---:|---:|",
+            "| Cap | Expansions | Optimized runtime (s) | Reference runtime (s) | End-to-end speedup | Optimized feature share | Reference feature share | Peak F | Peak groups | Trace parity |",
+            "|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|",
         ]
     )
     for row in end_rows:
@@ -1691,7 +2352,10 @@ def _scaling_report(
                     "expansion_cap",
                     "expansions_completed",
                     "runtime_seconds",
+                    "reference_runtime_seconds",
+                    "end_to_end_speedup",
                     "feature_time_share",
+                    "reference_feature_time_share",
                     "peak_frontier",
                     "peak_unique_resource_groups",
                     "reference_parity_passed",
@@ -1834,6 +2498,7 @@ def write_feature_benchmark_artifacts(
             ARTICLE_V1_REFERENCE_EVALUATOR_SCHEMA
         ),
         "benchmark_provenance": _benchmark_provenance(benchmark_provenance),
+        "benchmark_environment": capture_benchmark_environment(),
         "correctness_gate": correctness_gate.as_dict(),
         "reference_safe_frontier_size": safe_size,
         "default_frontier_sizes": list(expected_sizes),
@@ -1895,12 +2560,11 @@ def benchmark_feature_evaluator(
     default).  This function does not mutate configs or launch a pilot.
     """
 
-    if not isinstance(require_correctness_before_timing, bool):
-        raise ValueError("require_correctness_before_timing must be a bool")
-    if require_correctness_before_timing and not correctness_gate.passed:
-        raise ValueError(
-            "reference-equivalence correctness gate must pass before timing"
-        )
+    _require_pre_timing_gates(
+        correctness_gate,
+        implementation_checks,
+        require_correctness=require_correctness_before_timing,
+    )
     sizes = _validated_axis(frontier_sizes, name="frontier sizes")
     caps = _validated_axis(staged_caps, name="staged caps")
     safe_size = _positive_int(
@@ -1957,6 +2621,7 @@ __all__ = [
     "ARTICLE_V1_FEATURE_PROJECTION_SCHEMA",
     "ARTICLE_V1_REFERENCE_EVALUATOR_SCHEMA",
     "CorrectnessGate",
+    "DEFAULT_CORRECTNESS_TEST_NODE_IDS",
     "DEFAULT_FRONTIER_SIZES",
     "DEFAULT_HARD_EXPANSION_CAP",
     "DEFAULT_REFERENCE_SAFE_FRONTIER_SIZE",
@@ -1971,6 +2636,7 @@ __all__ = [
     "MicrobenchmarkMeasurement",
     "PilotFeasibilityCriteria",
     "PILOT_HARD_3Q_TARGET_ID",
+    "PRODUCTION_DOMINANCE_IMPLEMENTATION_CHECK",
     "REQUIRED_CORRECTNESS_CHECKS",
     "REQUIRED_PILOT_RELAUNCH_CHECKS",
     "RepositoryArticleV1FeatureBenchmarkAdapter",
@@ -1978,8 +2644,11 @@ __all__ = [
     "benchmark_feature_evaluator",
     "capture_benchmark_environment",
     "create_repository_feature_benchmark_adapter",
+    "inspect_production_dominance_update",
     "project_pilot_cost_from_scaling",
     "qualify_feature_benchmark",
     "run_repository_feature_benchmark",
+    "run_focused_correctness_gate",
+    "write_implementation_check_evidence",
     "write_feature_benchmark_artifacts",
 ]

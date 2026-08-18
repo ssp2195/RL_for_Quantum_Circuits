@@ -352,6 +352,12 @@ separately and is not the sum of phase counters. Phase counters are exclusive:
   construction and target-metric evaluation.
 - `feature_time_ns`: structural candidate/batch construction and
   standardization, excluding separately timed dense target metrics.
+- `compact_batch_time_ns`: cumulative compact-batch construction time within
+  the feature envelope. `last_compact_batch_time_ns` is the latest completed
+  batch duration, not another cumulative phase and must not be added to the
+  total. `compact_batch_count` records how many completed batches contribute;
+  a zero count requires both compact timing fields to be zero, and the latest
+  duration cannot exceed the cumulative duration.
 - `target_metric_time_ns`: dense process-infidelity cache misses/evaluations.
 - `symbolic_update_time_ns`: native legality/resource checks and symbolic/DAG
   child construction.
@@ -539,7 +545,7 @@ the working tree use repository-relative POSIX spelling, and the recorded run
 working directory is `.`; this avoids embedding one developer's absolute
 Windows checkout in portable report metadata.
 
-The final mini evidence is
+The pre-optimization mini evidence is
 `outputs/article_v1/final-mini-ci-v5/mini_ci_summary.json`. It records a passing
 nine-record matrix, all eleven semantic checks true, no reference-witness
 fallback, an independently certified FIFO success on the known reachable
@@ -547,7 +553,11 @@ target, and a V2 standard checkpoint trained with seed 19 under the explicit
 partial-smoke scope (one training target, one episode, cap 16). A same-ID
 resume appended zero, skipped nine, left `raw_runs.jsonl` unchanged, reported
 `checkpoint_trained_this_run: false`, and left the checkpoint file unchanged.
-Neither the configured pilot nor the full publication campaign has been run.
+That artifact belongs to the source revision before
+`article-v1-exact-incremental-v2`; it is retained for history but does not
+satisfy the new-schema relaunch gate. A clean-schema mini-CI must pass twice
+with byte-stable resume at commit `bd251b9` or its reviewed successor. That run,
+the configured pilot, and the full publication campaign remain pending.
 The full campaign must not be an ordinary blocking unit test.
 
 ## GHZ, Toffoli, and QFT boundaries

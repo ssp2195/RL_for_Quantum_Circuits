@@ -13,6 +13,7 @@ candidate coordinate is exactly ``(D(r) - 1) / max(1, F - 1)``.
 
 from __future__ import annotations
 
+from collections import deque
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 from hashlib import sha256
@@ -408,6 +409,9 @@ class ExactArticleFrontierFeatureIndex:
         self._resource_group_peak = 0
         self._dominance_update_time_ns = 0
         self._compact_batch_time_ns = 0
+        self._compact_batch_count = 0
+        self._last_compact_batch_time_ns = 0
+        self._recent_compact_batch_times_ns: deque[int] = deque(maxlen=25)
         self._candidate_gather_time_ns = 0
         self._standardization_time_ns = 0
         self._score_time_ns = 0
@@ -908,8 +912,17 @@ class ExactArticleFrontierFeatureIndex:
             _score_observer=self._record_score_time,
             _row_observer=self._record_row_time,
         )
-        self._compact_batch_time_ns += perf_counter_ns() - started_ns
+        elapsed_ns = perf_counter_ns() - started_ns
+        self._compact_batch_time_ns += elapsed_ns
+        self._compact_batch_count += 1
+        self._last_compact_batch_time_ns = elapsed_ns
+        self._recent_compact_batch_times_ns.append(elapsed_ns)
         return result
+
+    def recent_compact_batch_times_ns(self) -> tuple[int, ...]:
+        """Return the exact last 25 completed compact-batch durations."""
+
+        return tuple(self._recent_compact_batch_times_ns)
 
     def minimum_target_distance(self) -> float:
         if not self._slot_by_record_id:
@@ -1057,6 +1070,8 @@ class ExactArticleFrontierFeatureIndex:
             "resource_group_peak": self._resource_group_peak,
             "dominance_update_time_ns": self._dominance_update_time_ns,
             "compact_batch_time_ns": self._compact_batch_time_ns,
+            "compact_batch_count": self._compact_batch_count,
+            "last_compact_batch_time_ns": self._last_compact_batch_time_ns,
             "candidate_gather_time_ns": self._candidate_gather_time_ns,
             "standardization_time_ns": self._standardization_time_ns,
             "score_time_ns": self._score_time_ns,

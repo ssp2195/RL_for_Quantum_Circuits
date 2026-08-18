@@ -9,6 +9,7 @@ part of the ordinary unit-test suite; ``mini-ci`` is the bounded smoke path.
 from __future__ import annotations
 
 import argparse
+from collections import defaultdict, deque
 from contextlib import redirect_stdout
 from dataclasses import dataclass
 from hashlib import sha256
@@ -61,6 +62,21 @@ from experiments.article_v1_progress import (
     ProgressCadence,
     utc_timestamp,
 )
+from experiments.article_v1_replay_timing import (
+    REPLAY_TIMING_EXPECTED_EXPANSIONS,
+    ArticleV1ReplayTimingEvidence,
+    ReplayValidationResult,
+    checkpoint_file_sha256,
+    measure_replay_timing,
+    write_replay_timing,
+)
+from experiments.article_v1_runtime_snapshot import (
+    ARTICLE_V1_RUNTIME_SNAPSHOT_SCHEMA,
+    DEFAULT_RUNTIME_SNAPSHOT_INTERVAL,
+    ArticleV1RuntimeSnapshotStore,
+    ArticleV1RuntimeState,
+    LoadedRuntimeSnapshot,
+)
 from experiments.article_v1_training_checkpoint import (
     ArticleV1CheckpointProvenance,
     ArticleV1EventJournal,
@@ -69,6 +85,7 @@ from experiments.article_v1_training_checkpoint import (
     CheckpointCadence,
     CheckpointCadenceGate,
     CheckpointCompatibilityError,
+    CheckpointFormatError,
     MidEpisodeCheckpoint,
     ReplayObservation,
     ResumeExpectation,
@@ -102,6 +119,7 @@ from train import Trainer, TrainerBoundaryEvent, TrainerEpisodeResume
 
 ARTICLE_V1_RUNNER_SCHEMA = "article-v1-publication-runner-v4"
 ARTICLE_V1_CAMPAIGN_AUDIT_SCHEMA = "article-v1-campaign-audit-v1"
+ARTICLE_V1_REPLAY_CAPTURE_SCHEMA = "article-v1-replay-checkpoint-capture-v1"
 PRIMARY_SCHEDULERS = (
     "fifo",
     "lifo",
@@ -131,6 +149,88 @@ _RELEVANT_UNTRACKED_SUFFIXES = {
     ".yaml",
     ".yml",
 }
+
+
+class _ProgressFeatureTimingWindow:
+    """Track exact new compact-batch durations without boundary double counts."""
+
+    def __init__(self, *, initial_count: int = 0, window_size: int = 25) -> None:
+        if isinstance(initial_count, bool) or int(initial_count) < 0:
+            raise ValueError("initial compact-batch count must be nonnegative")
+        if isinstance(window_size, bool) or int(window_size) < 1:
+            raise ValueError("feature timing window size must be positive")
+        self._observed_count = int(initial_count)
+        self._samples_ns: deque[int] = deque(maxlen=int(window_size))
+
+    def observe(
+        self,
+        instrumentation: Mapping[str, object],
+        *,
+        recent_batch_times_ns: Sequence[int],
+    ) -> tuple[float, float]:
+        count = int(instrumentation.get("compact_batch_count", 0))
+        last_ns = int(instrumentation.get("last_compact_batch_time_ns", 0))
+        if count < 0 or last_ns < 0:
+            raise RuntimeError("feature batch timing instrumentation is negative")
+        if count < self._observed_count:
+            # The provider owns a fresh per-episode index after environment reset.
+            self._observed_count = 0
+            self._samples_ns.clear()
+        new_count = count - self._observed_count
+        recent = tuple(int(value) for value in recent_batch_times_ns)
+        if any(value < 0 for value in recent):
+            raise RuntimeError("recent feature batch timings are negative")
+        if new_count > len(recent):
+            # A callback may be attached after more than the provider's retained
+            # 25 samples.  Reloading that exact suffix still yields the exact
+            # requested rolling-25 statistic.
+            self._samples_ns.clear()
+            self._samples_ns.extend(recent)
+        elif new_count:
+            self._samples_ns.extend(recent[-new_count:])
+        self._observed_count = count
+        last_seconds = float(last_ns / 1_000_000_000) if count else 0.0
+        rolling_seconds = (
+            float(sum(self._samples_ns) / len(self._samples_ns) / 1_000_000_000)
+            if self._samples_ns
+            else 0.0
+        )
+        return last_seconds, rolling_seconds
+
+    def reset_episode(self) -> None:
+        self._observed_count = 0
+        self._samples_ns.clear()
+
+
+class _EpisodeProgressClock:
+    """Episode-local elapsed/rate clock whose reset follows the final event."""
+
+    def __init__(
+        self,
+        *,
+        started: float,
+        clock: Callable[[], float] = time.perf_counter,
+    ) -> None:
+        if not math.isfinite(float(started)):
+            raise ValueError("episode progress start must be finite")
+        self._started = float(started)
+        self._clock = clock
+
+    def measure(self, expansion: int) -> tuple[float, float]:
+        if isinstance(expansion, bool) or not isinstance(expansion, int) or expansion < 0:
+            raise ValueError("episode progress expansion must be nonnegative")
+        elapsed = float(self._clock()) - self._started
+        if not math.isfinite(elapsed) or elapsed < 0.0:
+            raise RuntimeError("episode progress clock regressed or is non-finite")
+        return elapsed, (float(expansion / elapsed) if elapsed else 0.0)
+
+    def reset(self, *, now: float | None = None) -> None:
+        current = float(self._clock() if now is None else now)
+        if not math.isfinite(current):
+            raise RuntimeError("episode progress reset time is non-finite")
+        self._started = current
+
+
 _TIMING_THREAD_ENVIRONMENT = (
     "OMP_NUM_THREADS",
     "MKL_NUM_THREADS",
@@ -175,11 +275,17 @@ def _is_relevant_untracked_source(path: str) -> bool:
     return Path(normalized).suffix.lower() in _RELEVANT_UNTRACKED_SUFFIXES
 
 
-def git_provenance() -> dict[str, object]:
-    """Return commit plus a content digest for the executable dirty source tree."""
+def git_provenance(*, refresh: bool = False) -> dict[str, object]:
+    """Return commit plus a content digest for the executable source tree.
+
+    Ordinary callers retain the process cache. Qualification commands may set
+    ``refresh=True`` to take an uncached before/after integrity snapshot.
+    """
 
     global _GIT_PROVENANCE_CACHE
-    if _GIT_PROVENANCE_CACHE is not None:
+    if not isinstance(refresh, bool):
+        raise ValueError("git provenance refresh must be a bool")
+    if _GIT_PROVENANCE_CACHE is not None and not refresh:
         return {
             **_GIT_PROVENANCE_CACHE,
             "relevant_untracked_files": list(
@@ -936,22 +1042,149 @@ def _restore_rng_state(generator: object, state: Mapping[str, object]) -> None:
     bit_generator.state = _json_ready(state)
 
 
+def _rng_state_digest(state: Mapping[str, object], *, owner: str) -> str:
+    return portable_digest(
+        _json_ready(state), domain=f"article-v1-{owner}-rng-state-v1"
+    )
+
+
+def _validate_loaded_runtime_snapshot(
+    loaded: LoadedRuntimeSnapshot,
+    *,
+    checkpoint: MidEpisodeCheckpoint,
+) -> tuple[CircuitSynthesisEnv, LinearQPolicy, int]:
+    """Validate a trusted cache before it can replace portable root replay."""
+
+    state = loaded.state
+    manifest = loaded.manifest
+    environment = state.environment
+    if not isinstance(environment, CircuitSynthesisEnv):
+        raise CheckpointCompatibilityError(
+            "runtime snapshot does not contain a circuit-synthesis environment"
+        )
+    base = int(manifest["base_expansion"])
+    if environment.steps != base or state.base_expansion != base:
+        raise CheckpointCompatibilityError("runtime snapshot expansion mismatch")
+    provider = environment.feature_provider
+    policy = environment.policy
+    if (
+        provider is None
+        or str(getattr(provider, "evaluator_schema_version", ""))
+        != checkpoint.provenance.feature_evaluator_schema_version
+        or not isinstance(policy, LinearQPolicy)
+    ):
+        raise CheckpointCompatibilityError(
+            "runtime snapshot feature evaluator or policy mismatch"
+        )
+    frontier_digest, archive_digest, generation_digest = _training_state_digests(
+        environment
+    )
+    observed_state = {
+        "frontier_active_ids_digest": frontier_digest,
+        "archive_digest": archive_digest,
+        "generation_count_digest": generation_digest,
+        "policy_weight_digest": policy_weight_digest(policy.theta),
+    }
+    for name, value in observed_state.items():
+        if value != manifest[name]:
+            raise CheckpointCompatibilityError(
+                f"runtime snapshot loaded {name} mismatch"
+            )
+    if _rng_state_digest(
+        _json_ready(policy.rng.bit_generator.state), owner="policy"
+    ) != manifest["policy_rng_state_digest"]:
+        raise CheckpointCompatibilityError("runtime snapshot policy RNG mismatch")
+    environment_rng = getattr(environment, "__dict__", {}).get("_np_random")
+    environment_rng_state = (
+        {}
+        if environment_rng is None
+        else _json_ready(environment_rng.bit_generator.state)
+    )
+    if _rng_state_digest(
+        environment_rng_state, owner="environment"
+    ) != manifest["environment_rng_state_digest"]:
+        raise CheckpointCompatibilityError("runtime snapshot environment RNG mismatch")
+    pending_id = manifest["pending_record_id"]
+    pending_node = next(
+        (
+            node
+            for node in environment.current_nodes()
+            if node.record_id == pending_id
+        ),
+        None,
+    )
+    if pending_node is None:
+        raise CheckpointCompatibilityError(
+            "runtime snapshot pending record is not open"
+        )
+    trainer = Trainer(environment, policy=policy)
+    pending_batch = trainer._article_decision_batch()
+    pending_digest = feature_row_digest(
+        trainer._frozen_features(pending_batch, pending_node)
+    )
+    if pending_digest != manifest["pending_feature_digest"]:
+        raise CheckpointCompatibilityError(
+            "runtime snapshot pending feature mismatch"
+        )
+    return environment, policy, base
+
+
 def _replay_training_checkpoint(
     checkpoint: MidEpisodeCheckpoint,
     *,
     environment: CircuitSynthesisEnv,
     policy: LinearQPolicy,
     trainer: Trainer,
+    base_expansion: int = 0,
 ) -> TrainerEpisodeResume:
     """Rebuild one real Article V1 episode without policy ranking/RNG draws."""
 
-    environment.reset(seed=getattr(environment.config, "seed", None))
-    policy.theta[:] = np.asarray(checkpoint.episode_initial_theta, dtype=np.float64)
-    replay_td_errors: list[float] = []
-    entry_index = 0
+    if (
+        isinstance(base_expansion, bool)
+        or not isinstance(base_expansion, int)
+        or base_expansion < 0
+        or base_expansion > checkpoint.expansion_count
+    ):
+        raise CheckpointCompatibilityError("runtime replay base expansion is invalid")
+    recorded_td_errors = tuple(
+        float(value)
+        for value in checkpoint.training_aggregates.get("td_errors", ())
+    )
+    if len(recorded_td_errors) != checkpoint.expansion_count:
+        raise CheckpointCompatibilityError(
+            "checkpoint TD-error history length mismatch"
+        )
+    if base_expansion == 0:
+        environment.reset(seed=getattr(environment.config, "seed", None))
+        policy.theta[:] = np.asarray(
+            checkpoint.episode_initial_theta, dtype=np.float64
+        )
+    elif environment.steps != base_expansion:
+        raise CheckpointCompatibilityError(
+            "runtime snapshot environment is at the wrong expansion"
+        )
+    replay_td_errors: list[float] = list(recorded_td_errors[:base_expansion])
+    entry_index = base_expansion
+    last_verified_state_digests: tuple[str, str, str] | None = None
+    if base_expansion:
+        base_entry = checkpoint.journal.entries[base_expansion - 1]
+        if (
+            not base_entry.state_digest_verified
+            or base_entry.frontier_active_ids_digest is None
+            or base_entry.archive_digest is None
+            or base_entry.generation_count_digest is None
+        ):
+            raise CheckpointCompatibilityError(
+                "runtime replay base is not a verified full-state boundary"
+            )
+        last_verified_state_digests = (
+            base_entry.frontier_active_ids_digest,
+            base_entry.archive_digest,
+            base_entry.generation_count_digest,
+        )
 
     def replay_step(selected_record_id: int) -> ReplayObservation:
-        nonlocal entry_index
+        nonlocal entry_index, last_verified_state_digests
         recorded = checkpoint.journal.entries[entry_index]
         nodes_before = environment.current_nodes()
         selected = next(
@@ -990,9 +1223,17 @@ def _replay_training_checkpoint(
             done=bool(terminated or truncated),
         )
         replay_td_errors.append(float(td_error))
-        frontier_digest, archive_digest, generation_digest = (
-            _training_state_digests(environment)
-        )
+        if recorded.state_digest_verified:
+            frontier_digest, archive_digest, generation_digest = (
+                _training_state_digests(environment)
+            )
+            last_verified_state_digests = (
+                frontier_digest,
+                archive_digest,
+                generation_digest,
+            )
+        else:
+            frontier_digest = archive_digest = generation_digest = None
         entry_index += 1
         return ReplayObservation(
             expansion_index=int(environment.steps),
@@ -1002,6 +1243,7 @@ def _replay_training_checkpoint(
             terminated=bool(terminated),
             truncated=bool(truncated),
             frontier_revision=int(environment.frontier.revision),
+            state_digest_verified=recorded.state_digest_verified,
             frontier_active_ids_digest=frontier_digest,
             archive_digest=archive_digest,
             generation_count_digest=generation_digest,
@@ -1009,14 +1251,18 @@ def _replay_training_checkpoint(
             pending_next_record_id=pending,
         )
 
-    replay_and_validate(checkpoint.journal, replay_step)
-    if tuple(replay_td_errors) != tuple(
-        checkpoint.training_aggregates.get("td_errors", ())
-    ):
-        raise CheckpointCompatibilityError("replayed TD-error history mismatch")
-    frontier_digest, archive_digest, generation_digest = _training_state_digests(
-        environment
+    replay_journal = ArticleV1EventJournal(
+        checkpoint.journal.entries[base_expansion:],
+        base_expansion=base_expansion,
     )
+    replay_and_validate(replay_journal, replay_step)
+    if tuple(replay_td_errors) != recorded_td_errors:
+        raise CheckpointCompatibilityError("replayed TD-error history mismatch")
+    if last_verified_state_digests is None:
+        raise CheckpointCompatibilityError(
+            "replay journal has no verified final full-state boundary"
+        )
+    frontier_digest, archive_digest, generation_digest = last_verified_state_digests
     pending_node = next(
         (
             node
@@ -1074,6 +1320,9 @@ def train_article_v1_checkpoint(
     training_checkpoint_dir: str | Path | None = None,
     progress_reporter: ArticleV1ProgressReporter | None = None,
     checkpoint_cadence: CheckpointCadence | None = None,
+    runtime_snapshot_every_expansions: int | None = (
+        DEFAULT_RUNTIME_SNAPSHOT_INTERVAL
+    ),
     resume_training: bool = True,
     run_id: str = "article-v1-training",
     interrupt_after_expansions: int | None = None,
@@ -1114,6 +1363,24 @@ def train_article_v1_checkpoint(
         or expansion_cap < 1
     ):
         raise ValueError("training expansion cap must be a positive integer or None")
+    if runtime_snapshot_every_expansions is not None and (
+        isinstance(runtime_snapshot_every_expansions, bool)
+        or not isinstance(runtime_snapshot_every_expansions, int)
+        or runtime_snapshot_every_expansions < 1
+    ):
+        raise ValueError(
+            "runtime snapshot interval must be a positive integer or None"
+        )
+    if interrupt_after_expansions is not None and (
+        isinstance(interrupt_after_expansions, bool)
+        or not isinstance(interrupt_after_expansions, int)
+        or interrupt_after_expansions < 1
+    ):
+        raise ValueError("interrupt_after_expansions must be a positive integer")
+    if interrupt_after_expansions is not None and training_checkpoint_dir is None:
+        raise ValueError(
+            "interrupt_after_expansions requires a training checkpoint directory"
+        )
     cases = tuple(cases)
     effective_training_expansion_budgets = [
         (
@@ -1141,6 +1408,11 @@ def train_article_v1_checkpoint(
         None
         if training_checkpoint_dir is None
         else ArticleV1TrainingCheckpointStore(training_checkpoint_dir)
+    )
+    runtime_snapshot_store = (
+        None
+        if store is None or runtime_snapshot_every_expansions is None
+        else ArticleV1RuntimeSnapshotStore(training_checkpoint_dir)
     )
     loaded_recovery: MidEpisodeCheckpoint | TrainingProgressCheckpoint | None = None
     if store is not None and resume_training and (
@@ -1258,6 +1530,11 @@ def train_article_v1_checkpoint(
         journal = ArticleV1EventJournal()
         episode_initial_theta = tuple(float(value) for value in policy.theta)
         td_errors: list[float] = []
+        loaded_runtime_snapshot: LoadedRuntimeSnapshot | None = None
+        runtime_snapshot_base_expansion = 0
+        runtime_snapshot_restore_started_ns = 0
+        runtime_snapshot_restore_time_ns = 0
+        recovery_replay_time_ns = 0
         if isinstance(current_recovery, MidEpisodeCheckpoint):
             validate_expected = ResumeExpectation(
                 provenance=provenance_for(index),
@@ -1274,34 +1551,119 @@ def train_article_v1_checkpoint(
                 float(value)
                 for value in current_recovery.training_aggregates.get("td_errors", ())
             ]
+            if runtime_snapshot_store is not None:
+                runtime_snapshot_restore_started_ns = time.perf_counter_ns()
+                loaded_runtime_snapshot = runtime_snapshot_store.load_compatible(
+                    current_recovery
+                )
+                runtime_snapshot_restore_time_ns += (
+                    time.perf_counter_ns() - runtime_snapshot_restore_started_ns
+                )
+            if loaded_runtime_snapshot is not None:
+                runtime_snapshot_restore_started_ns = time.perf_counter_ns()
+                environment, policy, runtime_snapshot_base_expansion = (
+                    _validate_loaded_runtime_snapshot(
+                        loaded_runtime_snapshot,
+                        checkpoint=current_recovery,
+                    )
+                )
+                provider = environment.feature_provider
+                context = environment.article_target_metric
+                if provider is None or context is None:
+                    raise CheckpointCompatibilityError(
+                        "runtime snapshot lost its Article V1 provider/context"
+                    )
+                trainer = Trainer(environment, policy=policy)
+                trainer.visit_counts = defaultdict(
+                    int, loaded_runtime_snapshot.state.visit_counts
+                )
+                runtime_snapshot_restore_time_ns += (
+                    time.perf_counter_ns() - runtime_snapshot_restore_started_ns
+                )
+            replay_started_ns = time.perf_counter_ns()
             resume_episode_state = _replay_training_checkpoint(
                 current_recovery,
                 environment=environment,
                 policy=policy,
                 trainer=trainer,
+                base_expansion=runtime_snapshot_base_expansion,
             )
+            recovery_replay_time_ns = time.perf_counter_ns() - replay_started_ns
             start_episode = current_recovery.episode_index
 
-        checkpoint_gate = CheckpointCadenceGate(checkpoint_cadence)
+        checkpoint_gate = CheckpointCadenceGate(
+            checkpoint_cadence,
+            initial_expansion=(
+                0
+                if resume_episode_state is None
+                else int(resume_episode_state.expansion)
+            ),
+        )
         target_started = time.perf_counter()
+        episode_progress_clock = _EpisodeProgressClock(started=target_started)
+        initial_provider_metrics = dict(
+            getattr(provider, "instrumentation", lambda: {})()
+        )
+        feature_timing_window = _ProgressFeatureTimingWindow(
+            initial_count=int(
+                initial_provider_metrics.get("compact_batch_count", 0)
+            )
+        )
         progress_start_ns = (
             0
             if progress_reporter is None
             else progress_reporter.progress_reporting_time_ns
         )
         checkpoint_start_ns = 0 if store is None else store.checkpoint_io_time_ns
+        runtime_snapshot_start_ns = (
+            0
+            if runtime_snapshot_store is None
+            else runtime_snapshot_store.snapshot_io_time_ns
+        )
+        runtime_snapshot_start_count = (
+            0
+            if runtime_snapshot_store is None
+            else runtime_snapshot_store.snapshot_write_count
+        )
+        runtime_snapshot_start_bytes = (
+            0
+            if runtime_snapshot_store is None
+            else runtime_snapshot_store.snapshot_bytes_written
+        )
+        checkpoint_state_digest_time_ns = 0
         last_checkpoint_path: str | None = None
+        last_checkpoint_expansion: int | None = None
         last_safe_event: TrainerBoundaryEvent | None = None
-        interrupted = False
         if progress_reporter is not None:
             progress_reporter.reset_cadence(expansion=0)
 
-        def save_mid(event: TrainerBoundaryEvent) -> None:
-            nonlocal last_checkpoint_path
+        def timed_training_state_digests() -> tuple[str, str, str]:
+            nonlocal checkpoint_state_digest_time_ns
+            started_ns = time.perf_counter_ns()
+            try:
+                return _training_state_digests(environment)
+            finally:
+                checkpoint_state_digest_time_ns += (
+                    time.perf_counter_ns() - started_ns
+                )
+
+        def save_mid(
+            event: TrainerBoundaryEvent,
+            *,
+            state_digests: tuple[str, str, str] | None = None,
+        ) -> bool:
+            nonlocal last_checkpoint_path, last_checkpoint_expansion
             if store is None or event.next_record_id is None or event.next_features is None:
-                return
-            frontier_digest, archive_digest, generation_digest = (
-                _training_state_digests(environment)
+                return False
+            if journal.expansion_count != event.expansion or not journal.entries:
+                return False
+            if state_digests is None:
+                state_digests = timed_training_state_digests()
+            frontier_digest, archive_digest, generation_digest = state_digests
+            journal.bind_latest_state_digests(
+                frontier_active_ids_digest=frontier_digest,
+                archive_digest=archive_digest,
+                generation_count_digest=generation_digest,
             )
             checkpoint = MidEpisodeCheckpoint(
                 provenance=provenance_for(index),
@@ -1335,6 +1697,36 @@ def train_article_v1_checkpoint(
                 generation_count_digest=generation_digest,
             )
             last_checkpoint_path = str(store.save_latest(checkpoint).path)
+            last_checkpoint_expansion = int(event.expansion)
+            if (
+                runtime_snapshot_store is not None
+                and runtime_snapshot_every_expansions is not None
+                and event.expansion % runtime_snapshot_every_expansions == 0
+            ):
+                environment_rng = getattr(environment, "__dict__", {}).get(
+                    "_np_random"
+                )
+                environment_rng_state = (
+                    {}
+                    if environment_rng is None
+                    else _json_ready(environment_rng.bit_generator.state)
+                )
+                runtime_snapshot_store.save_latest(
+                    checkpoint,
+                    ArticleV1RuntimeState(
+                        base_expansion=event.expansion,
+                        environment=environment,
+                        visit_counts=dict(trainer.visit_counts),
+                    ),
+                    pending_feature_digest=feature_row_digest(event.next_features),
+                    policy_rng_state_digest=_rng_state_digest(
+                        event.policy_rng_state, owner="policy"
+                    ),
+                    environment_rng_state_digest=_rng_state_digest(
+                        environment_rng_state, owner="environment"
+                    ),
+                )
+            return True
 
         def checkpoint_callback(event: TrainerBoundaryEvent) -> None:
             nonlocal journal, episode_initial_theta, td_errors
@@ -1344,8 +1736,28 @@ def train_article_v1_checkpoint(
                 assert event.selected_record_id is not None
                 assert event.selected_features is not None
                 assert event.reward is not None and event.td_error is not None
-                frontier_digest, archive_digest, generation_digest = (
-                    _training_state_digests(environment)
+                nonterminal = not (event.terminated or event.truncated)
+                cadence_due = bool(
+                    store is not None
+                    and nonterminal
+                    and checkpoint_gate.due(event.expansion)
+                )
+                snapshot_due = bool(
+                    runtime_snapshot_store is not None
+                    and runtime_snapshot_every_expansions is not None
+                    and nonterminal
+                    and event.expansion % runtime_snapshot_every_expansions == 0
+                )
+                interrupt_due = bool(
+                    interrupt_after_expansions is not None
+                    and event.expansion == int(interrupt_after_expansions)
+                    and nonterminal
+                )
+                state_digest_verified = cadence_due or interrupt_due or snapshot_due
+                state_digests = (
+                    timed_training_state_digests()
+                    if state_digest_verified
+                    else (None, None, None)
                 )
                 journal.append(
                     ArticleV1JournalEntry(
@@ -1358,9 +1770,10 @@ def train_article_v1_checkpoint(
                         terminated=event.terminated,
                         truncated=event.truncated,
                         frontier_revision=event.frontier_revision,
-                        frontier_active_ids_digest=frontier_digest,
-                        archive_digest=archive_digest,
-                        generation_count_digest=generation_digest,
+                        state_digest_verified=state_digest_verified,
+                        frontier_active_ids_digest=state_digests[0],
+                        archive_digest=state_digests[1],
+                        generation_count_digest=state_digests[2],
                         policy_weight_digest_after_update=policy_weight_digest(
                             event.policy_weights_after_update
                         ),
@@ -1368,17 +1781,26 @@ def train_article_v1_checkpoint(
                     )
                 )
                 td_errors.append(event.td_error)
-                if not (event.terminated or event.truncated) and checkpoint_gate.due(
-                    event.expansion
-                ):
-                    save_mid(event)
+                if cadence_due or snapshot_due:
+                    assert all(value is not None for value in state_digests)
+                    if not save_mid(
+                        event, state_digests=state_digests  # type: ignore[arg-type]
+                    ):
+                        raise RuntimeError(
+                            "checkpoint cadence reached without a safe pending state"
+                        )
                     checkpoint_gate.mark_saved(event.expansion)
-                if (
-                    interrupt_after_expansions is not None
-                    and event.expansion == int(interrupt_after_expansions)
-                    and not (event.terminated or event.truncated)
-                ):
-                    save_mid(event)
+                if interrupt_due:
+                    if not (cadence_due or snapshot_due):
+                        assert all(value is not None for value in state_digests)
+                        if not save_mid(
+                            event,
+                            state_digests=state_digests,  # type: ignore[arg-type]
+                        ):
+                            raise RuntimeError(
+                                "controlled interrupt reached without a valid "
+                                "mid-episode checkpoint"
+                            )
                     raise KeyboardInterrupt
                 return
 
@@ -1396,6 +1818,53 @@ def train_article_v1_checkpoint(
                 "training_runtime_seconds": float(time.perf_counter() - target_started),
                 "target_metric": context.cache_metrics(),
                 "policy_instrumentation": policy.instrumentation(),
+                "progress_reporting_time_ns": (
+                    0
+                    if progress_reporter is None
+                    else progress_reporter.progress_reporting_time_ns
+                    - progress_start_ns
+                ),
+                "checkpoint_callback_time_ns": int(
+                    trainer.checkpoint_callback_time_ns
+                ),
+                "checkpoint_state_digest_time_ns": int(
+                    checkpoint_state_digest_time_ns
+                ),
+                "checkpoint_io_time_ns": (
+                    0
+                    if store is None
+                    else store.checkpoint_io_time_ns - checkpoint_start_ns
+                ),
+                "runtime_snapshot_schema_version": (
+                    None
+                    if runtime_snapshot_store is None
+                    else ARTICLE_V1_RUNTIME_SNAPSHOT_SCHEMA
+                ),
+                "runtime_snapshot_restore_time_ns": int(
+                    runtime_snapshot_restore_time_ns
+                ),
+                "recovery_replay_time_ns": int(recovery_replay_time_ns),
+                "runtime_snapshot_io_time_ns": (
+                    0
+                    if runtime_snapshot_store is None
+                    else runtime_snapshot_store.snapshot_io_time_ns
+                    - runtime_snapshot_start_ns
+                ),
+                "runtime_snapshot_write_count": (
+                    0
+                    if runtime_snapshot_store is None
+                    else runtime_snapshot_store.snapshot_write_count
+                    - runtime_snapshot_start_count
+                ),
+                "runtime_snapshot_bytes_written": (
+                    0
+                    if runtime_snapshot_store is None
+                    else runtime_snapshot_store.snapshot_bytes_written
+                    - runtime_snapshot_start_bytes
+                ),
+                "runtime_snapshot_base_expansion": int(
+                    runtime_snapshot_base_expansion
+                ),
                 "training_incomplete": not target_complete,
             }
             serialized_histories = [*histories, target_history_record]
@@ -1423,19 +1892,31 @@ def train_article_v1_checkpoint(
             episode_initial_theta = event.policy_weights_after_update
             checkpoint_gate.reset(expansion=0)
 
-        def progress_callback(event: TrainerBoundaryEvent) -> None:
+        def emit_progress(
+            event: TrainerBoundaryEvent, *, force: bool = False
+        ) -> None:
             if progress_reporter is None:
                 return
             frontier = environment.frontier
             assert frontier is not None
             archive = frontier.archive
             provider_metrics = dict(getattr(provider, "instrumentation", lambda: {})())
-            elapsed = max(0.0, time.perf_counter() - target_started)
+            recent_timings = getattr(
+                provider, "recent_compact_batch_times_ns", lambda: ()
+            )()
+            last_feature_seconds, rolling_feature_seconds = (
+                feature_timing_window.observe(
+                    provider_metrics,
+                    recent_batch_times_ns=recent_timings,
+                )
+            )
+            elapsed, expansion_rate = episode_progress_clock.measure(event.expansion)
             progress_reporter.maybe_emit(
                 ArticleV1ProgressEvent(
                     timestamp_utc=utc_timestamp(),
                     run_id=run_id,
                     phase=f"training:{checkpoint_family}",
+                    feature_evaluator_schema_version=evaluator_schema,
                     training_seed=int(training_seed),
                     target_index=index,
                     target_count=len(cases),
@@ -1457,18 +1938,28 @@ def train_article_v1_checkpoint(
                     unique_resource_groups=int(
                         provider_metrics.get("unique_resource_group_count", 0)
                     ),
-                    last_feature_batch_seconds=0.0,
-                    rolling_feature_batch_seconds=0.0,
+                    last_feature_batch_seconds=last_feature_seconds,
+                    rolling_feature_batch_seconds=rolling_feature_seconds,
                     elapsed_seconds=elapsed,
-                    expansions_per_second=(event.expansion / elapsed if elapsed else 0.0),
+                    expansions_per_second=expansion_rate,
                     checkpoint_path=last_checkpoint_path,
                 ),
-                force=event.boundary == "episode_end",
+                force=force,
             )
             if event.boundary == "episode_end":
                 progress_reporter.reset_cadence(expansion=0)
+                feature_timing_window.reset_episode()
+                episode_progress_clock.reset()
 
-        trainer.checkpoint_callback = checkpoint_callback
+        def progress_callback(event: TrainerBoundaryEvent) -> None:
+            emit_progress(event, force=event.boundary == "episode_end")
+
+        recovery_callbacks_enabled = bool(
+            store is not None or interrupt_after_expansions is not None
+        )
+        trainer.checkpoint_callback = (
+            checkpoint_callback if recovery_callbacks_enabled else None
+        )
         trainer.progress_callback = progress_callback if progress_reporter else None
         try:
             with redirect_stdout(StringIO()):
@@ -1478,17 +1969,16 @@ def train_article_v1_checkpoint(
                     resume_episode=resume_episode_state,
                 )
         except KeyboardInterrupt:
-            interrupted = True
             if (
                 store is not None
                 and last_safe_event is not None
                 and not (last_safe_event.terminated or last_safe_event.truncated)
+                and last_checkpoint_expansion != last_safe_event.expansion
             ):
                 save_mid(last_safe_event)
+            if progress_reporter is not None and last_safe_event is not None:
+                emit_progress(last_safe_event, force=True)
             raise
-        finally:
-            if interrupted and progress_reporter is not None and last_safe_event is not None:
-                progress_callback(last_safe_event)
 
         target_history = list(partial_episode_results)
         history_record = {
@@ -1504,8 +1994,44 @@ def train_article_v1_checkpoint(
                 if progress_reporter is None
                 else progress_reporter.progress_reporting_time_ns - progress_start_ns
             ),
+            "checkpoint_callback_time_ns": int(
+                trainer.checkpoint_callback_time_ns
+            ),
+            "checkpoint_state_digest_time_ns": int(
+                checkpoint_state_digest_time_ns
+            ),
             "checkpoint_io_time_ns": (
                 0 if store is None else store.checkpoint_io_time_ns - checkpoint_start_ns
+            ),
+            "runtime_snapshot_schema_version": (
+                None
+                if runtime_snapshot_store is None
+                else ARTICLE_V1_RUNTIME_SNAPSHOT_SCHEMA
+            ),
+            "runtime_snapshot_restore_time_ns": int(
+                runtime_snapshot_restore_time_ns
+            ),
+            "recovery_replay_time_ns": int(recovery_replay_time_ns),
+            "runtime_snapshot_io_time_ns": (
+                0
+                if runtime_snapshot_store is None
+                else runtime_snapshot_store.snapshot_io_time_ns
+                - runtime_snapshot_start_ns
+            ),
+            "runtime_snapshot_write_count": (
+                0
+                if runtime_snapshot_store is None
+                else runtime_snapshot_store.snapshot_write_count
+                - runtime_snapshot_start_count
+            ),
+            "runtime_snapshot_bytes_written": (
+                0
+                if runtime_snapshot_store is None
+                else runtime_snapshot_store.snapshot_bytes_written
+                - runtime_snapshot_start_bytes
+            ),
+            "runtime_snapshot_base_expansion": int(
+                runtime_snapshot_base_expansion
             ),
         }
         histories.append(history_record)
@@ -1582,6 +2108,477 @@ def train_article_v1_checkpoint(
         training_histories=tuple(histories),
         corpus_config_digest=corpus_config_digest,
     )
+
+
+def _fixed_pilot_replay_workload() -> dict[str, object]:
+    """Resolve the one preregistered pilot hard-target replay workload."""
+
+    from experiments.article_v1_feature_benchmark import (
+        DEFAULT_HARD_EXPANSION_CAP,
+        PILOT_HARD_3Q_TARGET_ID,
+    )
+
+    config = load_article_v1_config("pilot")
+    corpus = build_article_v1_corpus(config)
+    training_cases = corpus.evaluation_targets(split="train")
+    matches = [
+        (case_index, case)
+        for case_index, case in enumerate(training_cases)
+        if case.target_id == PILOT_HARD_3Q_TARGET_ID
+    ]
+    if len(matches) != 1:
+        raise ValueError(
+            "frozen pilot replay target must identify exactly one train target"
+        )
+    case_index, case = matches[0]
+    if case.difficulty != "hard" or case.num_qubits != 3:
+        raise ValueError("frozen pilot replay target must be hard and three-qubit")
+    horizon = int(case.budget.expansion_budget)
+    if horizon != int(DEFAULT_HARD_EXPANSION_CAP):
+        raise ValueError("frozen pilot replay target must retain the 8192 horizon")
+    experiment = dict(config.experiment)
+    feature_schema = str(experiment["feature_schema"])
+    if feature_schema != ARTICLE_V1_FEATURE_SCHEMA_VERSION:
+        raise ValueError("frozen pilot replay requires the production feature schema")
+    seeds = experiment.get("training_seeds")
+    if not isinstance(seeds, Sequence) or isinstance(seeds, (str, bytes)) or not seeds:
+        raise ValueError("frozen pilot config has no training seed")
+    effective_seed = int(seeds[0]) + int(case_index)
+    provider, context = _feature_provider(
+        case,
+        expansion_budget=horizon,
+        feature_schema=feature_schema,
+    )
+    return {
+        "config": config,
+        "case": case,
+        "case_index": int(case_index),
+        "experiment": experiment,
+        "feature_schema": feature_schema,
+        "feature_evaluator_schema": str(provider.evaluator_schema_version),
+        "feature_dimension": int(provider.dimension),
+        "target_fingerprint": str(context.fingerprint),
+        "effective_seed": effective_seed,
+        "horizon": horizon,
+    }
+
+
+def _require_unchanged_source(
+    before: Mapping[str, object], after: Mapping[str, object]
+) -> None:
+    for name in ("commit_sha", "source_worktree_digest", "dirty_worktree"):
+        if before.get(name) != after.get(name):
+            raise RuntimeError(
+                f"source provenance changed during replay operation ({name})"
+            )
+
+
+def _validate_fixed_pilot_replay_checkpoint(
+    checkpoint: object,
+    *,
+    workload: Mapping[str, object],
+    source: Mapping[str, object],
+) -> MidEpisodeCheckpoint:
+    if not isinstance(checkpoint, MidEpisodeCheckpoint):
+        raise CheckpointCompatibilityError(
+            "fixed replay capture must be an internal mid-episode checkpoint"
+        )
+    config = workload["config"]
+    case = workload["case"]
+    assert isinstance(config, ArticleV1CorpusConfig)
+    assert isinstance(case, ArticleV1EvaluationTarget)
+    expected_provenance = _training_provenance(
+        case,
+        corpus_config_digest=config.digest,
+        target_fingerprint=str(workload["target_fingerprint"]),
+        feature_schema=str(workload["feature_schema"]),
+        feature_evaluator_schema=str(workload["feature_evaluator_schema"]),
+    )
+    if checkpoint.provenance != expected_provenance:
+        raise CheckpointCompatibilityError(
+            "fixed replay checkpoint provenance does not match the canonical workload"
+        )
+    if (
+        checkpoint.provenance.source_commit_sha != source.get("commit_sha")
+        or checkpoint.provenance.source_worktree_digest
+        != source.get("source_worktree_digest")
+    ):
+        raise CheckpointCompatibilityError(
+            "fixed replay checkpoint does not bind the current source snapshot"
+        )
+    validate_resume_compatibility(
+        checkpoint,
+        ResumeExpectation(
+            provenance=expected_provenance,
+            training_seed=int(workload["effective_seed"]),
+            episode_index=0,
+            episode_count=int(
+                dict(workload["experiment"])["training_episodes_per_target"]
+            ),
+            expansion_cap=int(workload["horizon"]),
+            feature_dimension=int(workload["feature_dimension"]),
+        ),
+    )
+    if checkpoint.expansion_count != REPLAY_TIMING_EXPECTED_EXPANSIONS:
+        raise CheckpointCompatibilityError(
+            "fixed replay checkpoint must end at expansion 1024"
+        )
+    if checkpoint.journal.base_expansion != 0 or len(checkpoint.journal.entries) != (
+        REPLAY_TIMING_EXPECTED_EXPANSIONS
+    ):
+        raise CheckpointCompatibilityError(
+            "fixed replay checkpoint must contain the exact 1024-entry journal"
+        )
+    final = checkpoint.journal.entries[-1]
+    if not final.state_digest_verified:
+        raise CheckpointCompatibilityError(
+            "fixed replay checkpoint final entry lacks full-state verification"
+        )
+    return checkpoint
+
+
+def capture_article_v1_replay_checkpoint(
+    output_directory: str | Path,
+    *,
+    quiet: bool = False,
+    checkpoint_cadence: CheckpointCadence | None = None,
+) -> dict[str, object]:
+    """Capture the canonical pilot hard target at the safe expansion-1024 boundary.
+
+    A controlled ``KeyboardInterrupt`` is the expected stop mechanism.  It is
+    converted to successful capture only after the manifest, portable schema,
+    provenance, exact journal length, and final full-state digests validate.
+    """
+
+    if not isinstance(quiet, bool):
+        raise ValueError("quiet must be a bool")
+    destination = Path(output_directory)
+    destination.mkdir(parents=True, exist_ok=True)
+    status_path = destination / "replay_checkpoint_capture.json"
+    if status_path.exists():
+        raise ValueError(
+            "replay checkpoint capture status already exists; use a new run ID"
+        )
+    source_before = git_provenance(refresh=True)
+    source_digest = str(source_before.get("source_worktree_digest"))
+    if not source_digest.startswith("sha256:"):
+        raise ValueError("fixed replay capture requires portable Git provenance")
+    workload = _fixed_pilot_replay_workload()
+    config = workload["config"]
+    case = workload["case"]
+    experiment = dict(workload["experiment"])
+    assert isinstance(config, ArticleV1CorpusConfig)
+    assert isinstance(case, ArticleV1EvaluationTarget)
+    state_directory = destination / "training_state"
+    store = ArticleV1TrainingCheckpointStore(state_directory)
+    runtime_store = ArticleV1RuntimeSnapshotStore(state_directory)
+
+    existing_exact = False
+    try:
+        existing = store.load("latest")
+    except (FileNotFoundError, CheckpointFormatError):
+        existing = None
+    if isinstance(existing, MidEpisodeCheckpoint) and (
+        existing.expansion_count == REPLAY_TIMING_EXPECTED_EXPANSIONS
+    ):
+        _validate_fixed_pilot_replay_checkpoint(
+            existing, workload=workload, source=source_before
+        )
+        existing_runtime = runtime_store.load_compatible(existing)
+        if (
+            existing_runtime is None
+            or existing_runtime.state.base_expansion
+            != REPLAY_TIMING_EXPECTED_EXPANSIONS
+        ):
+            raise ValueError(
+                "existing expansion-1024 checkpoint has no compatible compact "
+                "runtime snapshot; use a new run ID"
+            )
+        existing_exact = True
+
+    expected_interrupt_observed = False
+    if not existing_exact:
+        reporter = ArticleV1ProgressReporter(
+            destination,
+            cadence=ProgressCadence(every_expansions=25, every_seconds=10.0),
+            quiet=quiet,
+        )
+        try:
+            train_article_v1_checkpoint(
+                (case,),
+                corpus_config_digest=config.digest,
+                training_seed=int(workload["effective_seed"]),
+                episodes_per_target=int(experiment["training_episodes_per_target"]),
+                learning_rate=float(experiment["learning_rate"]),
+                epsilon_start=float(experiment["epsilon"]["start"]),
+                epsilon_minimum=float(experiment["epsilon"]["minimum"]),
+                epsilon_decay=float(experiment["epsilon"]["decay"]),
+                beta=float(experiment["beta"]),
+                feature_schema=str(workload["feature_schema"]),
+                expansion_cap=int(workload["horizon"]),
+                certification_tolerance=float(
+                    experiment["certification_tolerance"]
+                ),
+                training_checkpoint_dir=state_directory,
+                progress_reporter=reporter,
+                checkpoint_cadence=checkpoint_cadence or CheckpointCadence(),
+                resume_training=True,
+                run_id=destination.name,
+                interrupt_after_expansions=REPLAY_TIMING_EXPECTED_EXPANSIONS,
+            )
+        except KeyboardInterrupt:
+            expected_interrupt_observed = True
+        else:
+            raise RuntimeError(
+                "fixed replay workload ended without the expected expansion-1024 "
+                "checkpoint interrupt"
+            )
+
+    checkpoint = _validate_fixed_pilot_replay_checkpoint(
+        store.load("latest"), workload=workload, source=source_before
+    )
+    runtime_snapshot = runtime_store.load_compatible(checkpoint)
+    if (
+        runtime_snapshot is None
+        or runtime_snapshot.state.base_expansion
+        != REPLAY_TIMING_EXPECTED_EXPANSIONS
+    ):
+        raise RuntimeError(
+            "validated capture did not publish an exact expansion-1024 runtime snapshot"
+        )
+    source_after = git_provenance(refresh=True)
+    _require_unchanged_source(source_before, source_after)
+    if load_article_v1_config("pilot").digest != config.digest:
+        raise RuntimeError("frozen pilot config changed during checkpoint capture")
+    checkpoint_path = store.checkpoint_path("latest")
+    payload: dict[str, object] = {
+        "capture_schema": ARTICLE_V1_REPLAY_CAPTURE_SCHEMA,
+        "evidence_class": "engineering-performance-diagnostic",
+        "scientific_scheduler_evidence": False,
+        "source_commit_sha": source_before["commit_sha"],
+        "source_worktree_digest": source_before["source_worktree_digest"],
+        "source_committed_and_clean": not bool(source_before["dirty_worktree"]),
+        "config_profile": config.profile,
+        "config_digest": config.digest,
+        "target_id": case.target_id,
+        "target_fingerprint": workload["target_fingerprint"],
+        "feature_evaluator_schema_version": workload[
+            "feature_evaluator_schema"
+        ],
+        "training_seed": checkpoint.training_seed,
+        "expected_interrupt_expansion": REPLAY_TIMING_EXPECTED_EXPANSIONS,
+        "expected_interrupt_observed_in_this_process": expected_interrupt_observed,
+        "valid_existing_boundary_reused": existing_exact,
+        "checkpoint_path": str(checkpoint_path.resolve()),
+        "checkpoint_file_sha256": checkpoint_file_sha256(checkpoint_path),
+        "checkpoint_schema_version": checkpoint.schema_version,
+        "journal_digest": checkpoint.journal_digest,
+        "journal_entry_count": len(checkpoint.journal.entries),
+        "full_state_digest_entry_count": sum(
+            int(entry.state_digest_verified) for entry in checkpoint.journal.entries
+        ),
+        "final_entry_has_full_state_digests": True,
+        "runtime_snapshot_schema_version": ARTICLE_V1_RUNTIME_SNAPSHOT_SCHEMA,
+        "runtime_snapshot_slot": runtime_snapshot.slot,
+        "runtime_snapshot_base_expansion": (
+            runtime_snapshot.state.base_expansion
+        ),
+        "runtime_snapshot_payload_path": str(
+            runtime_store.payload_path(runtime_snapshot.slot).resolve()
+        ),
+        "runtime_snapshot_payload_sha256": runtime_snapshot.manifest[
+            "payload_sha256"
+        ],
+        "runtime_snapshot_payload_bytes": runtime_snapshot.manifest[
+            "payload_byte_length"
+        ],
+        "portable_root_replay_fallback_retained": True,
+        "capture_valid": True,
+        "pilot_relaunch_ready": False,
+        "pilot_relaunch_blocker": "validated replay timing is still required",
+    }
+    _atomic_json(status_path, payload)
+    return payload
+
+
+def _replay_fixed_pilot_checkpoint(
+    checkpoint: MidEpisodeCheckpoint,
+    *,
+    workload: Mapping[str, object],
+    runtime_snapshot_store: ArticleV1RuntimeSnapshotStore | None = None,
+) -> ReplayValidationResult:
+    case = workload["case"]
+    experiment = dict(workload["experiment"])
+    assert isinstance(case, ArticleV1EvaluationTarget)
+    loaded_runtime = (
+        None
+        if runtime_snapshot_store is None
+        else runtime_snapshot_store.load_compatible(checkpoint)
+    )
+    if loaded_runtime is None:
+        provider, context = _feature_provider(
+            case,
+            expansion_budget=int(workload["horizon"]),
+            feature_schema=str(workload["feature_schema"]),
+        )
+        policy = LinearQPolicy(
+            feature_provider=provider,
+            lr=float(experiment["learning_rate"]),
+            gamma=1.0,
+            seed=int(workload["effective_seed"]),
+        )
+        environment = CircuitSynthesisEnv(
+            Config(
+                num_qubits=case.num_qubits,
+                budget=case.budget.resource_budget(),
+                max_steps=int(workload["horizon"]),
+                max_frontier=64,
+                discount=1.0,
+                seed=int(workload["effective_seed"]),
+                fairness_interval=0,
+                canonicalization_enabled=bool(
+                    experiment["canonicalization_enabled"]
+                ),
+                pareto_dominance_enabled=bool(
+                    experiment["pareto_dominance_enabled"]
+                ),
+                absorb_clifford_angles=bool(
+                    experiment["absorb_clifford_angles"]
+                ),
+                canonicalization_mode=str(experiment["canonicalization_mode"]),
+                reward_mode="article_v1_expansion_potential",
+                article_v1_beta=float(experiment["beta"]),
+            ),
+            ArticleV1CertificationEngine(
+                _target(case),
+                tau_cert=float(experiment["certification_tolerance"]),
+            ),
+            feature_provider=provider,
+            target_metric=context,
+            instrumentation_enabled=True,
+            observation_features=False,
+        )
+        base_expansion = 0
+    else:
+        environment, policy, base_expansion = _validate_loaded_runtime_snapshot(
+            loaded_runtime, checkpoint=checkpoint
+        )
+        provider = environment.feature_provider
+        context = environment.article_target_metric
+        if provider is None or context is None:
+            raise CheckpointCompatibilityError(
+                "runtime snapshot lost the fixed pilot provider/context"
+            )
+    trainer = Trainer(environment, policy=policy)
+    if loaded_runtime is not None:
+        trainer.visit_counts = defaultdict(int, loaded_runtime.state.visit_counts)
+    trainer.epsilon = float(experiment["epsilon"]["start"])
+    trainer.min_epsilon = float(experiment["epsilon"]["minimum"])
+    trainer.epsilon_decay = float(experiment["epsilon"]["decay"])
+    resumed = _replay_training_checkpoint(
+        checkpoint,
+        environment=environment,
+        policy=policy,
+        trainer=trainer,
+        base_expansion=base_expansion,
+    )
+    # `_replay_training_checkpoint` has just compared these checkpoint-bound
+    # values to the freshly observed environment/policy/pending row. Reuse that
+    # validated result instead of serializing the complete state a second time.
+    result = ReplayValidationResult(
+        measured_expansions=int(resumed.expansion),
+        frontier_active_ids_digest=checkpoint.frontier_active_ids_digest,
+        archive_digest=checkpoint.archive_digest,
+        generation_count_digest=checkpoint.generation_count_digest,
+        policy_weight_digest=policy_weight_digest(policy.theta),
+        pending_feature_digest=checkpoint.pending_feature_digest,
+        replay_mode=(
+            "portable-root-journal"
+            if loaded_runtime is None
+            else "trusted-runtime-snapshot-plus-delta"
+        ),
+        runtime_snapshot_schema_version=(
+            None
+            if loaded_runtime is None
+            else str(loaded_runtime.manifest["runtime_snapshot_schema"])
+        ),
+        runtime_snapshot_base_expansion=base_expansion,
+        delta_journal_entry_count=checkpoint.expansion_count - base_expansion,
+        runtime_snapshot_payload_sha256=(
+            None
+            if loaded_runtime is None
+            else str(loaded_runtime.manifest["payload_sha256"])
+        ),
+        portable_replay_fallback_retained=True,
+    )
+    if result.policy_weight_digest != checkpoint.weight_digest:
+        raise CheckpointCompatibilityError(
+            "validated replay result does not equal the checkpoint policy state"
+        )
+    return result
+
+
+def measure_article_v1_replay_checkpoint(
+    checkpoint_path: str | Path,
+    output_path: str | Path,
+    *,
+    projected_full_episode_seconds: float,
+    clock_ns: Callable[[], int] = time.perf_counter_ns,
+) -> ArticleV1ReplayTimingEvidence:
+    """Validate and time replay of the exact canonical expansion-1024 checkpoint."""
+
+    path = Path(checkpoint_path)
+    evidence_path = Path(output_path)
+    if path.name != "latest.json":
+        raise ValueError("replay timing requires the captured latest.json slot")
+    if evidence_path.exists():
+        raise ValueError("replay timing output already exists; use a new path")
+    source_before = git_provenance(refresh=True)
+    source_digest = str(source_before.get("source_worktree_digest"))
+    if not source_digest.startswith("sha256:"):
+        raise ValueError("fixed replay timing requires portable Git provenance")
+    workload = _fixed_pilot_replay_workload()
+    config = workload["config"]
+    case = workload["case"]
+    assert isinstance(config, ArticleV1CorpusConfig)
+    assert isinstance(case, ArticleV1EvaluationTarget)
+    checkpoint = _validate_fixed_pilot_replay_checkpoint(
+        ArticleV1TrainingCheckpointStore(path.parent).load("latest"),
+        workload=workload,
+        source=source_before,
+    )
+    checkpoint_digest = checkpoint_file_sha256(path)
+    runtime_snapshot_store = ArticleV1RuntimeSnapshotStore(path.parent)
+    evidence = measure_replay_timing(
+        lambda: _replay_fixed_pilot_checkpoint(
+            checkpoint,
+            workload=workload,
+            runtime_snapshot_store=runtime_snapshot_store,
+        ),
+        source_commit_sha=str(source_before["commit_sha"]),
+        source_worktree_digest=str(source_before["source_worktree_digest"]),
+        source_committed_and_clean=not bool(source_before["dirty_worktree"]),
+        config_digest=config.digest,
+        target_id=case.target_id,
+        target_fingerprint=str(workload["target_fingerprint"]),
+        feature_evaluator_schema_version=str(
+            workload["feature_evaluator_schema"]
+        ),
+        checkpoint_path=path,
+        checkpoint_file_sha256=checkpoint_digest,
+        checkpoint_schema_version=checkpoint.schema_version,
+        journal_digest=checkpoint.journal_digest,
+        journal_entry_count=len(checkpoint.journal.entries),
+        expected_expansions=REPLAY_TIMING_EXPECTED_EXPANSIONS,
+        projected_full_episode_seconds=projected_full_episode_seconds,
+        clock_ns=clock_ns,
+    )
+    source_after = git_provenance(refresh=True)
+    _require_unchanged_source(source_before, source_after)
+    if load_article_v1_config("pilot").digest != config.digest:
+        raise RuntimeError("frozen pilot config changed during replay timing")
+    write_replay_timing(evidence_path, evidence)
+    return evidence
 
 
 def _serialized_witness_gates(
@@ -2175,6 +3172,7 @@ _REQUIRED_TIMING_FIELDS = (
     "feature_time_seconds",
     "dominance_update_time_seconds",
     "compact_batch_time_seconds",
+    "last_compact_batch_time_seconds",
     "candidate_gather_time_seconds",
     "standardization_time_seconds",
     "score_time_seconds",
@@ -2217,6 +3215,7 @@ _REQUIRED_COUNTER_FIELDS = (
     "active_archive_peak",
     "certification_count",
     "feature_evaluation_count",
+    "compact_batch_count",
     "target_metric_evaluation_count",
     "target_metric_cache_hits",
     "target_metric_cache_misses",
@@ -2430,6 +3429,16 @@ def _audit_campaign_record(
         if name not in search_metrics:
             raise ValueError(f"campaign record is missing counter {name}")
         _nonnegative_int(search_metrics[name], name=f"search_metrics.{name}")
+    compact_batch_count = int(search_metrics["compact_batch_count"])
+    compact_batch_time_ns = int(search_metrics["compact_batch_time_ns"])
+    last_compact_batch_time_ns = int(
+        search_metrics["last_compact_batch_time_ns"]
+    )
+    if last_compact_batch_time_ns > compact_batch_time_ns or (
+        compact_batch_count == 0
+        and (compact_batch_time_ns != 0 or last_compact_batch_time_ns != 0)
+    ):
+        raise ValueError("campaign compact-batch timing/count telemetry disagrees")
     if int(search_metrics["expanded"]) != expansions or int(
         search_metrics["num_expanded"]
     ) != expansions:
@@ -3449,6 +4458,443 @@ def campaign_plan(
     return report
 
 
+def benchmark_article_v1_features(
+    config: str | Path,
+    *,
+    output_root: str | Path = Path("outputs") / "article_v1",
+    run_id: str = "article-v1-feature-index-v2",
+    reference_safe_frontier_size: int = 1024,
+    microbenchmark_repetitions: int = 3,
+    microbenchmark_warmups: int = 1,
+    frontier_capture_expansion_limit: int = 512,
+    correctness_timeout_seconds: float = 300.0,
+    maximum_hard_episode_seconds: float | None = None,
+    maximum_peak_index_memory_bytes: int | None = None,
+    hard_training_episode_count: int | None = None,
+    write_profiles: bool = True,
+) -> dict[str, Any]:
+    """Safely qualify the real Article V1 feature evaluator before a pilot.
+
+    Structural and reference-equivalence evidence is written first.  The
+    repository benchmark adapter is not constructed, and therefore no timing
+    begins, unless both preflight gates pass.
+    """
+
+    from experiments.article_v1_feature_benchmark import (
+        DEFAULT_FRONTIER_SIZES,
+        DEFAULT_STAGED_EXPANSION_CAPS,
+        PRODUCTION_DOMINANCE_IMPLEMENTATION_CHECK,
+        PilotFeasibilityCriteria,
+        inspect_production_dominance_update,
+        run_focused_correctness_gate,
+        run_repository_feature_benchmark,
+        write_implementation_check_evidence,
+    )
+
+    status_schema = "article-v1-feature-benchmark-status-v1"
+    status_name = "benchmark_status.json"
+
+    def source_snapshot(value: Mapping[str, object]) -> dict[str, object]:
+        return {
+            name: _json_ready(value.get(name))
+            for name in (
+                "commit_sha",
+                "branch",
+                "dirty_worktree",
+                "source_worktree_digest",
+                "relevant_untracked_files",
+            )
+        }
+
+    def source_is_known(value: Mapping[str, object]) -> bool:
+        return (
+            value.get("commit_sha") not in {None, "", "unknown"}
+            and value.get("source_worktree_digest") not in {None, "", "unknown"}
+            and type(value.get("dirty_worktree")) is bool
+        )
+
+    def config_snapshot(source: str | Path) -> dict[str, object]:
+        resolved = load_article_v1_config(source)
+        return {
+            "profile": resolved.profile,
+            "digest": resolved.digest,
+            "resolved_config": resolved.to_dict(),
+        }
+
+    def same_config(
+        left: Mapping[str, object], right: Mapping[str, object]
+    ) -> bool:
+        return (
+            left.get("profile") == right.get("profile") == "pilot"
+            and left.get("digest") == right.get("digest")
+            and left.get("resolved_config") == right.get("resolved_config")
+        )
+
+    if not isinstance(run_id, str) or not run_id.strip():
+        raise ValueError("feature benchmark run_id must be a nonempty string")
+    if Path(run_id).name != run_id or run_id in {".", ".."}:
+        raise ValueError("feature benchmark run_id must be one path component")
+    if not isinstance(write_profiles, bool):
+        raise ValueError("write_profiles must be a bool")
+    positive_integer_arguments = {
+        "reference_safe_frontier_size": reference_safe_frontier_size,
+        "microbenchmark_repetitions": microbenchmark_repetitions,
+        "frontier_capture_expansion_limit": frontier_capture_expansion_limit,
+    }
+    if hard_training_episode_count is not None:
+        positive_integer_arguments["hard_training_episode_count"] = (
+            hard_training_episode_count
+        )
+    for name, value in positive_integer_arguments.items():
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, np.integer))
+            or int(value) <= 0
+        ):
+            raise ValueError(f"{name} must be a positive integer")
+    if (
+        isinstance(microbenchmark_warmups, bool)
+        or not isinstance(microbenchmark_warmups, (int, np.integer))
+        or int(microbenchmark_warmups) < 0
+    ):
+        raise ValueError("microbenchmark_warmups must be a non-negative integer")
+    if (
+        isinstance(correctness_timeout_seconds, bool)
+        or not isinstance(correctness_timeout_seconds, (int, float, np.number))
+        or not math.isfinite(float(correctness_timeout_seconds))
+        or float(correctness_timeout_seconds) <= 0.0
+    ):
+        raise ValueError("correctness_timeout_seconds must be finite and positive")
+    if (maximum_hard_episode_seconds is None) != (
+        maximum_peak_index_memory_bytes is None
+    ):
+        raise ValueError(
+            "both feature benchmark feasibility bounds must be supplied together"
+        )
+
+    feasibility_criteria = None
+    if maximum_hard_episode_seconds is not None:
+        assert maximum_peak_index_memory_bytes is not None
+        feasibility_criteria = PilotFeasibilityCriteria(
+            maximum_hard_episode_seconds=maximum_hard_episode_seconds,
+            maximum_peak_index_memory_bytes=maximum_peak_index_memory_bytes,
+        )
+
+    destination = Path(output_root).resolve() / run_id
+    if destination.exists() and (
+        not destination.is_dir() or any(destination.iterdir())
+    ):
+        return {
+            "schema_version": "article-v1-feature-benchmark-command-v2",
+            "passed": False,
+            "engineering_qualification_passed": False,
+            "pilot_relaunch_ready": False,
+            "aborted_before_timing": True,
+            "abort_reason": (
+                "feature benchmark destination already exists and is nonempty; "
+                "use a new run ID"
+            ),
+            "output_directory": str(destination),
+            "status_manifest": None,
+            "artifacts": None,
+        }
+    destination.mkdir(parents=True, exist_ok=True)
+    status_path = destination / status_name
+
+    def artifact_manifest() -> dict[str, object]:
+        files: dict[str, dict[str, object]] = {}
+        for path in sorted(destination.rglob("*")):
+            if (
+                not path.is_file()
+                or path == status_path
+                or path.name.endswith(".tmp")
+            ):
+                continue
+            relative = path.relative_to(destination).as_posix()
+            content = path.read_bytes()
+            files[relative] = {
+                "sha256": f"sha256:{sha256(content).hexdigest()}",
+                "bytes": len(content),
+            }
+        required_files = (
+            "baseline.json",
+            "microbenchmarks.csv",
+            "end_to_end_scaling.csv",
+            "scaling_report.md",
+            "projected_pilot_cost.json",
+        )
+        profile_entries = {
+            name: record
+            for name, record in files.items()
+            if name.startswith("profiles/")
+        }
+        profile_digest = sha256()
+        for name, record in profile_entries.items():
+            profile_digest.update(name.encode("utf-8"))
+            profile_digest.update(str(record["sha256"]).encode("ascii"))
+            profile_digest.update(str(record["bytes"]).encode("ascii"))
+        return {
+            "files": files,
+            "required_six_artifacts_complete": (
+                all(name in files for name in required_files)
+                and bool(profile_entries)
+            ),
+            "profiles": {
+                "file_count": len(profile_entries),
+                "sha256": f"sha256:{profile_digest.hexdigest()}",
+                "files": profile_entries,
+            },
+        }
+
+    def publish_status(payload: Mapping[str, object]) -> dict[str, object]:
+        document = {
+            "schema_version": status_schema,
+            **dict(payload),
+            "artifact_manifest": artifact_manifest(),
+            "written_last": True,
+        }
+        _atomic_json(status_path, document)
+        return document
+
+    initial_source = source_snapshot(git_provenance(refresh=True))
+    try:
+        canonical_config = config_snapshot("pilot")
+        requested_config = config_snapshot(config)
+    except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        status = publish_status(
+            {
+                "phase": "configuration-preflight",
+                "engineering_qualification_passed": False,
+                "pilot_relaunch_ready": False,
+                "abort_reason": f"could not resolve frozen pilot config: {exc}",
+                "source_snapshots": {"initial": initial_source},
+            }
+        )
+        return {
+            "schema_version": "article-v1-feature-benchmark-command-v2",
+            "passed": False,
+            "engineering_qualification_passed": False,
+            "pilot_relaunch_ready": False,
+            "aborted_before_timing": True,
+            "abort_reason": status["abort_reason"],
+            "output_directory": str(destination),
+            "status_manifest": str(status_path),
+            "artifacts": None,
+        }
+    config_binding = {
+        "requested_source": str(config),
+        "requested": requested_config,
+        "canonical_checked_in_pilot": canonical_config,
+        "matches_frozen_pilot": same_config(requested_config, canonical_config),
+    }
+    evidence_binding = {
+        "source": initial_source,
+        "config_profile": requested_config["profile"],
+        "config_digest": requested_config["digest"],
+        "canonical_pilot_config_digest": canonical_config["digest"],
+    }
+    common_summary: dict[str, Any] = {
+        "schema_version": "article-v1-feature-benchmark-command-v2",
+        "evidence_class": "engineering-performance-diagnostic",
+        "scientific_scheduler_evidence": False,
+        "output_directory": str(destination),
+        "frontier_sizes": list(DEFAULT_FRONTIER_SIZES),
+        "staged_expansion_caps": list(DEFAULT_STAGED_EXPANSION_CAPS),
+        "reference_safe_frontier_size": int(reference_safe_frontier_size),
+        "config_binding": config_binding,
+        "source_snapshots": {"initial": initial_source},
+        "status_manifest": str(status_path),
+    }
+
+    def failed_before_timing(
+        reason: str,
+        *,
+        phase: str,
+        extra: Mapping[str, object] | None = None,
+    ) -> dict[str, Any]:
+        payload = {
+            **common_summary,
+            **dict(extra or {}),
+            "phase": phase,
+            "engineering_qualification_passed": False,
+            "pilot_relaunch_ready": False,
+            "abort_reason": reason,
+        }
+        publish_status(payload)
+        return {
+            **common_summary,
+            **dict(extra or {}),
+            "passed": False,
+            "engineering_qualification_passed": False,
+            "pilot_relaunch_ready": False,
+            "aborted_before_timing": True,
+            "abort_reason": reason,
+            "artifacts": None,
+        }
+
+    if not source_is_known(initial_source):
+        return failed_before_timing(
+            "fresh git source provenance is unavailable",
+            phase="source-preflight",
+        )
+    if config_binding["matches_frozen_pilot"] is not True:
+        return failed_before_timing(
+            "requested config is not the frozen checked-in pilot config",
+            phase="configuration-preflight",
+        )
+
+    implementation_report = inspect_production_dominance_update()
+    implementation_report["evidence_binding"] = evidence_binding
+    implementation_evidence = write_implementation_check_evidence(
+        destination, implementation_report
+    )
+    implementation_checks = {
+        PRODUCTION_DOMINANCE_IMPLEMENTATION_CHECK: bool(
+            implementation_report.get("passed") is True
+        )
+    }
+    common_summary["implementation_check"] = implementation_report
+    common_summary["implementation_evidence"] = str(implementation_evidence)
+    if not implementation_checks[PRODUCTION_DOMINANCE_IMPLEMENTATION_CHECK]:
+        return failed_before_timing(
+            "production dominance implementation check failed",
+            phase="implementation-gate",
+            extra={"correctness_gate": None},
+        )
+
+    correctness_gate, correctness_report = run_focused_correctness_gate(
+        destination,
+        timeout_seconds=correctness_timeout_seconds,
+        evidence_binding=evidence_binding,
+    )
+    common_summary["correctness_gate"] = correctness_gate.as_dict()
+    common_summary["correctness_evidence"] = correctness_report
+    if not correctness_gate.passed:
+        return failed_before_timing(
+            "reference-equivalence correctness gate failed",
+            phase="correctness-gate",
+        )
+
+    before_timing_source = source_snapshot(git_provenance(refresh=True))
+    common_summary["source_snapshots"]["before_timing"] = before_timing_source
+    try:
+        canonical_before_timing = config_snapshot("pilot")
+        requested_before_timing = config_snapshot(config)
+    except (OSError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        return failed_before_timing(
+            f"could not re-read frozen config before timing: {exc}",
+            phase="pre-timing-integrity",
+        )
+    config_unchanged_before_timing = (
+        same_config(canonical_before_timing, canonical_config)
+        and same_config(requested_before_timing, requested_config)
+        and same_config(requested_before_timing, canonical_before_timing)
+    )
+    source_unchanged_before_timing = before_timing_source == initial_source
+    common_summary["pre_timing_integrity"] = {
+        "source_unchanged": source_unchanged_before_timing,
+        "config_unchanged": config_unchanged_before_timing,
+    }
+    if not source_unchanged_before_timing or not config_unchanged_before_timing:
+        return failed_before_timing(
+            "source or frozen pilot config changed before timing",
+            phase="pre-timing-integrity",
+        )
+
+    provenance = before_timing_source
+    source_clean = (
+        provenance.get("dirty_worktree") is False
+        and provenance.get("commit_sha") not in {None, "", "unknown"}
+        and provenance.get("source_worktree_digest") not in {None, "", "unknown"}
+    )
+    artifacts = run_repository_feature_benchmark(
+        destination,
+        correctness_gate=correctness_gate,
+        implementation_checks=implementation_checks,
+        config="pilot",
+        frontier_sizes=DEFAULT_FRONTIER_SIZES,
+        staged_caps=DEFAULT_STAGED_EXPANSION_CAPS,
+        feasibility_criteria=feasibility_criteria,
+        pilot_relaunch_checks={
+            "source_revision_committed_and_clean": source_clean,
+        },
+        benchmark_provenance={
+            "code_version": str(provenance["commit_sha"]),
+            "source_worktree_digest": str(provenance["source_worktree_digest"]),
+            "worktree_clean": not bool(provenance["dirty_worktree"]),
+            "source_snapshots": {
+                "initial": initial_source,
+                "before_timing": before_timing_source,
+            },
+            "config_binding": config_binding,
+        },
+        hard_training_episode_count=hard_training_episode_count,
+        write_profiles=write_profiles,
+        adapter_kwargs={
+            "reference_safe_frontier_size": reference_safe_frontier_size,
+            "microbenchmark_repetitions": microbenchmark_repetitions,
+            "microbenchmark_warmups": microbenchmark_warmups,
+            "frontier_capture_expansion_limit": frontier_capture_expansion_limit,
+        },
+    )
+    artifact_paths = {
+        "baseline_json": str(artifacts.baseline_json),
+        "microbenchmarks_csv": str(artifacts.microbenchmarks_csv),
+        "end_to_end_scaling_csv": str(artifacts.end_to_end_scaling_csv),
+        "profiles_directory": str(artifacts.profiles_directory),
+        "scaling_report_md": str(artifacts.scaling_report_md),
+        "projected_pilot_cost_json": str(artifacts.projected_pilot_cost_json),
+    }
+    after_artifacts_source = source_snapshot(git_provenance(refresh=True))
+    common_summary["source_snapshots"]["after_artifacts"] = after_artifacts_source
+    try:
+        canonical_after = config_snapshot("pilot")
+        requested_after = config_snapshot(config)
+        config_unchanged_after = (
+            same_config(canonical_after, canonical_config)
+            and same_config(requested_after, requested_config)
+            and same_config(requested_after, canonical_after)
+        )
+    except (OSError, TypeError, ValueError, json.JSONDecodeError):
+        config_unchanged_after = False
+    source_unchanged_after = after_artifacts_source == initial_source
+    engineering_passed = bool(
+        artifacts.qualification.get("passed") is True
+        and source_unchanged_after
+        and config_unchanged_after
+    )
+    pilot_relaunch_ready = bool(
+        engineering_passed
+        and artifacts.projection.get("pilot_decision")
+        == "configured pilot is feasible unchanged"
+    )
+    final_integrity = {
+        "source_unchanged": source_unchanged_after,
+        "config_unchanged": config_unchanged_after,
+    }
+    final_payload = {
+        **common_summary,
+        "phase": "complete" if engineering_passed else "post-artifact-integrity-failed",
+        "engineering_qualification_passed": engineering_passed,
+        "pilot_relaunch_ready": pilot_relaunch_ready,
+        "final_integrity": final_integrity,
+        "abort_reason": (
+            None
+            if engineering_passed
+            else "performance qualification or final source/config integrity failed"
+        ),
+        "qualification": dict(artifacts.qualification),
+        "projection": dict(artifacts.projection),
+        "artifacts": artifact_paths,
+    }
+    publish_status(final_payload)
+    return {
+        **final_payload,
+        "passed": engineering_passed,
+        "aborted_before_timing": False,
+    }
+
+
 def main(argv: Iterable[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -3484,8 +4930,115 @@ def main(argv: Iterable[str] | None = None) -> int:
     plan_parser.add_argument("--config", type=Path, required=True)
     plan_parser.add_argument("--workers", type=int, default=1)
     plan_parser.add_argument("--pilot-seconds-per-expansion", type=float)
+    feature_benchmark = subparsers.add_parser(
+        "benchmark-features",
+        description=(
+            "Qualify the exact incremental Article V1 feature evaluator after "
+            "a focused reference-equivalence pytest gate. Fixed axes: "
+            "F=32,64,128,256,512,1024,2048 and caps=32,64,128,256,512,1024."
+        ),
+    )
+    feature_benchmark.add_argument("--config", type=Path, required=True)
+    feature_benchmark.add_argument(
+        "--output-root", type=Path, default=Path("outputs") / "article_v1"
+    )
+    feature_benchmark.add_argument(
+        "--run-id", default="article-v1-feature-index-v2"
+    )
+    feature_benchmark.add_argument(
+        "--reference-safe-frontier-size",
+        type=int,
+        default=1024,
+        help="current-host reference is required through F=1024; F=2048 is skipped",
+    )
+    feature_benchmark.add_argument(
+        "--microbenchmark-repetitions", type=int, default=3
+    )
+    feature_benchmark.add_argument("--microbenchmark-warmups", type=int, default=1)
+    feature_benchmark.add_argument(
+        "--frontier-capture-expansion-limit", type=int, default=512
+    )
+    feature_benchmark.add_argument(
+        "--correctness-timeout-seconds", type=float, default=300.0
+    )
+    feature_benchmark.add_argument("--maximum-hard-episode-seconds", type=float)
+    feature_benchmark.add_argument(
+        "--maximum-peak-index-memory-bytes", type=int
+    )
+    feature_benchmark.add_argument("--hard-training-episode-count", type=int)
+    feature_benchmark.add_argument(
+        "--no-profiles",
+        action="store_true",
+        help="skip cProfile runs; pytest/AST evidence remains in profiles/",
+    )
+    replay_capture = subparsers.add_parser(
+        "capture-replay-checkpoint",
+        description=(
+            "Run only the frozen pilot hard/3q training workload and stop at "
+            "the validated expansion-1024 recovery boundary."
+        ),
+    )
+    replay_capture.add_argument(
+        "--output-root", type=Path, default=Path("outputs") / "article_v1"
+    )
+    replay_capture.add_argument(
+        "--run-id", default="article-v1-replay-capture-1024"
+    )
+    replay_capture.add_argument("--quiet", action="store_true")
+    replay_capture.add_argument(
+        "--checkpoint-every-expansions", type=int, default=64
+    )
+    replay_capture.add_argument("--checkpoint-every-seconds", type=float, default=60.0)
+    replay_measure = subparsers.add_parser(
+        "measure-replay-timing",
+        description=(
+            "Replay and validate an exact canonical expansion-1024 checkpoint, "
+            "then write strict article-v1-replay-timing-v1 evidence."
+        ),
+    )
+    replay_measure.add_argument("--checkpoint", type=Path, required=True)
+    replay_measure.add_argument("--output", type=Path, required=True)
+    replay_measure.add_argument(
+        "--projected-full-episode-seconds", type=float, required=True
+    )
     args = parser.parse_args(argv)
 
+    if args.command == "capture-replay-checkpoint":
+        result = capture_article_v1_replay_checkpoint(
+            args.output_root / args.run_id,
+            quiet=bool(args.quiet),
+            checkpoint_cadence=CheckpointCadence(
+                every_expansions=args.checkpoint_every_expansions,
+                every_seconds=args.checkpoint_every_seconds,
+            ),
+        )
+        print(json.dumps(_json_ready(result), indent=2, sort_keys=True))
+        return 0
+    if args.command == "measure-replay-timing":
+        result = measure_article_v1_replay_checkpoint(
+            args.checkpoint,
+            args.output,
+            projected_full_episode_seconds=args.projected_full_episode_seconds,
+        )
+        print(json.dumps(_json_ready(result.to_payload()), indent=2, sort_keys=True))
+        return 0 if result.engineering_timing_valid else 1
+    if args.command == "benchmark-features":
+        result = benchmark_article_v1_features(
+            args.config,
+            output_root=args.output_root,
+            run_id=args.run_id,
+            reference_safe_frontier_size=args.reference_safe_frontier_size,
+            microbenchmark_repetitions=args.microbenchmark_repetitions,
+            microbenchmark_warmups=args.microbenchmark_warmups,
+            frontier_capture_expansion_limit=args.frontier_capture_expansion_limit,
+            correctness_timeout_seconds=args.correctness_timeout_seconds,
+            maximum_hard_episode_seconds=args.maximum_hard_episode_seconds,
+            maximum_peak_index_memory_bytes=args.maximum_peak_index_memory_bytes,
+            hard_training_episode_count=args.hard_training_episode_count,
+            write_profiles=not bool(args.no_profiles),
+        )
+        print(json.dumps(_json_ready(result), indent=2, sort_keys=True))
+        return 0 if result["engineering_qualification_passed"] else 1
     if args.command == "mini-ci":
         result = mini_ci_benchmark(
             args.output_root,
@@ -3731,16 +5284,20 @@ def main(argv: Iterable[str] | None = None) -> int:
 __all__ = [
     "ARTICLE_V1_CAMPAIGN_AUDIT_SCHEMA",
     "ARTICLE_V1_CHECKPOINT_SCHEMA",
+    "ARTICLE_V1_REPLAY_CAPTURE_SCHEMA",
     "ARTICLE_V1_RUNNER_SCHEMA",
     "PRIMARY_SCHEDULERS",
     "ArticleV1Checkpoint",
     "audit_article_v1_campaign",
+    "benchmark_article_v1_features",
+    "capture_article_v1_replay_checkpoint",
     "environment_metadata",
     "evaluate_article_v1_matrix",
     "evaluate_article_v1_run",
     "git_provenance",
     "initialize_run",
     "main",
+    "measure_article_v1_replay_checkpoint",
     "mini_ci_benchmark",
     "campaign_plan",
     "train_article_v1_checkpoint",

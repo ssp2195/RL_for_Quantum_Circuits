@@ -190,6 +190,9 @@ def main(argv: Iterable[str] | None = None) -> int:
         "ablations",
         "mini-ci",
         "calibrate-certifier",
+        "benchmark-features",
+        "capture-replay-checkpoint",
+        "measure-replay-timing",
         "plan",
     }
     if arguments and arguments[0] in article_v1_commands:

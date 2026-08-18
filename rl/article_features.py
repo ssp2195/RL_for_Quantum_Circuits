@@ -925,6 +925,16 @@ class ArticleV1FeatureProvider(ArticleV1ReferenceFeatureProvider):
     def reconcile_index(self, records: Sequence[object] | None = None) -> None:
         getattr(self._ensure_feature_index(), "reconcile")(records)
 
+    def recent_compact_batch_times_ns(self) -> tuple[int, ...]:
+        """Return exact completed-batch timings used by progress telemetry."""
+
+        if self._feature_index is None:
+            return ()
+        values = getattr(
+            self._feature_index, "recent_compact_batch_times_ns"
+        )()
+        return tuple(int(value) for value in values)
+
     def instrumentation(self) -> Mapping[str, int | str]:
         if self._feature_index is None:
             return MappingProxyType(
@@ -939,6 +949,8 @@ class ArticleV1FeatureProvider(ArticleV1ReferenceFeatureProvider):
                     "resource_group_peak": 0,
                     "dominance_update_time_ns": 0,
                     "compact_batch_time_ns": 0,
+                    "compact_batch_count": 0,
+                    "last_compact_batch_time_ns": 0,
                     "candidate_gather_time_ns": 0,
                     "standardization_time_ns": 0,
                     "score_time_ns": 0,

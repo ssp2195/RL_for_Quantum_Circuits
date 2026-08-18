@@ -4,9 +4,13 @@ from dataclasses import replace
 from hashlib import sha256
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pytest
+
+import article_benchmark as root_article_benchmark
+import experiments.article_v1_runner as runner_module
 
 from benchmarks.article_native_corpus import (
     ARTICLE_V1_TRAINING_BUDGET_POLICY,
@@ -26,13 +30,21 @@ from experiments.article_v1_runner import (
     ARTICLE_V1_CHECKPOINT_SCHEMA,
     PRIMARY_SCHEDULERS,
     ArticleV1Checkpoint,
+    _EpisodeProgressClock,
+    _ProgressFeatureTimingWindow,
     _load_or_train_article_v1_checkpoint,
     _validate_checkpoint_campaign,
     _mini_ci_semantic_checks,
     evaluate_article_v1_run,
     git_provenance,
     initialize_run,
+    main,
     mini_ci_benchmark,
+)
+from experiments.article_v1_progress import (
+    ARTICLE_V1_PROGRESS_EVENT_SCHEMA,
+    load_progress_events,
+    load_progress_status,
 )
 from experiments.profiles import ARTICLE_V1_PROFILE
 from rl.article_features import (
@@ -42,6 +54,142 @@ from rl.article_features import (
     ARTICLE_V1_NO_Z_FEATURE_NAMES,
     ARTICLE_V1_NO_Z_FEATURE_SCHEMA_VERSION,
 )
+
+
+def test_episode_progress_clock_resets_elapsed_time_and_rate() -> None:
+    current = [12.0]
+    clock = _EpisodeProgressClock(started=10.0, clock=lambda: current[0])
+    assert clock.measure(4) == (2.0, 2.0)
+
+    clock.reset(now=20.0)
+    current[0] = 21.0
+    assert clock.measure(3) == (1.0, 3.0)
+
+
+def test_replay_capture_and_measure_cli_dispatch_without_starting_workload(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: dict[str, object] = {}
+
+    def fake_capture(path: Path, **kwargs: object) -> dict[str, object]:
+        calls["capture"] = (path, kwargs)
+        return {"capture_valid": True}
+
+    evidence = SimpleNamespace(
+        engineering_timing_valid=True,
+        to_payload=lambda: {"replay_timing_schema": "article-v1-replay-timing-v1"},
+    )
+
+    def fake_measure(
+        checkpoint: Path,
+        output: Path,
+        **kwargs: object,
+    ) -> object:
+        calls["measure"] = (checkpoint, output, kwargs)
+        return evidence
+
+    monkeypatch.setattr(
+        runner_module, "capture_article_v1_replay_checkpoint", fake_capture
+    )
+    monkeypatch.setattr(
+        runner_module, "measure_article_v1_replay_checkpoint", fake_measure
+    )
+    assert main(
+        (
+            "capture-replay-checkpoint",
+            "--output-root",
+            str(tmp_path),
+            "--run-id",
+            "capture",
+            "--quiet",
+        )
+    ) == 0
+    capture_path, capture_kwargs = calls["capture"]
+    assert capture_path == tmp_path / "capture"
+    assert capture_kwargs["quiet"] is True
+    assert capture_kwargs["checkpoint_cadence"].every_expansions == 64
+
+    checkpoint = tmp_path / "capture" / "training_state" / "latest.json"
+    output = tmp_path / "replay_timing.json"
+    assert main(
+        (
+            "measure-replay-timing",
+            "--checkpoint",
+            str(checkpoint),
+            "--output",
+            str(output),
+            "--projected-full-episode-seconds",
+            "3515.337979379539",
+        )
+    ) == 0
+    measured_checkpoint, measured_output, measured_kwargs = calls["measure"]
+    assert measured_checkpoint == checkpoint
+    assert measured_output == output
+    assert measured_kwargs["projected_full_episode_seconds"] == pytest.approx(
+        3515.337979379539
+    )
+
+
+@pytest.mark.parametrize(
+    "command", ("capture-replay-checkpoint", "measure-replay-timing")
+)
+def test_root_cli_dispatches_replay_operability_commands(
+    command: str,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: list[list[str]] = []
+
+    def fake_main(arguments: list[str]) -> int:
+        captured.append(list(arguments))
+        return 23
+
+    monkeypatch.setattr(runner_module, "main", fake_main)
+    assert root_article_benchmark.main([command]) == 23
+    assert captured == [[command]]
+
+
+def test_progress_feature_timing_window_is_exact_and_does_not_double_count() -> None:
+    window = _ProgressFeatureTimingWindow()
+    all_times: list[int] = []
+    last_seconds = rolling_seconds = 0.0
+    for count in range(1, 28):
+        all_times.append(count * 100)
+        recent = tuple(all_times[-25:])
+        last_seconds, rolling_seconds = window.observe(
+            {
+                "compact_batch_count": count,
+                "last_compact_batch_time_ns": all_times[-1],
+            },
+            recent_batch_times_ns=recent,
+        )
+    assert last_seconds == 2_700 / 1_000_000_000
+    assert rolling_seconds == sum(all_times[-25:]) / 25 / 1_000_000_000
+
+    # Episode end observes the same provider count and cannot append twice.
+    duplicate = window.observe(
+        {
+            "compact_batch_count": 27,
+            "last_compact_batch_time_ns": 2_700,
+        },
+        recent_batch_times_ns=tuple(all_times[-25:]),
+    )
+    assert duplicate == (last_seconds, rolling_seconds)
+
+    # If attachment skips more samples than the provider retains, that exact
+    # retained suffix is the complete requested rolling-25 window.
+    late = _ProgressFeatureTimingWindow()
+    suffix = tuple(range(76, 101))
+    assert late.observe(
+        {"compact_batch_count": 100, "last_compact_batch_time_ns": 100},
+        recent_batch_times_ns=suffix,
+    ) == (100 / 1_000_000_000, sum(suffix) / 25 / 1_000_000_000)
+
+    window.reset_episode()
+    assert window.observe(
+        {"compact_batch_count": 2, "last_compact_batch_time_ns": 150},
+        recent_batch_times_ns=(50, 150),
+    ) == (150 / 1_000_000_000, 100 / 1_000_000_000)
 
 
 def _one_h_target() -> ArticleV1EvaluationTarget:
@@ -639,6 +787,15 @@ def test_mini_ci_writes_artifacts_resumes_and_never_falls_back_to_reference_witn
     assert all(row["source_worktree_digest"].startswith("sha256:") for row in records)
     assert all(Path(path).is_file() for path in first["artifacts"].values())
     assert (destination / "mini_ci_summary.json").is_file()
+    progress_events = load_progress_events(destination / "progress.jsonl")
+    assert progress_events
+    assert all(
+        event.schema_version == ARTICLE_V1_PROGRESS_EVENT_SCHEMA
+        and event.feature_evaluator_schema_version
+        == ARTICLE_V1_PROFILE.feature_evaluator_schema
+        for event in progress_events
+    )
+    assert load_progress_status(destination / "status.json") == progress_events[-1]
 
     second = mini_ci_benchmark(tmp_path, run_id="regression")
     assert raw_path.read_bytes() == first_raw

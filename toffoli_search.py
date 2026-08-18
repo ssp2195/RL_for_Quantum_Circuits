@@ -693,7 +693,11 @@ def run_toffoli_search(
     learned_gates: tuple[Gate, ...] = ()
     learned_state: object | None = None
     learned_policy = _new_policy(deps, provider, seed=seed, learning_rate=learning_rate)
-    if train:
+    # ``--train --episodes 0`` is the public, bounded failure-path probe used
+    # by the CLI regression test.  It must still write the complete negative
+    # artifact bundle instead of asking ``Trainer`` to execute an invalid
+    # zero-episode training loop.
+    if train and episodes > 0:
         training_environment = environment(
             run_seed=seed,
             max_steps=training_max_steps,
