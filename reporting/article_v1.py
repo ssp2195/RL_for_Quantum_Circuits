@@ -25,8 +25,8 @@ import time
 from typing import Any
 
 
-ARTICLE_V1_RAW_RUN_SCHEMA = "article-v1-raw-run-v3"
-ARTICLE_V1_REPORT_SCHEMA = "article-v1-publication-report-v3"
+ARTICLE_V1_RAW_RUN_SCHEMA = "article-v1-raw-run-v4"
+ARTICLE_V1_REPORT_SCHEMA = "article-v1-publication-report-v4"
 DEFAULT_STATISTICS_SEED = 20_260_815
 DEFAULT_BOOTSTRAP_SAMPLES = 10_000
 
@@ -164,6 +164,16 @@ def run_identity_payload(run: Mapping[str, Any]) -> dict[str, Any]:
                 "profile.feature_schema",
             ),
             name="feature schema",
+        ),
+        "feature_evaluator_schema": _first_value(
+            run,
+            (
+                "feature_evaluator_schema_version",
+                "feature_evaluator_schema",
+                "schemas.feature_evaluator",
+                "profile.feature_evaluator_schema",
+            ),
+            name="feature evaluator schema",
         ),
         "reward_schema": _first_value(
             run,
@@ -631,6 +641,9 @@ def _group_fields(run: Mapping[str, Any]) -> dict[str, Any]:
         "training_seed": identity["training_seed"],
         "resource_budget": _canonical_json(identity["resource_budget"]),
         "feature_schema": display(identity["feature_schema"]),
+        "feature_evaluator_schema": display(
+            identity["feature_evaluator_schema"]
+        ),
         "reward_schema": display(identity["reward_schema"]),
         "reward_parameters": display(identity["reward_parameters"]),
         "target_metric_schema": display(identity["target_metric_schema"]),
@@ -653,6 +666,7 @@ def _group_key(fields: Mapping[str, Any]) -> tuple[str, ...]:
             "training_seed",
             "resource_budget",
             "feature_schema",
+            "feature_evaluator_schema",
             "reward_schema",
             "reward_parameters",
             "target_metric_schema",
@@ -754,6 +768,7 @@ def _learner_seed_summary(
         "scheduler",
         "resource_budget",
         "feature_schema",
+        "feature_evaluator_schema",
         "reward_schema",
         "reward_parameters",
         "certifier_schema",
@@ -1040,6 +1055,7 @@ def aggregate_article_v1_runs(
                 "training_seed",
                 "resource_budget",
                 "feature_schema",
+                "feature_evaluator_schema",
                 "reward_schema",
                 "reward_parameters",
                 "certifier_schema",
@@ -1158,6 +1174,7 @@ def _paired_differences(
                 "difficulty",
                 "resource_budget",
                 "feature_schema",
+                "feature_evaluator_schema",
                 "reward_schema",
                 "reward_parameters",
                 "certifier_schema",
@@ -1208,14 +1225,15 @@ def _paired_differences(
                             "difficulty": context[1],
                             "resource_budget": context[2],
                             "feature_schema": context[3],
-                            "reward_schema": context[4],
-                            "reward_parameters": context[5],
-                            "certifier_schema": context[6],
-                            "certification_parameters": context[7],
-                            "search_reduction": context[8],
-                            "code_version": context[9],
-                            "source_worktree_digest": context[10],
-                            "expansion_budget": int(context[11]),
+                            "feature_evaluator_schema": context[4],
+                            "reward_schema": context[5],
+                            "reward_parameters": context[6],
+                            "certifier_schema": context[7],
+                            "certification_parameters": context[8],
+                            "search_reduction": context[9],
+                            "code_version": context[10],
+                            "source_worktree_digest": context[11],
+                            "expansion_budget": int(context[12]),
                             "target_id": target,
                             "left_scheduler": left[0],
                             "left_checkpoint_digest": left[1],
@@ -1257,14 +1275,15 @@ def _paired_differences(
                         "difficulty": context[1],
                         "resource_budget": context[2],
                         "feature_schema": context[3],
-                        "reward_schema": context[4],
-                        "reward_parameters": context[5],
-                        "certifier_schema": context[6],
-                        "certification_parameters": context[7],
-                        "search_reduction": context[8],
-                        "code_version": context[9],
-                        "source_worktree_digest": context[10],
-                        "expansion_budget": int(context[11]),
+                        "feature_evaluator_schema": context[4],
+                        "reward_schema": context[5],
+                        "reward_parameters": context[6],
+                        "certifier_schema": context[7],
+                        "certification_parameters": context[8],
+                        "search_reduction": context[9],
+                        "code_version": context[10],
+                        "source_worktree_digest": context[11],
+                        "expansion_budget": int(context[12]),
                         "left_scheduler": left[0],
                         "left_checkpoint_digest": left[1],
                         "left_training_seed": left[2],

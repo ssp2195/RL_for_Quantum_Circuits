@@ -2,8 +2,10 @@
 
 ``ArticleV1FeatureProvider`` implements the exact feature contract from
 ``Article_limited_scope.md`` plus the operational definitions in the Article
-V1 implementation plan. It produces ``[1, x, z, (b/B) x]`` from one frozen
-frontier snapshot. The older 37-coordinate implementation is retained under
+V1 implementation plan using an exact incremental frontier index. It produces
+``[1, x, z, (b/B) x]`` from one frozen frontier snapshot. The preserved
+all-pairs oracle is ``ArticleV1ReferenceFeatureProvider``. The older
+37-coordinate implementation is retained under
 ``ExtendedArticleFeatureProvider``; ``ArticleFeatureProvider`` remains its
 versioned compatibility wrapper.
 
@@ -21,6 +23,7 @@ from math import comb, log2, sqrt
 from time import perf_counter_ns
 from types import MappingProxyType
 from typing import Any, Optional
+import warnings
 
 import numpy as np
 
@@ -39,6 +42,10 @@ ARTICLE_V1_TARGET_METRIC_SCHEMA_VERSION = PROJECTIVE_UNITARY_METRICS_SCHEMA
 ARTICLE_V1_FEATURE_SCHEMA_VERSION = "article-v1-31d"
 ARTICLE_V1_NO_TARGET_FEATURE_SCHEMA_VERSION = "article-v1-no-target-28d"
 ARTICLE_V1_NO_Z_FEATURE_SCHEMA_VERSION = "article-v1-no-z-21d"
+ARTICLE_V1_REFERENCE_EVALUATOR_SCHEMA_VERSION = "article-v1-reference-all-pairs-v1"
+ARTICLE_V1_EXACT_INCREMENTAL_EVALUATOR_SCHEMA_VERSION = (
+    "article-v1-exact-incremental-v2"
+)
 ARTICLE_V1_STANDARDIZATION_ETA = 1e-8
 ARTICLE_V1_DTYPE = np.dtype(np.float64)
 _TARGET_METRIC_ROUNDOFF_TOLERANCE = 1e-10
@@ -339,13 +346,20 @@ def _strictly_dominates(left: tuple[int, ...], right: tuple[int, ...]) -> bool:
     return _weakly_dominates(left, right) and any(a < b for a, b in zip(left, right))
 
 
-class ArticleV1FeatureProvider:
-    """Exact 31-D Article V1 feature provider over frozen frontier batches."""
+class ArticleV1ReferenceFeatureProvider:
+    """Reference all-pairs Article V1 evaluator used as a correctness oracle.
+
+    This path intentionally preserves the original nested frontier scan.  It
+    is safe for parity tests and bounded microbenchmarks, but should not be
+    selected for publication-scale runs.
+    """
 
     schema_version = ARTICLE_V1_FEATURE_SCHEMA_VERSION
+    evaluator_schema_version = ARTICLE_V1_REFERENCE_EVALUATOR_SCHEMA_VERSION
     feature_names = ARTICLE_V1_FEATURE_NAMES
     include_target = True
     include_frontier_context = True
+    standardization_eta = ARTICLE_V1_STANDARDIZATION_ETA
 
     def __init__(
         self,
@@ -354,6 +368,8 @@ class ArticleV1FeatureProvider:
         semantic_key: Callable[[CircuitState], object] | None = None,
         search_horizon: int = 1,
         generation_counts: Mapping[object, int] | None = None,
+        reference_safe_frontier_size: int = 256,
+        warn_above_safe_size: bool = True,
     ) -> None:
         if self.include_target and not isinstance(target_context, ArticleTargetContext):
             raise TypeError("article-v1 target features require an ArticleTargetContext")
@@ -368,6 +384,16 @@ class ArticleV1FeatureProvider:
         self._search_horizon = 1
         self._search_step = 0
         self._generation_counts: Mapping[object, int] = MappingProxyType({})
+        if (
+            isinstance(reference_safe_frontier_size, bool)
+            or not isinstance(reference_safe_frontier_size, (int, np.integer))
+            or int(reference_safe_frontier_size) < 1
+        ):
+            raise ValueError("reference_safe_frontier_size must be a positive integer")
+        if not isinstance(warn_above_safe_size, bool):
+            raise TypeError("warn_above_safe_size must be a bool")
+        self.reference_safe_frontier_size = int(reference_safe_frontier_size)
+        self.warn_above_safe_size = warn_above_safe_size
         self.bind_search_horizon(search_horizon)
         self.bind_generation_counts(generation_counts or {})
 
@@ -511,6 +537,15 @@ class ArticleV1FeatureProvider:
         """Build read-only feature rows from one complete frontier snapshot."""
 
         records = self._validated_records(frontier)
+        if self.warn_above_safe_size and len(records) > self.reference_safe_frontier_size:
+            warnings.warn(
+                "ArticleV1ReferenceFeatureProvider is executing the O(F^2) "
+                f"all-pairs oracle above its safe frontier size "
+                f"({len(records)} > {self.reference_safe_frontier_size}); use the "
+                "exact incremental evaluator for production ranking",
+                RuntimeWarning,
+                stacklevel=2,
+            )
         budget = self._search_horizon if expansion_budget is None else expansion_budget
         completed = self._search_step if expansions_completed is None else expansions_completed
         if (
@@ -663,6 +698,7 @@ class ArticleV1FeatureProvider:
     def metadata(self) -> Mapping[str, object]:
         return {
             "feature_schema_version": self.schema_version,
+            "feature_evaluator_schema_version": self.evaluator_schema_version,
             "feature_dim": self.dimension,
             "feature_names": self.names,
             "candidate_feature_dim": len(self.candidate_coordinate_names),
@@ -684,7 +720,248 @@ class ArticleV1FeatureProvider:
                 "remaining external expansion budget fraction times candidate vector"
             ),
             "novelty_source": "externally supplied canonical-key generation counts",
+            "evaluator_role": "reference-all-pairs-correctness-oracle",
+            "reference_safe_frontier_size": self.reference_safe_frontier_size,
         }
+
+
+class ArticleV1FeatureProvider(ArticleV1ReferenceFeatureProvider):
+    """Production Article V1 provider backed by an exact incremental index.
+
+    ``build_compact_batch`` is the publication-scale path.  ``build_snapshot``
+    remains a materializing compatibility adapter for callers that require a
+    legacy :class:`FrontierFeatureSnapshot`.
+    """
+
+    evaluator_schema_version = ARTICLE_V1_EXACT_INCREMENTAL_EVALUATOR_SCHEMA_VERSION
+
+    def __init__(
+        self,
+        target_context: ArticleTargetContext,
+        *,
+        semantic_key: Callable[[CircuitState], object] | None = None,
+        search_horizon: int = 1,
+        generation_counts: Mapping[object, int] | None = None,
+        debug_reconciliation: bool = False,
+        initial_index_capacity: int = 16,
+        **reference_compatibility: Any,
+    ) -> None:
+        self._feature_index: object | None = None
+        self._debug_reconciliation = bool(debug_reconciliation)
+        if (
+            isinstance(initial_index_capacity, bool)
+            or not isinstance(initial_index_capacity, (int, np.integer))
+            or int(initial_index_capacity) < 1
+        ):
+            raise ValueError("initial_index_capacity must be a positive integer")
+        self._initial_index_capacity = int(initial_index_capacity)
+        super().__init__(
+            target_context,
+            semantic_key=semantic_key,
+            search_horizon=search_horizon,
+            generation_counts=generation_counts,
+            **reference_compatibility,
+        )
+
+    def _ensure_feature_index(self) -> object:
+        if self._feature_index is None:
+            from rl.article_frontier_index import ExactArticleFrontierFeatureIndex
+
+            self._feature_index = ExactArticleFrontierFeatureIndex(
+                self,
+                debug_reconciliation=self._debug_reconciliation,
+                initial_capacity=self._initial_index_capacity,
+            )
+        return self._feature_index
+
+    @property
+    def feature_index(self) -> object:
+        return self._ensure_feature_index()
+
+    def reset_index(self) -> None:
+        """Reset per-episode accelerator and novelty-mirror state."""
+
+        self._feature_index = None
+        self._generation_counts = MappingProxyType({})
+
+    def bind_generation_counts(self, values: Mapping[object, int]) -> None:
+        # Retain the compatibility copy for ``extract`` and legacy metadata.
+        super().bind_generation_counts(values)
+        if self._feature_index is not None:
+            replace = getattr(self._feature_index, "replace_generation_counts")
+            replace(self._generation_counts)
+
+    set_generation_counts = bind_generation_counts
+
+    def update_generation_counts(self, updates: Mapping[object, int]) -> None:
+        """Apply absolute changed-key totals without copying the complete map."""
+
+        if not isinstance(updates, Mapping):
+            raise TypeError("generation-count updates must be a mapping")
+        merged = dict(self._generation_counts)
+        for key, count in _freeze_generation_counts(updates).items():
+            if count == 0:
+                merged.pop(key, None)
+            else:
+                merged[key] = count
+        self._generation_counts = MappingProxyType(merged)
+        index = self._ensure_feature_index()
+        getattr(index, "update_generation_counts")(updates)
+
+    def increment_generation_counts(self, deltas: Mapping[object, int]) -> None:
+        """Apply exact changed-key deltas to the incremental novelty cache."""
+
+        if not isinstance(deltas, Mapping):
+            raise TypeError("generation-count deltas must be a mapping")
+        merged = dict(self._generation_counts)
+        for key, delta in deltas.items():
+            if isinstance(delta, bool) or not isinstance(delta, (int, np.integer)):
+                raise TypeError("generation-count deltas must be integers")
+            count = int(merged.get(key, 0)) + int(delta)
+            if count < 0:
+                raise ValueError("generation-count delta would make a count negative")
+            if count == 0:
+                merged.pop(key, None)
+            else:
+                merged[key] = count
+        self._generation_counts = MappingProxyType(merged)
+        index = self._ensure_feature_index()
+        getattr(index, "increment_generation_counts")(deltas)
+
+    def synchronize_frontier(
+        self,
+        records: Sequence[object],
+        *,
+        generation_count_updates: Mapping[object, int] | None = None,
+    ) -> object:
+        """Mirror an authoritative ArchiveRecord/SearchNode sequence."""
+
+        index = self._ensure_feature_index()
+        if not bool(getattr(index, "initialized")):
+            counts = dict(self._generation_counts)
+            if generation_count_updates:
+                counts.update(generation_count_updates)
+            getattr(index, "initialize")(records, generation_counts=counts)
+            return None
+        return getattr(index, "synchronize")(
+            records,
+            generation_count_updates=generation_count_updates or {},
+        )
+
+    def build_compact_batch(
+        self,
+        records: Sequence[object],
+        *,
+        theta: np.ndarray | None = None,
+        archive_generation_counts: Mapping[object, int] | None = None,
+        generation_count_updates: Mapping[object, int] | None = None,
+        expansions_completed: int | None = None,
+        expansion_budget: int | None = None,
+    ) -> object:
+        """Return an exact compact decision batch from authoritative records."""
+
+        if archive_generation_counts is not None:
+            self.bind_generation_counts(archive_generation_counts)
+        self.synchronize_frontier(
+            records, generation_count_updates=generation_count_updates
+        )
+        budget = self._search_horizon if expansion_budget is None else expansion_budget
+        completed = self._search_step if expansions_completed is None else expansions_completed
+        return getattr(self._ensure_feature_index(), "build_decision_batch")(
+            theta=theta,
+            expansions_completed=completed,
+            expansion_budget=budget,
+        )
+
+    def build_batch(self, frontier: Sequence[object], **kwargs: Any) -> object:
+        """Compatibility alias for the compact production batch."""
+
+        return self.build_compact_batch(frontier, **kwargs)
+
+    def build_snapshot(
+        self,
+        frontier: Sequence[object],
+        *,
+        archive_generation_counts: Mapping[object, int] | None = None,
+        expansions_completed: int | None = None,
+        expansion_budget: int | None = None,
+    ) -> FrontierFeatureSnapshot:
+        """Materialize a legacy snapshot from one compact exact batch."""
+
+        batch = self.build_compact_batch(
+            frontier,
+            archive_generation_counts=archive_generation_counts,
+            expansions_completed=expansions_completed,
+            expansion_budget=expansion_budget,
+        )
+        record_ids = tuple(int(value) for value in batch.record_ids)
+        feature_vectors = {
+            record_id: batch.features_for_record(record_id) for record_id in record_ids
+        }
+        candidate_vectors = {
+            record_id: batch.candidate_for_record(record_id) for record_id in record_ids
+        }
+        index = self._ensure_feature_index()
+        counts = getattr(index, "generation_counts_snapshot")()
+        return FrontierFeatureSnapshot(
+            schema_version=self.schema_version,
+            snapshot_id=batch.snapshot_id,
+            record_ids=record_ids,
+            frontier_nodes=tuple(batch.frontier_nodes),
+            expansions_completed=int(batch.expansions_completed),
+            expansion_budget=int(batch.expansion_budget),
+            archive_generation_counts=counts,
+            target_fingerprint=batch.target_fingerprint,
+            feature_vectors=MappingProxyType(feature_vectors),
+            candidate_vectors=MappingProxyType(candidate_vectors),
+        )
+
+    def minimum_target_distance(self) -> float:
+        return float(getattr(self._ensure_feature_index(), "minimum_target_distance")())
+
+    def select_target_distance_node(self) -> object:
+        return getattr(self._ensure_feature_index(), "select_target_distance_node")()
+
+    def reconcile_index(self, records: Sequence[object] | None = None) -> None:
+        getattr(self._ensure_feature_index(), "reconcile")(records)
+
+    def instrumentation(self) -> Mapping[str, int | str]:
+        if self._feature_index is None:
+            return MappingProxyType(
+                {
+                    "feature_evaluator_schema_version": self.evaluator_schema_version,
+                    "feature_static_cache_hits": 0,
+                    "feature_static_cache_misses": 0,
+                    "frontier_index_additions": 0,
+                    "frontier_index_removals": 0,
+                    "frontier_index_rebuilds": 0,
+                    "unique_resource_group_count": 0,
+                    "resource_group_peak": 0,
+                    "dominance_update_time_ns": 0,
+                    "compact_batch_time_ns": 0,
+                    "candidate_gather_time_ns": 0,
+                    "standardization_time_ns": 0,
+                    "score_time_ns": 0,
+                    "selected_row_materialization_time_ns": 0,
+                    "feature_index_memory_bytes": 0,
+                    "frontier_revision": 0,
+                    "generation_count_revision": 0,
+                }
+            )
+        return MappingProxyType(dict(getattr(self._feature_index, "instrumentation")()))
+
+    def metadata(self) -> Mapping[str, object]:
+        metadata = dict(super().metadata())
+        metadata.update(
+            {
+                "feature_evaluator_schema_version": self.evaluator_schema_version,
+                "evaluator_role": "production-exact-incremental",
+                "dominance_evaluation": "exact dynamic resource-group counts",
+                "compact_linear_scoring": True,
+            }
+        )
+        metadata.pop("reference_safe_frontier_size", None)
+        return metadata
 
 
 class ArticleV1NoTargetFeatureProvider(ArticleV1FeatureProvider):
@@ -958,6 +1235,7 @@ __all__ = [
     "ARTICLE_SEARCH_BUDGET_FEATURE_NAME",
     "ARTICLE_V1_COORDINATE_NAMES",
     "ARTICLE_V1_DTYPE",
+    "ARTICLE_V1_EXACT_INCREMENTAL_EVALUATOR_SCHEMA_VERSION",
     "ARTICLE_V1_FEATURE_NAMES",
     "ARTICLE_V1_FEATURE_SCHEMA_VERSION",
     "ARTICLE_V1_NO_TARGET_COORDINATE_NAMES",
@@ -965,6 +1243,7 @@ __all__ = [
     "ARTICLE_V1_NO_TARGET_FEATURE_SCHEMA_VERSION",
     "ARTICLE_V1_NO_Z_FEATURE_NAMES",
     "ARTICLE_V1_NO_Z_FEATURE_SCHEMA_VERSION",
+    "ARTICLE_V1_REFERENCE_EVALUATOR_SCHEMA_VERSION",
     "ARTICLE_V1_STANDARDIZATION_ETA",
     "ARTICLE_V1_TARGET_METRIC_SCHEMA_VERSION",
     "EXTENDED_ARTICLE_CANDIDATE_FEATURE_NAMES",
@@ -973,6 +1252,7 @@ __all__ = [
     "ArticleFeatureProvider",
     "ArticleTargetContext",
     "ArticleV1FeatureProvider",
+    "ArticleV1ReferenceFeatureProvider",
     "ArticleV1NoTargetFeatureProvider",
     "ArticleV1NoZFeatureProvider",
     "ExtendedArticleFeatureProvider",

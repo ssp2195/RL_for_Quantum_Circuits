@@ -55,6 +55,31 @@ from env.rl_env import CircuitSynthesisEnv
 from enums import GateType
 from evaluate import evaluate
 from experiments.profiles import ARTICLE_V1_PROFILE
+from experiments.article_v1_progress import (
+    ArticleV1ProgressEvent,
+    ArticleV1ProgressReporter,
+    ProgressCadence,
+    utc_timestamp,
+)
+from experiments.article_v1_training_checkpoint import (
+    ArticleV1CheckpointProvenance,
+    ArticleV1EventJournal,
+    ArticleV1JournalEntry,
+    ArticleV1TrainingCheckpointStore,
+    CheckpointCadence,
+    CheckpointCadenceGate,
+    CheckpointCompatibilityError,
+    MidEpisodeCheckpoint,
+    ReplayObservation,
+    ResumeExpectation,
+    TrainingProgressCheckpoint,
+    feature_row_digest,
+    policy_weight_digest,
+    portable_digest,
+    replay_and_validate,
+    validate_pending_resume_state,
+    validate_resume_compatibility,
+)
 from reporting.article_v1 import (
     ARTICLE_V1_RAW_RUN_SCHEMA,
     ArticleV1RunStore,
@@ -72,10 +97,10 @@ from rl.article_features import (
     ArticleV1NoZFeatureProvider,
 )
 from rl.policy import LinearQPolicy
-from train import Trainer
+from train import Trainer, TrainerBoundaryEvent, TrainerEpisodeResume
 
 
-ARTICLE_V1_RUNNER_SCHEMA = "article-v1-publication-runner-v3"
+ARTICLE_V1_RUNNER_SCHEMA = "article-v1-publication-runner-v4"
 ARTICLE_V1_CAMPAIGN_AUDIT_SCHEMA = "article-v1-campaign-audit-v1"
 PRIMARY_SCHEDULERS = (
     "fifo",
@@ -292,7 +317,7 @@ def _resource_budget_payload(case) -> dict[str, int]:
     }
 
 
-ARTICLE_V1_CHECKPOINT_SCHEMA = "article-v1-transferable-linear-checkpoint-v3"
+ARTICLE_V1_CHECKPOINT_SCHEMA = "article-v1-transferable-linear-checkpoint-v4"
 
 
 def _weights_digest(
@@ -300,6 +325,7 @@ def _weights_digest(
     *,
     training_seed: int,
     feature_schema: str,
+    feature_evaluator_schema: str,
     checkpoint_family: str,
     training_scope_mode: str,
     corpus_config_digest: str,
@@ -314,10 +340,12 @@ def _weights_digest(
     effective_training_expansion_budgets: Sequence[tuple[str, int]],
 ) -> str:
     digest = sha256()
-    digest.update(b"article-v1-transferable-linear-checkpoint-digest-v2\0")
+    digest.update(b"article-v1-transferable-linear-checkpoint-digest-v3\0")
     digest.update(str(int(training_seed)).encode("ascii"))
     digest.update(b"\0")
     digest.update(feature_schema.encode("ascii"))
+    digest.update(b"\0")
+    digest.update(feature_evaluator_schema.encode("ascii"))
     digest.update(b"\0")
     digest.update(checkpoint_family.encode("ascii"))
     digest.update(b"\0")
@@ -374,6 +402,9 @@ class ArticleV1Checkpoint:
     training_target_ids: tuple[str, ...]
     training_histories: tuple[Mapping[str, object], ...]
     corpus_config_digest: str
+    feature_evaluator_schema_version: str = (
+        ARTICLE_V1_PROFILE.feature_evaluator_schema
+    )
 
     @property
     def weight_digest(self) -> str:
@@ -381,6 +412,7 @@ class ArticleV1Checkpoint:
             self.weights,
             training_seed=self.training_seed,
             feature_schema=self.feature_schema_version,
+            feature_evaluator_schema=self.feature_evaluator_schema_version,
             checkpoint_family=self.checkpoint_family,
             training_scope_mode=self.training_scope_mode,
             corpus_config_digest=self.corpus_config_digest,
@@ -410,6 +442,11 @@ class ArticleV1Checkpoint:
             raise ValueError("checkpoint ordered feature names do not match its schema")
         if len(self.weights) != len(expected_names):
             raise ValueError("checkpoint weight dimension does not match its schema")
+        if (
+            self.feature_evaluator_schema_version
+            != ARTICLE_V1_PROFILE.feature_evaluator_schema
+        ):
+            raise ValueError("checkpoint feature evaluator schema is not Article V1")
         if self.reward_schema_version != ARTICLE_V1_PROFILE.reward_schema:
             raise ValueError("checkpoint reward schema is not Article V1")
         if self.target_metric_schema_version != ARTICLE_V1_PROFILE.target_metric_schema:
@@ -621,6 +658,9 @@ class ArticleV1Checkpoint:
             "profile_name": ARTICLE_V1_PROFILE.name,
             "algorithm": "linear-semi-gradient-sarsa(0)",
             "feature_schema_version": self.feature_schema_version,
+            "feature_evaluator_schema_version": (
+                self.feature_evaluator_schema_version
+            ),
             "ordered_feature_names": list(self.ordered_feature_names),
             "feature_dimension": len(self.weights),
             "reward_schema_version": self.reward_schema_version,
@@ -698,6 +738,9 @@ class ArticleV1Checkpoint:
             training_seed=int(payload["training_seed"]),
             weights=weights,
             feature_schema_version=feature_schema,
+            feature_evaluator_schema_version=str(
+                payload["feature_evaluator_schema_version"]
+            ),
             ordered_feature_names=names,
             reward_schema_version=str(payload["reward_schema_version"]),
             target_metric_schema_version=str(payload["target_metric_schema_version"]),
@@ -817,6 +860,201 @@ def _feature_provider(
     return provider_type(context, search_horizon=expansion_budget), context
 
 
+def _training_provenance(
+    case: ArticleV1TargetCase | ArticleV1EvaluationTarget,
+    *,
+    corpus_config_digest: str,
+    target_fingerprint: str,
+    feature_schema: str,
+    feature_evaluator_schema: str,
+) -> ArticleV1CheckpointProvenance:
+    code = git_provenance()
+    source_digest = str(code["source_worktree_digest"])
+    if not source_digest.startswith("sha256:"):
+        raise ValueError("portable training recovery requires git source provenance")
+    return ArticleV1CheckpointProvenance(
+        source_commit_sha=str(code["commit_sha"]),
+        source_worktree_digest=source_digest,
+        config_digest=corpus_config_digest,
+        corpus_digest=corpus_config_digest,
+        profile_digest=portable_digest(
+            ARTICLE_V1_PROFILE.metadata(), domain="article-v1-profile-v1"
+        ),
+        target_id=case.target_id,
+        target_fingerprint=target_fingerprint,
+        feature_schema_version=feature_schema,
+        feature_evaluator_schema_version=feature_evaluator_schema,
+        reward_schema_version=ARTICLE_V1_PROFILE.reward_schema,
+        certifier_schema_version=ARTICLE_V1_PROFILE.certification_schema,
+    )
+
+
+def _training_state_digests(
+    environment: CircuitSynthesisEnv,
+) -> tuple[str, str, str]:
+    frontier = environment.frontier
+    if frontier is None:
+        raise RuntimeError("training frontier is not initialized")
+    frontier_ids = tuple(int(value) for value in frontier.active_record_ids())
+    archive_payload = [
+        {
+            "record_id": int(record.record_id),
+            "key": _json_ready(record.key),
+            "resources": list(record.resources.as_tuple()),
+            "expanded": bool(record.expanded),
+            "active": bool(record.active),
+            "queued": bool(record.queued),
+            "tombstoned": bool(record.tombstoned),
+        }
+        for record in frontier.archive.all_records()
+    ]
+    generation_payload = sorted(
+        (
+            {
+                "key": _json_ready(key),
+                "count": int(count),
+            }
+            for key, count in environment.generation_counts.items()
+        ),
+        key=lambda value: json.dumps(value["key"], sort_keys=True, default=str),
+    )
+    return (
+        portable_digest(frontier_ids, domain="article-v1-frontier-active-ids-v1"),
+        portable_digest(archive_payload, domain="article-v1-archive-state-v1"),
+        portable_digest(
+            generation_payload, domain="article-v1-generation-count-state-v1"
+        ),
+    )
+
+
+def _restore_rng_state(generator: object, state: Mapping[str, object]) -> None:
+    bit_generator = getattr(generator, "bit_generator", None)
+    if bit_generator is None:
+        if state:
+            raise CheckpointCompatibilityError("checkpoint RNG has no runtime owner")
+        return
+    bit_generator.state = _json_ready(state)
+
+
+def _replay_training_checkpoint(
+    checkpoint: MidEpisodeCheckpoint,
+    *,
+    environment: CircuitSynthesisEnv,
+    policy: LinearQPolicy,
+    trainer: Trainer,
+) -> TrainerEpisodeResume:
+    """Rebuild one real Article V1 episode without policy ranking/RNG draws."""
+
+    environment.reset(seed=getattr(environment.config, "seed", None))
+    policy.theta[:] = np.asarray(checkpoint.episode_initial_theta, dtype=np.float64)
+    replay_td_errors: list[float] = []
+    entry_index = 0
+
+    def replay_step(selected_record_id: int) -> ReplayObservation:
+        nonlocal entry_index
+        recorded = checkpoint.journal.entries[entry_index]
+        nodes_before = environment.current_nodes()
+        selected = next(
+            (node for node in nodes_before if node.record_id == selected_record_id),
+            None,
+        )
+        if selected is None:
+            raise CheckpointCompatibilityError(
+                f"replay selected record {selected_record_id} is not open"
+            )
+        batch = trainer._article_decision_batch()
+        selected_features = trainer._frozen_features(batch, selected)
+        selected_digest = feature_row_digest(selected_features)
+        _, reward, terminated, truncated, info = environment.select_record(
+            selected_record_id
+        )
+        if info.get("selected_by_fairness", False):
+            raise CheckpointCompatibilityError("replay unexpectedly invoked fairness")
+        next_features = None
+        pending = recorded.pending_next_record_id
+        if not (terminated or truncated):
+            next_nodes = environment.current_nodes()
+            next_node = next(
+                (node for node in next_nodes if node.record_id == pending), None
+            )
+            if next_node is None:
+                raise CheckpointCompatibilityError(
+                    "recorded pending action is not open during replay"
+                )
+            next_batch = trainer._article_decision_batch()
+            next_features = trainer._frozen_features(next_batch, next_node)
+        td_error = policy.update_from_features(
+            current_features=selected_features,
+            reward=float(reward),
+            next_features=next_features,
+            done=bool(terminated or truncated),
+        )
+        replay_td_errors.append(float(td_error))
+        frontier_digest, archive_digest, generation_digest = (
+            _training_state_digests(environment)
+        )
+        entry_index += 1
+        return ReplayObservation(
+            expansion_index=int(environment.steps),
+            selected_record_id=selected_record_id,
+            selected_feature_digest=selected_digest,
+            reward=float(reward),
+            terminated=bool(terminated),
+            truncated=bool(truncated),
+            frontier_revision=int(environment.frontier.revision),
+            frontier_active_ids_digest=frontier_digest,
+            archive_digest=archive_digest,
+            generation_count_digest=generation_digest,
+            policy_weight_digest_after_update=policy_weight_digest(policy.theta),
+            pending_next_record_id=pending,
+        )
+
+    replay_and_validate(checkpoint.journal, replay_step)
+    if tuple(replay_td_errors) != tuple(
+        checkpoint.training_aggregates.get("td_errors", ())
+    ):
+        raise CheckpointCompatibilityError("replayed TD-error history mismatch")
+    frontier_digest, archive_digest, generation_digest = _training_state_digests(
+        environment
+    )
+    pending_node = next(
+        (
+            node
+            for node in environment.current_nodes()
+            if node.record_id == checkpoint.pending_next_record_id
+        ),
+        None,
+    )
+    if pending_node is None:
+        raise CheckpointCompatibilityError("pending record is not open after replay")
+    pending_batch = trainer._article_decision_batch()
+    pending_features = trainer._frozen_features(pending_batch, pending_node)
+    validate_pending_resume_state(
+        checkpoint,
+        active_record_ids=environment.frontier.active_record_ids(),
+        recomputed_pending_feature_row=pending_features,
+        frontier_revision=int(environment.frontier.revision),
+        frontier_active_ids_digest=frontier_digest,
+        archive_digest=archive_digest,
+        generation_count_digest=generation_digest,
+    )
+    if policy_weight_digest(policy.theta) != checkpoint.weight_digest:
+        raise CheckpointCompatibilityError("replayed final policy weights mismatch")
+    policy.theta[:] = np.asarray(checkpoint.theta, dtype=np.float64)
+    trainer.epsilon = float(checkpoint.epsilon)
+    _restore_rng_state(policy.rng, checkpoint.policy_rng_state)
+    environment_rng = getattr(environment, "__dict__", {}).get("_np_random")
+    _restore_rng_state(environment_rng, checkpoint.environment_rng_state)
+    return TrainerEpisodeResume(
+        episode_index=checkpoint.episode_index,
+        expansion=checkpoint.expansion_count,
+        selected_record_id=checkpoint.pending_next_record_id,
+        selected_features=checkpoint.pending_next_feature_row,
+        total_reward=checkpoint.total_reward,
+        td_errors=tuple(float(value) for value in replay_td_errors),
+    )
+
+
 def train_article_v1_checkpoint(
     cases: Sequence[ArticleV1TargetCase | ArticleV1EvaluationTarget],
     *,
@@ -833,6 +1071,12 @@ def train_article_v1_checkpoint(
     training_scope_mode: str = COMPLETE_TRAINING_SCOPE,
     expansion_cap: int | None = None,
     certification_tolerance: float = 1e-9,
+    training_checkpoint_dir: str | Path | None = None,
+    progress_reporter: ArticleV1ProgressReporter | None = None,
+    checkpoint_cadence: CheckpointCadence | None = None,
+    resume_training: bool = True,
+    run_id: str = "article-v1-training",
+    interrupt_after_expansions: int | None = None,
 ) -> ArticleV1Checkpoint:
     """Train transferable weights without exposing generator witnesses."""
 
@@ -870,14 +1114,103 @@ def train_article_v1_checkpoint(
         or expansion_cap < 1
     ):
         raise ValueError("training expansion cap must be a positive integer or None")
+    cases = tuple(cases)
+    effective_training_expansion_budgets = [
+        (
+            case.target_id,
+            min(int(case.budget.expansion_budget), int(expansion_cap))
+            if expansion_cap is not None
+            else int(case.budget.expansion_budget),
+        )
+        for case in cases
+    ]
+    budget_mapping = dict(effective_training_expansion_budgets)
+    evaluator_schema = str(FEATURE_VARIANTS[feature_schema].evaluator_schema_version)
+
+    def provenance_for(case_index: int) -> ArticleV1CheckpointProvenance:
+        target_context = ArticleTargetContext(_target(cases[case_index]))
+        return _training_provenance(
+            cases[case_index],
+            corpus_config_digest=corpus_config_digest,
+            target_fingerprint=target_context.fingerprint,
+            feature_schema=feature_schema,
+            feature_evaluator_schema=evaluator_schema,
+        )
+
+    store = (
+        None
+        if training_checkpoint_dir is None
+        else ArticleV1TrainingCheckpointStore(training_checkpoint_dir)
+    )
+    loaded_recovery: MidEpisodeCheckpoint | TrainingProgressCheckpoint | None = None
+    if store is not None and resume_training and (
+        store.checkpoint_path("latest").exists()
+        or store.manifest_path("latest").exists()
+    ):
+        loaded_recovery = store.load_latest_or_previous()
+
     weights: np.ndarray | None = None
     histories: list[Mapping[str, object]] = []
-    effective_training_expansion_budgets: list[tuple[str, int]] = []
-    for index, case in enumerate(cases):
-        maximum_steps = int(case.budget.expansion_budget)
-        if expansion_cap is not None:
-            maximum_steps = min(maximum_steps, int(expansion_cap))
-        effective_training_expansion_budgets.append((case.target_id, maximum_steps))
+    start_target = 0
+    partial_episode_results: list[Mapping[str, object]] = []
+    if isinstance(loaded_recovery, TrainingProgressCheckpoint):
+        if loaded_recovery.training_seed != int(training_seed):
+            raise CheckpointCompatibilityError("training-progress seed mismatch")
+        if loaded_recovery.target_count != len(cases):
+            raise CheckpointCompatibilityError("training-progress target count mismatch")
+        if loaded_recovery.episodes_per_target != int(episodes_per_target):
+            raise CheckpointCompatibilityError("training-progress episode count mismatch")
+        if dict(loaded_recovery.effective_budgets) != budget_mapping:
+            raise CheckpointCompatibilityError("training-progress budget mismatch")
+        expected_completed = training_target_ids[: loaded_recovery.target_cursor]
+        if loaded_recovery.completed_target_ids != expected_completed:
+            raise CheckpointCompatibilityError("training-progress target cursor mismatch")
+        start_target = loaded_recovery.target_cursor
+        serialized_history = list(_json_ready(loaded_recovery.training_history))
+        histories = [dict(value) for value in serialized_history[:start_target]]
+        if len(serialized_history) > start_target:
+            incomplete = dict(serialized_history[start_target])
+            if incomplete.get("target_id") != cases[start_target].target_id:
+                raise CheckpointCompatibilityError(
+                    "training-progress partial target mismatch"
+                )
+            partial_episode_results = [
+                dict(value) for value in incomplete.get("episodes", ())
+            ]
+        weights = np.asarray(loaded_recovery.theta, dtype=np.float64).copy()
+        if start_target < len(cases):
+            expected = provenance_for(start_target)
+            if loaded_recovery.provenance != expected:
+                raise CheckpointCompatibilityError(
+                    "training-progress provenance mismatch"
+                )
+    elif isinstance(loaded_recovery, MidEpisodeCheckpoint):
+        matching = [
+            index
+            for index, case in enumerate(cases)
+            if case.target_id == loaded_recovery.provenance.target_id
+        ]
+        if len(matching) != 1:
+            raise CheckpointCompatibilityError("recovery target is outside training scope")
+        start_target = matching[0]
+        aggregates = _json_ready(loaded_recovery.training_aggregates)
+        histories = [dict(value) for value in aggregates.get("completed_histories", ())]
+        partial_episode_results = [
+            dict(value) for value in aggregates.get("completed_episode_results", ())
+        ]
+        if tuple(record["target_id"] for record in histories) != training_target_ids[
+            :start_target
+        ]:
+            raise CheckpointCompatibilityError("mid-episode completed history mismatch")
+        weights = np.asarray(loaded_recovery.theta, dtype=np.float64).copy()
+
+    if start_target > len(cases):
+        raise CheckpointCompatibilityError("training recovery cursor exceeds corpus")
+
+    provider = None
+    for index in range(start_target, len(cases)):
+        case = cases[index]
+        maximum_steps = budget_mapping[case.target_id]
         provider, context = _feature_provider(
             case, expansion_budget=maximum_steps, feature_schema=feature_schema
         )
@@ -915,29 +1248,313 @@ def train_article_v1_checkpoint(
         trainer.epsilon = float(epsilon_start)
         trainer.min_epsilon = float(epsilon_minimum)
         trainer.epsilon_decay = float(epsilon_decay)
-        with redirect_stdout(StringIO()):
-            target_history = trainer.train(episodes_per_target)
-        histories.append(
-            {
+        current_recovery = loaded_recovery if index == start_target else None
+        start_episode = 0
+        resume_episode_state = None
+        if isinstance(current_recovery, TrainingProgressCheckpoint):
+            start_episode = current_recovery.episode_cursor
+            trainer.epsilon = float(current_recovery.epsilon)
+            _restore_rng_state(policy.rng, current_recovery.policy_rng_state)
+        journal = ArticleV1EventJournal()
+        episode_initial_theta = tuple(float(value) for value in policy.theta)
+        td_errors: list[float] = []
+        if isinstance(current_recovery, MidEpisodeCheckpoint):
+            validate_expected = ResumeExpectation(
+                provenance=provenance_for(index),
+                training_seed=int(training_seed),
+                episode_index=current_recovery.episode_index,
+                episode_count=int(episodes_per_target),
+                expansion_cap=maximum_steps,
+                feature_dimension=len(policy.theta),
+            )
+            validate_resume_compatibility(current_recovery, validate_expected)
+            episode_initial_theta = current_recovery.episode_initial_theta
+            journal = ArticleV1EventJournal(current_recovery.journal.entries)
+            td_errors = [
+                float(value)
+                for value in current_recovery.training_aggregates.get("td_errors", ())
+            ]
+            resume_episode_state = _replay_training_checkpoint(
+                current_recovery,
+                environment=environment,
+                policy=policy,
+                trainer=trainer,
+            )
+            start_episode = current_recovery.episode_index
+
+        checkpoint_gate = CheckpointCadenceGate(checkpoint_cadence)
+        target_started = time.perf_counter()
+        progress_start_ns = (
+            0
+            if progress_reporter is None
+            else progress_reporter.progress_reporting_time_ns
+        )
+        checkpoint_start_ns = 0 if store is None else store.checkpoint_io_time_ns
+        last_checkpoint_path: str | None = None
+        last_safe_event: TrainerBoundaryEvent | None = None
+        interrupted = False
+        if progress_reporter is not None:
+            progress_reporter.reset_cadence(expansion=0)
+
+        def save_mid(event: TrainerBoundaryEvent) -> None:
+            nonlocal last_checkpoint_path
+            if store is None or event.next_record_id is None or event.next_features is None:
+                return
+            frontier_digest, archive_digest, generation_digest = (
+                _training_state_digests(environment)
+            )
+            checkpoint = MidEpisodeCheckpoint(
+                provenance=provenance_for(index),
+                training_seed=int(training_seed),
+                episode_index=event.episode_index,
+                episode_count=int(episodes_per_target),
+                expansion_count=event.expansion,
+                expansion_cap=maximum_steps,
+                journal=journal,
+                episode_initial_theta=episode_initial_theta,
+                theta=event.policy_weights_after_update,
+                epsilon=event.epsilon,
+                policy_rng_state=event.policy_rng_state,
+                environment_rng_state=event.environment_rng_state,
+                pending_next_record_id=event.next_record_id,
+                pending_next_feature_row=event.next_features,
+                total_reward=event.total_reward,
+                training_aggregates={
+                    "td_errors": list(td_errors),
+                    "completed_histories": histories,
+                    "completed_episode_results": partial_episode_results,
+                },
+                search_metrics={
+                    name: value
+                    for name, value in event.search_metrics.items()
+                    if not name.endswith("_time_ns")
+                },
+                frontier_revision=event.frontier_revision,
+                frontier_active_ids_digest=frontier_digest,
+                archive_digest=archive_digest,
+                generation_count_digest=generation_digest,
+            )
+            last_checkpoint_path = str(store.save_latest(checkpoint).path)
+
+        def checkpoint_callback(event: TrainerBoundaryEvent) -> None:
+            nonlocal journal, episode_initial_theta, td_errors
+            nonlocal partial_episode_results, last_safe_event, last_checkpoint_path
+            last_safe_event = event
+            if event.boundary == "expansion":
+                assert event.selected_record_id is not None
+                assert event.selected_features is not None
+                assert event.reward is not None and event.td_error is not None
+                frontier_digest, archive_digest, generation_digest = (
+                    _training_state_digests(environment)
+                )
+                journal.append(
+                    ArticleV1JournalEntry(
+                        expansion_index=event.expansion,
+                        selected_record_id=event.selected_record_id,
+                        selected_feature_digest=feature_row_digest(
+                            event.selected_features
+                        ),
+                        reward=event.reward,
+                        terminated=event.terminated,
+                        truncated=event.truncated,
+                        frontier_revision=event.frontier_revision,
+                        frontier_active_ids_digest=frontier_digest,
+                        archive_digest=archive_digest,
+                        generation_count_digest=generation_digest,
+                        policy_weight_digest_after_update=policy_weight_digest(
+                            event.policy_weights_after_update
+                        ),
+                        pending_next_record_id=event.next_record_id,
+                    )
+                )
+                td_errors.append(event.td_error)
+                if not (event.terminated or event.truncated) and checkpoint_gate.due(
+                    event.expansion
+                ):
+                    save_mid(event)
+                    checkpoint_gate.mark_saved(event.expansion)
+                if (
+                    interrupt_after_expansions is not None
+                    and event.expansion == int(interrupt_after_expansions)
+                    and not (event.terminated or event.truncated)
+                ):
+                    save_mid(event)
+                    raise KeyboardInterrupt
+                return
+
+            episode_result = dict(_json_ready(event.episode_result))
+            partial_episode_results.append(episode_result)
+            target_complete = event.episode_index + 1 == int(episodes_per_target)
+            target_cursor = index + 1 if target_complete else index
+            episode_cursor = 0 if target_complete else event.episode_index + 1
+            completed_ids = training_target_ids[:target_cursor]
+            target_history_record = {
                 "target_id": case.target_id,
                 "split": case.split,
                 "difficulty": case.difficulty,
-                "episodes": target_history,
-                "training_runtime_seconds": float(
-                    trainer.last_training_runtime_seconds
-                ),
+                "episodes": partial_episode_results,
+                "training_runtime_seconds": float(time.perf_counter() - target_started),
                 "target_metric": context.cache_metrics(),
                 "policy_instrumentation": policy.instrumentation(),
+                "training_incomplete": not target_complete,
             }
-        )
-        weights = np.array(policy.theta, dtype=np.float64, copy=True)
+            serialized_histories = [*histories, target_history_record]
+            next_index = min(target_cursor, len(cases) - 1)
+            if store is not None:
+                progress_checkpoint = TrainingProgressCheckpoint(
+                    provenance=provenance_for(next_index),
+                    training_seed=int(training_seed),
+                    target_cursor=target_cursor,
+                    target_count=len(cases),
+                    episode_cursor=episode_cursor,
+                    episodes_per_target=int(episodes_per_target),
+                    theta=event.policy_weights_after_update,
+                    epsilon=event.epsilon,
+                    policy_rng_state=event.policy_rng_state,
+                    training_history=tuple(serialized_histories),
+                    completed_target_ids=completed_ids,
+                    effective_budgets=budget_mapping,
+                )
+                last_checkpoint_path = str(
+                    store.save_episode_final(progress_checkpoint).path
+                )
+            journal = ArticleV1EventJournal()
+            td_errors = []
+            episode_initial_theta = event.policy_weights_after_update
+            checkpoint_gate.reset(expansion=0)
 
-    assert weights is not None
+        def progress_callback(event: TrainerBoundaryEvent) -> None:
+            if progress_reporter is None:
+                return
+            frontier = environment.frontier
+            assert frontier is not None
+            archive = frontier.archive
+            provider_metrics = dict(getattr(provider, "instrumentation", lambda: {})())
+            elapsed = max(0.0, time.perf_counter() - target_started)
+            progress_reporter.maybe_emit(
+                ArticleV1ProgressEvent(
+                    timestamp_utc=utc_timestamp(),
+                    run_id=run_id,
+                    phase=f"training:{checkpoint_family}",
+                    training_seed=int(training_seed),
+                    target_index=index,
+                    target_count=len(cases),
+                    target_id=case.target_id,
+                    split=case.split,
+                    stratum=case.difficulty,
+                    num_qubits=case.num_qubits,
+                    episode_index=event.episode_index,
+                    episode_count=int(episodes_per_target),
+                    expansion=event.expansion,
+                    expansion_cap=maximum_steps,
+                    frontier_size=len(event.frontier_active_record_ids),
+                    frontier_peak=max(
+                        len(event.frontier_active_record_ids),
+                        int(event.search_metrics.get("frontier_peak", 0)),
+                    ),
+                    archive_records=int(archive.archive_record_count),
+                    active_archive_records=int(archive.active_record_count),
+                    unique_resource_groups=int(
+                        provider_metrics.get("unique_resource_group_count", 0)
+                    ),
+                    last_feature_batch_seconds=0.0,
+                    rolling_feature_batch_seconds=0.0,
+                    elapsed_seconds=elapsed,
+                    expansions_per_second=(event.expansion / elapsed if elapsed else 0.0),
+                    checkpoint_path=last_checkpoint_path,
+                ),
+                force=event.boundary == "episode_end",
+            )
+            if event.boundary == "episode_end":
+                progress_reporter.reset_cadence(expansion=0)
+
+        trainer.checkpoint_callback = checkpoint_callback
+        trainer.progress_callback = progress_callback if progress_reporter else None
+        try:
+            with redirect_stdout(StringIO()):
+                trainer.train(
+                    int(episodes_per_target),
+                    start_episode=start_episode,
+                    resume_episode=resume_episode_state,
+                )
+        except KeyboardInterrupt:
+            interrupted = True
+            if (
+                store is not None
+                and last_safe_event is not None
+                and not (last_safe_event.terminated or last_safe_event.truncated)
+            ):
+                save_mid(last_safe_event)
+            raise
+        finally:
+            if interrupted and progress_reporter is not None and last_safe_event is not None:
+                progress_callback(last_safe_event)
+
+        target_history = list(partial_episode_results)
+        history_record = {
+            "target_id": case.target_id,
+            "split": case.split,
+            "difficulty": case.difficulty,
+            "episodes": target_history,
+            "training_runtime_seconds": float(trainer.last_training_runtime_seconds),
+            "target_metric": context.cache_metrics(),
+            "policy_instrumentation": policy.instrumentation(),
+            "progress_reporting_time_ns": (
+                0
+                if progress_reporter is None
+                else progress_reporter.progress_reporting_time_ns - progress_start_ns
+            ),
+            "checkpoint_io_time_ns": (
+                0 if store is None else store.checkpoint_io_time_ns - checkpoint_start_ns
+            ),
+        }
+        histories.append(history_record)
+        weights = np.array(policy.theta, dtype=np.float64, copy=True)
+        partial_episode_results = []
+        loaded_recovery = None
+
+        if store is not None:
+            target_cursor = index + 1
+            next_index = min(target_cursor, len(cases) - 1)
+            final_progress = TrainingProgressCheckpoint(
+                provenance=provenance_for(next_index),
+                training_seed=int(training_seed),
+                target_cursor=target_cursor,
+                target_count=len(cases),
+                episode_cursor=0,
+                episodes_per_target=int(episodes_per_target),
+                theta=tuple(float(value) for value in weights),
+                epsilon=float(trainer.epsilon),
+                policy_rng_state=getattr(last_safe_event, "policy_rng_state", {}),
+                training_history=tuple(histories),
+                completed_target_ids=training_target_ids[:target_cursor],
+                effective_budgets=budget_mapping,
+            )
+            store.save_latest(final_progress)
+
+    if weights is None:
+        if not isinstance(loaded_recovery, TrainingProgressCheckpoint):
+            raise RuntimeError("training produced no recoverable weights")
+        weights = np.asarray(loaded_recovery.theta, dtype=np.float64)
+        provider, _ = _feature_provider(
+            cases[-1],
+            expansion_budget=budget_mapping[cases[-1].target_id],
+            feature_schema=feature_schema,
+        )
+        histories = [dict(value) for value in _json_ready(loaded_recovery.training_history)]
+    assert provider is not None
     provider_names = tuple(provider.names)
     return ArticleV1Checkpoint(
         training_seed=int(training_seed),
         weights=tuple(float(value) for value in weights),
         feature_schema_version=str(provider.schema_version),
+        feature_evaluator_schema_version=str(
+            getattr(
+                provider,
+                "evaluator_schema_version",
+                ARTICLE_V1_PROFILE.feature_evaluator_schema,
+            )
+        ),
         ordered_feature_names=provider_names,
         reward_schema_version=ARTICLE_V1_PROFILE.reward_schema,
         target_metric_schema_version=ARTICLE_V1_PROFILE.target_metric_schema,
@@ -1073,20 +1690,22 @@ def evaluate_article_v1_run(
         )
         checkpoint.validate_for_evaluation(checkpoint_scope, case)
     target = _target(case)
-    target_context = ArticleTargetContext(target)
-    provider = None
+    schema = (
+        ARTICLE_V1_FEATURE_SCHEMA_VERSION
+        if checkpoint is None
+        else checkpoint.feature_schema_version
+    )
+    # Every Article V1 scheduler shares the same exact incremental frontier
+    # index.  Learned/zero policies also consume its compact linear batch;
+    # baselines use it only for the common reward potential (and the direct
+    # target-distance arm uses its exact active-minimum heap).
+    provider, target_context = _feature_provider(
+        case,
+        expansion_budget=expansion_budget,
+        feature_schema=schema,
+    )
     policy = None
     if scheduler in {"zero_weight_linear", "article_sarsa"}:
-        schema = (
-            ARTICLE_V1_FEATURE_SCHEMA_VERSION
-            if checkpoint is None
-            else checkpoint.feature_schema_version
-        )
-        provider, target_context = _feature_provider(
-            case,
-            expansion_budget=expansion_budget,
-            feature_schema=schema,
-        )
         policy = LinearQPolicy(
             feature_provider=provider,
             gamma=1.0,
@@ -1097,6 +1716,10 @@ def evaluate_article_v1_run(
             assert checkpoint is not None
             if checkpoint.ordered_feature_names != tuple(provider.names):
                 raise ValueError("checkpoint/provider ordered feature schema mismatch")
+            if checkpoint.feature_evaluator_schema_version != str(
+                getattr(provider, "evaluator_schema_version", "")
+            ):
+                raise ValueError("checkpoint/provider feature evaluator schema mismatch")
             policy.theta[:] = np.asarray(checkpoint.weights, dtype=np.float64)
 
     internal_scheduler = scheduler
@@ -1170,6 +1793,13 @@ def evaluate_article_v1_run(
             ARTICLE_V1_PROFILE.feature_schema
             if provider is None
             else str(provider.schema_version)
+        ),
+        "feature_evaluator_schema_version": str(
+            getattr(
+                provider,
+                "evaluator_schema_version",
+                ARTICLE_V1_PROFILE.feature_evaluator_schema,
+            )
         ),
         "reward_schema_version": ARTICLE_V1_PROFILE.reward_schema,
         "reward_parameters": {"beta": float(beta)},
@@ -1303,6 +1933,11 @@ def _expected_matrix_runs(
                             ARTICLE_V1_PROFILE.feature_schema
                             if checkpoint is None
                             else checkpoint.feature_schema_version
+                        ),
+                        "feature_evaluator_schema_version": (
+                            ARTICLE_V1_PROFILE.feature_evaluator_schema
+                            if checkpoint is None
+                            else checkpoint.feature_evaluator_schema_version
                         ),
                         "reward_schema_version": ARTICLE_V1_PROFILE.reward_schema,
                         "reward_parameters": {"beta": beta},
@@ -1538,6 +2173,12 @@ _REQUIRED_TIMING_FIELDS = (
     "environment_step_time_seconds",
     "ranking_time_seconds",
     "feature_time_seconds",
+    "dominance_update_time_seconds",
+    "compact_batch_time_seconds",
+    "candidate_gather_time_seconds",
+    "standardization_time_seconds",
+    "score_time_seconds",
+    "selected_row_materialization_time_seconds",
     "target_metric_time_seconds",
     "symbolic_update_time_seconds",
     "canonicalization_time_seconds",
@@ -1582,6 +2223,16 @@ _REQUIRED_COUNTER_FIELDS = (
     "peak_frontier_records",
     "peak_active_archive_records",
     "maximum_pareto_antichain_width",
+    "feature_static_cache_hits",
+    "feature_static_cache_misses",
+    "frontier_index_additions",
+    "frontier_index_removals",
+    "frontier_index_rebuilds",
+    "unique_resource_group_count",
+    "resource_group_peak",
+    "feature_index_memory_bytes",
+    "frontier_revision",
+    "generation_count_revision",
 )
 _REQUIRED_SUMMARY_COUNTER_FIELDS = {
     "feature_evaluations": "feature_evaluation_count",
@@ -1624,6 +2275,7 @@ _CANONICAL_RAW_RECORD_FIELDS = {
     "training_seed",
     "evaluation_seed",
     "feature_schema_version",
+    "feature_evaluator_schema_version",
     "reward_schema_version",
     "reward_parameters",
     "target_metric_schema_version",
@@ -2449,6 +3101,8 @@ def _mini_ci_semantic_checks(
         and sarsa_records[0].get("training_seed") == checkpoint.training_seed,
         "article_schemas_exact": all(
             record.get("feature_schema_version") == ARTICLE_V1_PROFILE.feature_schema
+            and record.get("feature_evaluator_schema_version")
+            == ARTICLE_V1_PROFILE.feature_evaluator_schema
             and record.get("reward_schema_version") == ARTICLE_V1_PROFILE.reward_schema
             and record.get("target_metric_schema_version")
             == ARTICLE_V1_PROFILE.target_metric_schema
@@ -2500,6 +3154,11 @@ def mini_ci_benchmark(
     training_case = corpus.cases(split="train", difficulty="easy")[:1]
     test_case = corpus.cases(split="test", difficulty="easy")[:1]
     experiment = corpus.config.experiment
+    progress_reporter = ArticleV1ProgressReporter(
+        destination,
+        cadence=ProgressCadence(),
+        quiet=True,
+    )
     training_seed = int(experiment["training_seeds"][0])
     checkpoint_scope = corpus.checkpoint_scope(
         checkpoint_family=STANDARD_CHECKPOINT_FAMILY,
@@ -2530,6 +3189,12 @@ def mini_ci_benchmark(
             certification_tolerance=float(
                 experiment["certification_tolerance"]
             ),
+            training_checkpoint_dir=(
+                destination / "training_state" / "standard-seed-0"
+            ),
+            progress_reporter=progress_reporter,
+            run_id=run_id,
+            resume_training=not force_retrain,
         ),
     )
     matrix = evaluate_article_v1_matrix(
@@ -2801,6 +3466,12 @@ def main(argv: Iterable[str] | None = None) -> int:
         child.add_argument("--output-root", type=Path, default=Path("outputs") / "article_v1")
         child.add_argument("--run-id", default="publication")
         child.add_argument("--force-retrain", action="store_true")
+        child.add_argument("--quiet", action="store_true")
+        child.add_argument("--progress-every-expansions", type=int, default=25)
+        child.add_argument("--progress-every-seconds", type=float, default=10.0)
+        child.add_argument("--checkpoint-every-expansions", type=int, default=64)
+        child.add_argument("--checkpoint-every-seconds", type=float, default=60.0)
+        child.add_argument("--no-training-resume", action="store_true")
     mini = subparsers.add_parser("mini-ci")
     mini.add_argument("--output-root", type=Path, default=Path("outputs") / "article_v1")
     mini.add_argument("--run-id", default="mini-ci")
@@ -2855,6 +3526,18 @@ def main(argv: Iterable[str] | None = None) -> int:
     checkpoint_paths: list[Path] = []
     ood_checkpoint_paths: list[Path] = []
     if args.command in {"pilot", "train"}:
+        progress_reporter = ArticleV1ProgressReporter(
+            destination,
+            cadence=ProgressCadence(
+                every_expansions=args.progress_every_expansions,
+                every_seconds=args.progress_every_seconds,
+            ),
+            quiet=bool(args.quiet),
+        )
+        checkpoint_cadence = CheckpointCadence(
+            every_expansions=args.checkpoint_every_expansions,
+            every_seconds=args.checkpoint_every_seconds,
+        )
         ood_limit = int(
             corpus.config.ood_length_split.training_max_generator_length
         )
@@ -2887,6 +3570,18 @@ def main(argv: Iterable[str] | None = None) -> int:
                         certification_tolerance=float(
                             experiment["certification_tolerance"]
                         ),
+                        training_checkpoint_dir=(
+                            destination
+                            / "training_state"
+                            / f"standard-seed-{resolved_seed}"
+                        ),
+                        progress_reporter=progress_reporter,
+                        checkpoint_cadence=checkpoint_cadence,
+                        resume_training=(
+                            not bool(args.force_retrain)
+                            and not bool(args.no_training_resume)
+                        ),
+                        run_id=args.run_id,
                     )
                 ),
             )
@@ -2914,6 +3609,18 @@ def main(argv: Iterable[str] | None = None) -> int:
                         certification_tolerance=float(
                             experiment["certification_tolerance"]
                         ),
+                        training_checkpoint_dir=(
+                            destination
+                            / "training_state"
+                            / f"ood-seed-{resolved_seed}"
+                        ),
+                        progress_reporter=progress_reporter,
+                        checkpoint_cadence=checkpoint_cadence,
+                        resume_training=(
+                            not bool(args.force_retrain)
+                            and not bool(args.no_training_resume)
+                        ),
+                        run_id=args.run_id,
                     )
                 ),
             )

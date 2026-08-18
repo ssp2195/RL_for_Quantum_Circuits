@@ -71,6 +71,21 @@ class Frontier:
         self._queue: list[tuple[float, int, int]] = []
         self._counter = itertools.count()
         self._queued_ids: set[int] = set()
+        # Monotone engineering revision for caches that mirror the authoritative
+        # open-record set.  Record identity and archive membership remain the
+        # scientific source of truth; the revision is only an invalidation key.
+        self._revision = 0
+
+    @property
+    def revision(self) -> int:
+        """Return the monotone open-frontier membership revision."""
+
+        return int(self._revision)
+
+    def active_record_ids(self) -> tuple[int, ...]:
+        """Return authoritative open record IDs in deterministic frontier order."""
+
+        return tuple(record.record_id for record in self.active_records())
 
     @property
     def heap(self) -> list[SearchNode]:
@@ -79,7 +94,16 @@ class Frontier:
 
     def insert(self, node: SearchNode) -> InsertResult:
         """Archive then queue ``node``; expose detailed dominance information."""
+        open_before = set(self._queued_ids)
         result = self.archive.insert(node)
+        dominated_open_ids = {
+            record.record_id
+            for record in result.dominated
+            if record.record_id in open_before
+        }
+        if dominated_open_ids:
+            self._queued_ids.difference_update(dominated_open_ids)
+            self._revision += len(dominated_open_ids)
         if result.accepted:
             assert result.record is not None
             queued = self.add(result.record)
@@ -114,6 +138,7 @@ class Frontier:
             (float(record.node.priority), next(self._counter), record.record_id),
         )
         self._queued_ids.add(record.record_id)
+        self._revision += 1
         return True
 
     def pop(self) -> SearchNode:
@@ -126,6 +151,7 @@ class Frontier:
                 continue
 
             self.archive.mark_expanded(record)
+            self._revision += 1
             return record.node
         raise IndexError("pop from an empty frontier")
 
@@ -141,7 +167,10 @@ class Frontier:
             return False
 
         self._queued_ids.discard(record.record_id)
-        return self.archive.mark_expanded(record)
+        removed = self.archive.mark_expanded(record)
+        if removed:
+            self._revision += 1
+        return removed
 
     def active_records(self) -> list[ArchiveRecord]:
         """Return currently selectable records in a deterministic order."""
@@ -157,7 +186,11 @@ class Frontier:
             if (record := self.archive.record(record_id)) is not None
             and self._is_open(record)
         ]
-        self._queued_ids.intersection_update(record.record_id for record in records)
+        surviving_ids = {record.record_id for record in records}
+        removed_count = len(self._queued_ids - surviving_ids)
+        self._queued_ids.intersection_update(surviving_ids)
+        if removed_count:
+            self._revision += removed_count
         return sorted(records, key=lambda record: (record.node.priority, record.record_id))
 
     def nodes(self) -> list[SearchNode]:

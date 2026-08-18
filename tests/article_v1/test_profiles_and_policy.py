@@ -20,6 +20,7 @@ class _Node:
 
 class _Provider:
     schema_version = "test-schema-v1"
+    evaluator_schema_version = "test-evaluator-v1"
     dimension = 2
     names = ("bias", "value")
 
@@ -27,7 +28,10 @@ class _Provider:
         return np.asarray([1.0, state.value], dtype=np.float64)
 
     def metadata(self):
-        return {"target_fingerprint": "target:test"}
+        return {
+            "target_fingerprint": "target:test",
+            "feature_evaluator_schema_version": self.evaluator_schema_version,
+        }
 
 
 def test_article_v1_profile_is_explicit_and_complete():
@@ -35,6 +39,7 @@ def test_article_v1_profile_is_explicit_and_complete():
     assert ARTICLE_V1_PROFILE.metadata() == {
         "name": "article_v1_raw_metric_v2",
         "feature_schema": "article-v1-31d",
+        "feature_evaluator_schema": "article-v1-exact-incremental-v2",
         "reward_schema": "article-v1-expansion-potential-amended",
         "target_metric_schema": "projective-unitary-metrics-v2",
         "certification_schema": "phase-frobenius-raw-v2",
@@ -87,9 +92,16 @@ def test_checkpoint_rejects_feature_schema_or_dimension_reinterpretation(tmp_pat
     )
     assert restored.theta.tolist() == pytest.approx(policy.theta.tolist())
     assert metadata["ordered_feature_names"] == ["bias", "value"]
+    assert metadata["feature_evaluator_schema_version"] == "test-evaluator-v1"
 
     class _WrongProvider(_Provider):
         schema_version = "test-schema-v2"
 
     with pytest.raises(ValueError, match="feature_schema_version mismatch"):
         LinearQPolicy.load_checkpoint(checkpoint, feature_provider=_WrongProvider())
+
+    class _WrongEvaluator(_Provider):
+        evaluator_schema_version = "test-evaluator-v2"
+
+    with pytest.raises(ValueError, match="feature_evaluator_schema_version mismatch"):
+        LinearQPolicy.load_checkpoint(checkpoint, feature_provider=_WrongEvaluator())

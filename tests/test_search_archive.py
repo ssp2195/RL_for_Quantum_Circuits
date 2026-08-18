@@ -258,3 +258,28 @@ def test_remove_marks_only_selected_record_expanded_and_keeps_archive_active():
     assert not record.queued
     assert not record.tombstoned
     assert not frontier.contains(node)
+
+
+def test_frontier_revision_and_active_record_ids_track_exact_membership_changes():
+    frontier = make_frontier()
+    assert frontier.revision == 0
+    assert frontier.active_record_ids() == ()
+
+    first = make_node(key="first", priority=2.0)
+    second = make_node(key="second", priority=1.0)
+    assert frontier.push(first)
+    first_revision = frontier.revision
+    assert first_revision > 0
+    assert frontier.push(second)
+    assert frontier.revision > first_revision
+    assert frontier.active_record_ids() == (second.record_id, first.record_id)
+
+    before_rejected_insert = frontier.revision
+    assert not frontier.push(
+        make_node(key="first", resources=(5, 2, 6, (4, 3)))
+    )
+    assert frontier.revision == before_rejected_insert
+
+    assert frontier.remove(second)
+    assert frontier.revision > before_rejected_insert
+    assert frontier.active_record_ids() == (first.record_id,)

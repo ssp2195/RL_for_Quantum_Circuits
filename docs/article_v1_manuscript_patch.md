@@ -79,7 +79,8 @@ pilot/publication campaigns were executed.
 ### Audited repository execution semantics
 
 The repository's transferable learner schema is
-`article-v1-transferable-linear-checkpoint-v3`. Its digest binds the feature
+`article-v1-transferable-linear-checkpoint-v4`. Its digest binds the unchanged
+mathematical feature schema, the `article-v1-exact-incremental-v2` evaluator
 schema, standard/OOD family, corpus-config digest, training-scope mode, ordered
 training-target IDs, training seed, learning rate, epsilon schedule, training
 `beta`, certification tolerance, episodes per target, optional expansion cap,
@@ -93,13 +94,13 @@ mini smoke explicitly permits a named partial-training scope. The zero-weight
 linear control still computes the same Article 31D feature batches and
 target-distance coordinates; only its coefficients are zero.
 
-Raw-run V3 identity includes `config_digest`, `training_seed`, and
+Raw-run V4 identity includes the evaluator schema, `config_digest`, `training_seed`, and
 `source_worktree_digest`, in addition to checkpoint and experiment semantics.
 Resume is fail-closed: immutable run, environment, corpus, and per-split
 manifests must match before an existing ledger is reused. An existing
 checkpoint must also validate exactly; a compatible resume loads it without
 retraining or rewriting, while missing/corrupt/conflicting checkpoint content
-aborts. Pre-V3 or pre-config-identity ledgers require a new run ID rather than implicit
+aborts. Pre-V4 or pre-evaluator-identity ledgers require a new run ID rather than implicit
 migration.
 
 Reported success-curve points are restricted to external expansion caps that

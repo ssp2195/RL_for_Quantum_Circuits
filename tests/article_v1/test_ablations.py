@@ -256,7 +256,7 @@ def test_protocol_executes_only_validation_and_records_exact_variants(tmp_path):
         assert case.split == "validation"
         evaluation_calls.append({"target_id": case.target_id, **kwargs})
         return {
-            "schema_version": "article-v1-raw-run-v3",
+            "schema_version": "article-v1-raw-run-v4",
             "target_id": case.target_id,
             "split": case.split,
             "difficulty": case.difficulty,

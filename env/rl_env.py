@@ -25,6 +25,7 @@ from rl.target_context import (
 )
 from search.action_space import generate_actions
 from search.expansion import expand_node
+from search.archive import ArchiveRecord
 from search.frontier import Frontier
 from search.node import SearchNode
 from search.problems.native import NativeGateSearchProblem
@@ -333,6 +334,53 @@ class CircuitSynthesisEnv(gym.Env):
     def current_nodes(self) -> list[SearchNode]:
         return [] if self.frontier is None else self.frontier.nodes()
 
+    def current_records(self) -> list[ArchiveRecord]:
+        """Return the authoritative selectable archive records.
+
+        Feature evaluators consume records rather than reconstructing
+        canonical/resource identity from their nodes at every decision.  The
+        frontier remains the sole owner of membership and ordering.
+        """
+
+        return [] if self.frontier is None else self.frontier.active_records()
+
+    def _synchronize_feature_frontier(
+        self,
+        *,
+        generation_count_updates: Optional[dict[object, int]] = None,
+    ) -> None:
+        synchronize = getattr(self.feature_provider, "synchronize_frontier", None)
+        if callable(synchronize):
+            synchronize(
+                self.current_records(),
+                generation_count_updates=generation_count_updates,
+            )
+
+    def _article_frontier_potential(
+        self,
+        nodes: Sequence[SearchNode],
+        *,
+        terminal: bool = False,
+    ) -> float:
+        """Return the exact Article potential, using the indexed minimum when available."""
+
+        if terminal:
+            return 0.0
+        minimum_target_distance = getattr(
+            self.feature_provider, "minimum_target_distance", None
+        )
+        if callable(minimum_target_distance):
+            self._synchronize_feature_frontier()
+            minimum = minimum_target_distance()
+            if minimum is None:
+                return 0.0
+            value = float(minimum)
+            if not np.isfinite(value) or value < 0.0:
+                raise ValueError("feature index returned an invalid target distance")
+            return -value
+        assert self.article_v1_reward is not None
+        return self.article_v1_reward.frontier_potential(nodes)
+
     def action_info(self, nodes: Optional[Sequence[SearchNode]] = None) -> dict[str, Any]:
         nodes = list(self.current_nodes() if nodes is None else nodes)
         action_mask = np.zeros(self.action_space.n, dtype=np.int8)
@@ -508,11 +556,22 @@ class CircuitSynthesisEnv(gym.Env):
         self.frontier.push(root)
         root_key = self.canonicalizer.semantic_key(root.state)
         self.generation_counts[root_key] += 1
-        bind_generation_counts = getattr(
-            self.feature_provider, "bind_generation_counts", None
+        reset_feature_index = getattr(self.feature_provider, "reset_index", None)
+        synchronize_feature_index = getattr(
+            self.feature_provider, "synchronize_frontier", None
         )
-        if callable(bind_generation_counts):
-            bind_generation_counts(self.generation_counts)
+        if callable(reset_feature_index):
+            reset_feature_index()
+        if callable(synchronize_feature_index):
+            self._synchronize_feature_frontier(
+                generation_count_updates={root_key: 1}
+            )
+        else:
+            bind_generation_counts = getattr(
+                self.feature_provider, "bind_generation_counts", None
+            )
+            if callable(bind_generation_counts):
+                bind_generation_counts(self.generation_counts)
         self.current_node = root
         self._reset_search_metrics()
         # A constrained problem knows whether its root is structurally
@@ -591,7 +650,7 @@ class CircuitSynthesisEnv(gym.Env):
             set_search_step(self.steps)
         nodes_before = self.current_nodes()
         article_potential_before = (
-            self.article_v1_reward.frontier_potential(nodes_before)
+            self._article_frontier_potential(nodes_before)
             if self.article_v1_reward is not None
             else 0.0
         )
@@ -634,6 +693,7 @@ class CircuitSynthesisEnv(gym.Env):
         cost_delta = 0.0
         terminal_children: list[SearchNode] = []
         generated_child_potentials: list[float] = []
+        generation_count_updates: dict[object, int] = {}
 
         self.search_metrics["expanded"] += 1
         self.search_metrics["generated"] += len(children)
@@ -649,6 +709,9 @@ class CircuitSynthesisEnv(gym.Env):
         for child in children:
             generated_key = self.canonicalizer.semantic_key(child.state)
             self.generation_counts[generated_key] += 1
+            generation_count_updates[generated_key] = int(
+                self.generation_counts[generated_key]
+            )
             if self.target_progress_reward is not None:
                 generated_child_potentials.append(self._node_potential(child))
             terminal_candidate = self.problem.is_terminal_candidate(child)
@@ -729,17 +792,24 @@ class CircuitSynthesisEnv(gym.Env):
                 elif insertion.dominance_rejected:
                     self.search_metrics["num_dominance_rejections"] += 1
 
-        bind_generation_counts = getattr(
-            self.feature_provider, "bind_generation_counts", None
-        )
-        if callable(bind_generation_counts):
-            bind_generation_counts(self.generation_counts)
-
         dead_end = int(not children)
 
         terminated = self.solution_node is not None or self.frontier.is_empty()
         truncated = not terminated and self.steps >= self.config.max_steps
         nodes_after = self.current_nodes()
+        synchronize_feature_index = getattr(
+            self.feature_provider, "synchronize_frontier", None
+        )
+        if callable(synchronize_feature_index):
+            self._synchronize_feature_frontier(
+                generation_count_updates=generation_count_updates
+            )
+        else:
+            bind_generation_counts = getattr(
+                self.feature_provider, "bind_generation_counts", None
+            )
+            if callable(bind_generation_counts):
+                bind_generation_counts(self.generation_counts)
         self._sync_archive_metrics()
         self._record_frontier_sample(len(nodes_after))
         if not (terminated or truncated):
@@ -749,7 +819,7 @@ class CircuitSynthesisEnv(gym.Env):
         if self.reward_mode == "article_v1_expansion_potential":
             assert self.article_v1_reward is not None
             article_terminal = bool(terminated or truncated)
-            article_potential_after = self.article_v1_reward.frontier_potential(
+            article_potential_after = self._article_frontier_potential(
                 nodes_after,
                 terminal=article_terminal,
             )

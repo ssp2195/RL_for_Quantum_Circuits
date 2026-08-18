@@ -18,6 +18,7 @@ class ExperimentProfile:
 
     name: str
     feature_schema: str
+    feature_evaluator_schema: str
     reward_schema: str
     target_metric_schema: str
     certification_schema: str
@@ -33,6 +34,7 @@ class ExperimentProfile:
 ARTICLE_V1_PROFILE = ExperimentProfile(
     name="article_v1_raw_metric_v2",
     feature_schema="article-v1-31d",
+    feature_evaluator_schema="article-v1-exact-incremental-v2",
     reward_schema="article-v1-expansion-potential-amended",
     target_metric_schema="projective-unitary-metrics-v2",
     certification_schema="phase-frobenius-raw-v2",
@@ -45,6 +47,7 @@ ARTICLE_V1_PROFILE = ExperimentProfile(
 LEGACY_RESOURCE_PROFILE = ExperimentProfile(
     name="legacy-resource-v1",
     feature_schema="frontier-resource-v1",
+    feature_evaluator_schema="legacy-rowwise-v1",
     reward_schema="legacy-archive-shaping-v1",
     target_metric_schema="none",
     certification_schema="legacy-dense-phase-quotient-v1",
@@ -57,6 +60,7 @@ LEGACY_RESOURCE_PROFILE = ExperimentProfile(
 EXTENDED_TARGET_AWARE_PROFILE = ExperimentProfile(
     name="extended-target-aware-37d-v1",
     feature_schema="extended-target-aware-37d-v1",
+    feature_evaluator_schema="legacy-rowwise-v1",
     reward_schema="article-expansion-cost-legacy-v1",
     target_metric_schema="phase-aligned-frobenius-v1",
     certification_schema="legacy-dense-phase-quotient-v1",
@@ -69,6 +73,7 @@ EXTENDED_TARGET_AWARE_PROFILE = ExperimentProfile(
 COMPOSITE_TARGET_PROGRESS_PROFILE = ExperimentProfile(
     name="composite-target-progress-v1",
     feature_schema="frontier-target-aware-v1",
+    feature_evaluator_schema="legacy-rowwise-v1",
     reward_schema="composite-target-progress-v1",
     target_metric_schema="process-support-entanglement-composite-v1",
     certification_schema="legacy-dense-phase-quotient-v1",
@@ -81,6 +86,7 @@ COMPOSITE_TARGET_PROGRESS_PROFILE = ExperimentProfile(
 GHZ3_DIRECT_PROFILE = ExperimentProfile(
     name="ghz3-direct-v1",
     feature_schema="frontier-target-aware-v1",
+    feature_evaluator_schema="legacy-rowwise-v1",
     reward_schema="ghz3-terminal-direct-v1",
     target_metric_schema="ghz3-labelled-frame-v1",
     certification_schema="legacy-dense-phase-quotient-v1",
@@ -93,6 +99,7 @@ GHZ3_DIRECT_PROFILE = ExperimentProfile(
 TOFFOLI_PARITY_PROFILE = ExperimentProfile(
     name="toffoli-parity-v1",
     feature_schema="toffoli-parity-frontier-v1",
+    feature_evaluator_schema="toffoli-rowwise-v1",
     reward_schema="toffoli-parity-potential-v1",
     target_metric_schema="toffoli-parity-progress-v1",
     certification_schema="toffoli-exact-dense-v1",

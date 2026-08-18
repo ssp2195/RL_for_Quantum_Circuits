@@ -194,6 +194,9 @@ def _failure_record(spec, config, provenance) -> dict[str, object]:
         "training_seed": None if checkpoint is None else checkpoint.training_seed,
         "evaluation_seed": spec.evaluation_seed,
         "feature_schema_version": spec.identity["feature_schema"],
+        "feature_evaluator_schema_version": spec.identity[
+            "feature_evaluator_schema"
+        ],
         "reward_schema_version": spec.identity["reward_schema"],
         "reward_parameters": dict(spec.identity["reward_parameters"]),
         "target_metric_schema_version": spec.identity["target_metric_schema"],
@@ -732,6 +735,7 @@ def test_audit_rejects_missing_unexpected_and_duplicate_physical_records(
         ("expansion_budget", 999_999),
         ("evaluation_seed", 999_999),
         ("feature_schema_version", "foreign-feature-schema"),
+        ("feature_evaluator_schema_version", "foreign-evaluator-schema"),
         ("reward_schema_version", "foreign-reward-schema"),
         ("target_metric_schema_version", "foreign-target-metric-schema"),
         ("certification_schema_version", "foreign-certifier-schema"),
@@ -1181,5 +1185,5 @@ def test_config_digest_changes_run_identity(campaign_fixture) -> None:
 
 def test_checkpoint_schema_constant_remains_explicit() -> None:
     assert ARTICLE_V1_CHECKPOINT_SCHEMA == (
-        "article-v1-transferable-linear-checkpoint-v3"
+        "article-v1-transferable-linear-checkpoint-v4"
     )

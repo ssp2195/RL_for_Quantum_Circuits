@@ -235,8 +235,9 @@ control still materializes the same Article 31D feature/target-metric pipeline;
 only its coefficients are zero.
 
 Learned checkpoints use the fail-closed
-`article-v1-transferable-linear-checkpoint-v3` contract. The checkpoint digest
-binds its feature schema, standard/OOD family, corpus config, training-scope
+`article-v1-transferable-linear-checkpoint-v4` contract. The checkpoint digest
+binds both the unchanged mathematical feature schema and the
+`article-v1-exact-incremental-v2` evaluator schema, standard/OOD family, corpus config, training-scope
 mode, ordered training target IDs, training `beta`, certification tolerance,
 episodes per target, learning rate, epsilon schedule, training seed, optional
 expansion cap, budget policy, effective per-target training budgets, and
@@ -247,10 +248,10 @@ silently used as the primary learner. Standard, OOD, and ablation campaign
 checkpoints use their complete declared train partition; mini-CI alone is
 explicitly labelled `explicit_partial_smoke`. Raw-run identity includes both
 the corpus `config_digest`, checkpoint training seed, and source-worktree
-digest under `article-v1-raw-run-v3`. Resume validates
+digest under `article-v1-raw-run-v4`. Resume validates
 immutable run/environment/corpus manifests and existing checkpoints before
 reuse; a compatible checkpoint is loaded, not retrained or rewritten, while
-stale/conflicting content fails closed. Pre-V3 or pre-config-identity ledgers
+stale/conflicting content fails closed. Pre-V4 or pre-evaluator-identity ledgers
 and checkpoints require a new run ID.
 
 The root CLI dispatches the Article V1 workflow:

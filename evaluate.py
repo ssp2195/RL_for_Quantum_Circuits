@@ -220,8 +220,11 @@ def evaluate(
 
     while not (terminated or truncated):
         nodes = env.current_nodes()
+        current_records = getattr(env, "current_records", None)
+        records = current_records() if callable(current_records) else nodes
         if not nodes:
             break
+        selection_batch = None
         selection_started = time.perf_counter_ns()
         metric_cache = getattr(target_metric, "cache_metrics", None)
         target_time_before = (
@@ -245,7 +248,22 @@ def evaluate(
                 ),
             )
         elif scheduler in {"greedy", "zero_policy", "learned"}:
-            node = policy.select_node(nodes, epsilon=0.0)
+            build_compact = getattr(policy, "build_compact_decision_batch", None)
+            select_compact = getattr(policy, "select_from_compact_batch", None)
+            provider_compact = getattr(
+                getattr(policy, "feature_provider", None),
+                "build_compact_batch",
+                None,
+            )
+            if (
+                callable(build_compact)
+                and callable(select_compact)
+                and callable(provider_compact)
+            ):
+                selection_batch = build_compact(records)
+                node = select_compact(selection_batch, epsilon=0.0)
+            else:
+                node = policy.select_node(nodes, epsilon=0.0)
         elif scheduler == "random":
             node = policy.select_node(nodes, epsilon=1.0)
         elif scheduler in {"target_potential", "composite_target_progress"}:
@@ -259,7 +277,15 @@ def evaluate(
             )
         else:  # article_target_distance: direct Eq. (86), no learned weights.
             assert target_metric is not None
-            node = select_article_target_distance(nodes, target_metric)
+            synchronize = getattr(feature_provider, "synchronize_frontier", None)
+            select_indexed = getattr(
+                feature_provider, "select_target_distance_node", None
+            )
+            if callable(synchronize) and callable(select_indexed):
+                synchronize(records)
+                node = select_indexed()
+            else:
+                node = select_article_target_distance(nodes, target_metric)
         if scheduler not in {"greedy", "zero_policy", "learned", "random"}:
             elapsed = time.perf_counter_ns() - selection_started
             target_time_after = target_time_before
@@ -272,12 +298,22 @@ def evaluate(
             )
         assert node is not None
         prefix = [repr(action) for action in node.reconstruct_actions()]
-        selected_q_value = (
-            float(policy.node_value(node, nodes))
-            if collect_trace
-            and scheduler in {"greedy", "zero_policy", "learned", "random"}
-            else None
-        )
+        selected_q_value = None
+        if collect_trace and scheduler in {
+            "greedy",
+            "zero_policy",
+            "learned",
+            "random",
+        }:
+            if selection_batch is not None:
+                selected_features = policy.features_from_decision_batch(
+                    selection_batch, node
+                )
+                selected_q_value = float(
+                    policy.q_value_from_features(selected_features)
+                )
+            else:
+                selected_q_value = float(policy.node_value(node, nodes))
         _, reward, terminated, truncated, info = env.select_record(int(node.record_id))
         if collect_trace:
             row: dict[str, Any] = {
@@ -343,6 +379,15 @@ def evaluate(
         search_metrics.get("feature_evaluation_count", 0)
         + policy_metrics["feature_evaluation_count"]
     )
+    provider_instrumentation = getattr(feature_provider, "instrumentation", None)
+    if callable(provider_instrumentation):
+        for name, value in dict(provider_instrumentation()).items():
+            if name == "feature_evaluator_schema_version":
+                continue
+            if isinstance(value, (int, np.integer)) and not isinstance(value, bool):
+                search_metrics[str(name)] = int(value)
+            elif isinstance(value, (float, np.floating)):
+                search_metrics[str(name)] = float(value)
     if target_metric is not None:
         cache_metrics = getattr(target_metric, "cache_metrics", None)
         if callable(cache_metrics):

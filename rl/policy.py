@@ -420,6 +420,9 @@ class LinearQPolicy:
             "profile_name": profile_name,
             "algorithm": self.metadata()["algorithm"],
             "feature_schema_version": self.feature_schema_version,
+            "feature_evaluator_schema_version": provider_metadata.get(
+                "feature_evaluator_schema_version"
+            ),
             "ordered_feature_names": list(ordered_names),
             "feature_dimension": self.feature_dim,
             "reward_schema_version": reward_schema_version,
@@ -478,6 +481,11 @@ class LinearQPolicy:
             "feature_dimension": int(provider.dimension),
             "ordered_feature_names": list(provider.names),
         }
+        provider_evaluator_schema = dict(provider.metadata()).get(
+            "feature_evaluator_schema_version"
+        )
+        if provider_evaluator_schema is not None:
+            checks["feature_evaluator_schema_version"] = provider_evaluator_schema
         optional_checks = {
             "profile_name": expected_profile_name,
             "reward_schema_version": expected_reward_schema,
@@ -594,6 +602,86 @@ class LinearQPolicy:
         self.feature_evaluation_count += len(frozen_nodes)
         self.feature_time_ns += max(0, elapsed - target_delta)
         return result
+
+    def build_compact_decision_batch(self, records: Sequence[object]):
+        """Build one exact compact Article decision state.
+
+        The provider owns frontier synchronization and the algebraic score
+        reduction.  This method deliberately keeps timing/RNG ownership in
+        the policy so compact and reference evaluators share the same SARSA
+        behavior contract.
+        """
+
+        build_compact = getattr(self.feature_provider, "build_compact_batch", None)
+        if not callable(build_compact):
+            nodes = tuple(getattr(record, "node", record) for record in records)
+            return self.build_feature_batch(nodes)
+
+        started = time.perf_counter_ns()
+        target_context = getattr(self.feature_provider, "target_context", None)
+        cache_metrics = getattr(target_context, "cache_metrics", None)
+        target_time_before = 0
+        if callable(cache_metrics):
+            target_time_before = int(
+                cache_metrics().get("target_metric_time_ns", 0)
+            )
+        frozen_records = tuple(records)
+        batch = build_compact(frozen_records, theta=self.theta)
+        nodes = tuple(getattr(batch, "frontier_nodes", ()))
+        if len(nodes) != len(frozen_records):
+            raise ValueError(
+                "compact feature batch must contain one node per frontier record"
+            )
+        elapsed = time.perf_counter_ns() - started
+        target_time_after = target_time_before
+        if callable(cache_metrics):
+            target_time_after = int(
+                cache_metrics().get("target_metric_time_ns", target_time_before)
+            )
+        target_delta = max(0, target_time_after - target_time_before)
+        self.feature_evaluation_count += len(nodes)
+        self.feature_time_ns += max(0, elapsed - target_delta)
+        return batch
+
+    @staticmethod
+    def _decision_batch_nodes(batch: object) -> tuple[SearchNode, ...]:
+        nodes = getattr(batch, "frontier_nodes", getattr(batch, "nodes", ()))
+        return tuple(nodes)
+
+    @staticmethod
+    def features_from_decision_batch(batch: object, node: SearchNode) -> np.ndarray:
+        features_for_node = getattr(batch, "features_for_node", None)
+        if callable(features_for_node):
+            return np.asarray(features_for_node(node), dtype=np.float64)
+        features_for = getattr(batch, "features_for", None)
+        if callable(features_for):
+            return np.asarray(features_for(node), dtype=np.float64)
+        raise TypeError("decision batch does not expose frozen node features")
+
+    def select_from_compact_batch(
+        self,
+        batch: object,
+        *,
+        epsilon: float = 0.1,
+    ) -> Optional[SearchNode]:
+        """Apply the unchanged epsilon-greedy rule to a compact batch."""
+
+        ranking_started = time.perf_counter_ns()
+        nodes = self._decision_batch_nodes(batch)
+        if not nodes:
+            return None
+        if self.rng.random() < epsilon:
+            selected = nodes[int(self.rng.integers(len(nodes)))]
+        else:
+            select_greedy = getattr(batch, "select_greedy", None)
+            if callable(select_greedy):
+                selected = select_greedy(self.theta)
+            elif not np.any(self.theta):
+                selected = min(nodes, key=self._stable_id)
+            else:
+                selected = self._greedy_from_batch(batch)
+        self.ranking_time_ns += time.perf_counter_ns() - ranking_started
+        return selected
 
     def q_value_from_features(self, features: np.ndarray) -> float:
         phi = np.asarray(features, dtype=np.float64)

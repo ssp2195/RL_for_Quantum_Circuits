@@ -36,6 +36,7 @@ def _raw_run(
         "training_seed": None,
         "evaluation_seed": 0,
         "feature_schema_version": "article-v1-31d",
+        "feature_evaluator_schema_version": "article-v1-exact-incremental-v2",
         "reward_schema_version": "article-v1-expansion-potential-amended",
         "target_metric_schema_version": "projective-unitary-metrics-v2",
         "certification_schema_version": "phase-frobenius-raw-v2",

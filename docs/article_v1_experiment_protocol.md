@@ -219,7 +219,8 @@ frontier, and target-metric cache. Missing or zero-weight checkpoints may not
 be labelled `article_sarsa`.
 
 Article learned policies serialize as
-`article-v1-transferable-linear-checkpoint-v3`. The digest binds the feature
+`article-v1-transferable-linear-checkpoint-v4`. The digest binds the unchanged
+mathematical feature schema, the `article-v1-exact-incremental-v2` evaluator
 schema, checkpoint family, training-scope mode, corpus-config digest, ordered
 training-target IDs, training `beta`, certification tolerance, episodes per
 target, learning rate, epsilon schedule, training seed, optional expansion cap,
@@ -237,7 +238,7 @@ mini-CI uses `explicit_partial_smoke`, with explicit training IDs and cap; that
 checkpoint cannot pass a complete-training scope and is not publication learner
 evidence. A structurally valid checkpoint from another scope is rejected. A V1
 or otherwise pre-scope checkpoint is not upgraded by inference and must be
-retrained/serialized as V3.
+retrained/serialized as V4.
 
 The explicit plan amendment to Eq. 104 is
 
@@ -392,7 +393,7 @@ config/profile/code-worktree/corpus contract before loading the raw ledger.
 Missing, corrupt, stale, or conflicting immutable content is rejected, not
 overwritten. A partial final JSONL line is not a completed record and may be
 repaired atomically; a conflicting completed key is an error. Old ledgers
-created before raw-run V3 or before the config/training-seed/source-worktree
+created before raw-run V4 or before the evaluator/config/training-seed/source-worktree
 identity fields are intentionally incompatible and require a new run ID.
 Existing checkpoints are also fail-closed immutable artifacts: a compatible
 resume validates and loads them without retraining or rewriting, while a
@@ -497,7 +498,7 @@ CPU, wall-time, disk, per-process RAM, raw-record, and checkpoint estimates.
 
 It also provides
 `python article_benchmark.py mini-ci --output-root outputs/article_v1 --run-id mini-ci-v5-new`.
-Use a fresh run ID when an older pre-V3 ledger is present. The implemented
+Use a fresh run ID when an older pre-V4 ledger is present. The implemented
 output root is `outputs/article_v1/<run_id>/` and may contain:
 
 ```text
