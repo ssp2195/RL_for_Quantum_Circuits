@@ -972,6 +972,42 @@ def _learner_seed_summary(
     return output, learner_output
 
 
+def derive_fixed_horizon_anytime_rows(
+    raw_run: Mapping[str, Any],
+    thresholds: Sequence[int],
+) -> tuple[dict[str, Any], ...]:
+    """Derive threshold observations from one fixed-horizon raw execution.
+
+    This never duplicates physical execution: the raw run remains the source
+    record and the returned rows are explicitly marked as derived.
+    """
+    if raw_run.get("budget_mode") not in (None, "fixed-max-horizon-anytime-v1"):
+        raise ValueError("anytime derivation requires fixed-max-horizon-anytime-v1")
+    horizon = raw_run.get("executed_max_horizon", raw_run.get("expansion_budget"))
+    if isinstance(horizon, bool) or not isinstance(horizon, int) or horizon < 1:
+        raise ValueError("raw run must contain a positive executed_max_horizon")
+    values = tuple(thresholds)
+    if not values or any(isinstance(v, bool) or not isinstance(v, int) or v < 1 or v > horizon for v in values):
+        raise ValueError("anytime thresholds must be positive and no larger than the executed horizon")
+    if values != tuple(sorted(set(values))):
+        raise ValueError("anytime thresholds must be sorted and unique")
+    hit = raw_run.get("first_certified_hit_expansion")
+    if hit is not None and (isinstance(hit, bool) or not isinstance(hit, int) or hit < 1 or hit > horizon):
+        raise ValueError("first_certified_hit_expansion is outside the executed horizon")
+    base = {
+        "target_id": raw_run.get("target_id"),
+        "scheduler": raw_run.get("scheduler"),
+        "checkpoint_seed": raw_run.get("training_seed"),
+        "evaluation_seed": raw_run.get("evaluation_seed"),
+        "executed_max_horizon": horizon,
+        "first_hit_expansion": hit,
+        "process_cpu_seconds": raw_run.get("process_cpu_seconds", raw_run.get("search_metrics", {}).get("process_cpu_seconds", 0.0)),
+        "wall_time_seconds": raw_run.get("runtime_seconds", 0.0),
+        "derived_from_raw_run": True,
+    }
+    return tuple({**base, "threshold": threshold, "success_by_threshold": bool(hit is not None and hit <= threshold)} for threshold in values)
+
+
 def aggregate_article_v1_runs(
     runs: Iterable[Mapping[str, Any]],
     *,
@@ -1642,6 +1678,7 @@ __all__ = [
     "AppendOnlyJSONLRunStore",
     "ArticleV1RunStore",
     "aggregate_article_v1_runs",
+    "derive_fixed_horizon_anytime_rows",
     "bootstrap_mean_ci",
     "load_completed_run_keys",
     "run_identity_payload",

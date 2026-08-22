@@ -13,7 +13,13 @@ import itertools
 from dataclasses import replace
 from typing import TYPE_CHECKING, Optional, Union
 
-from search.archive import ArchiveRecord, InsertResult, ParetoArchive, ResourceVector
+from search.archive import (
+    ArchiveRecord,
+    InsertResult,
+    ParetoArchive,
+    PreparedArchiveCandidate,
+    ResourceVector,
+)
 from search.node import SearchNode
 
 if TYPE_CHECKING:
@@ -71,6 +77,12 @@ class Frontier:
         self._queue: list[tuple[float, int, int]] = []
         self._counter = itertools.count()
         self._queued_ids: set[int] = set()
+        # Exact record-ID index for O(1) membership/update and an optional
+        # allocation-order engineering view.  Scientific selection continues
+        # to use the reviewed priority-then-record-ID ordering below.
+        self._open_records_by_id: dict[int, ArchiveRecord] = {}
+        self._ordered_cache_revision = -1
+        self._ordered_active_records: tuple[ArchiveRecord, ...] = ()
         # Monotone engineering revision for caches that mirror the authoritative
         # open-record set.  Record identity and archive membership remain the
         # scientific source of truth; the revision is only an invalidation key.
@@ -94,8 +106,34 @@ class Frontier:
 
     def insert(self, node: SearchNode) -> InsertResult:
         """Archive then queue ``node``; expose detailed dominance information."""
+        return self._finish_insert(node, self.archive.insert(node))
+
+    def insert_prepared(
+        self,
+        node: SearchNode,
+        prepared: PreparedArchiveCandidate,
+        *,
+        canonicalization_time_ns: int = 0,
+        debug_recompute: bool = False,
+    ) -> InsertResult:
+        """Archive and queue a node using its already-computed exact payload."""
+
+        return self._finish_insert(
+            node,
+            self.archive.insert_prepared(
+                node,
+                prepared,
+                canonicalization_time_ns=canonicalization_time_ns,
+                debug_recompute=debug_recompute,
+            ),
+        )
+
+    def _finish_insert(
+        self,
+        node: SearchNode,
+        result: InsertResult,
+    ) -> InsertResult:
         open_before = set(self._queued_ids)
-        result = self.archive.insert(node)
         dominated_open_ids = {
             record.record_id
             for record in result.dominated
@@ -103,6 +141,8 @@ class Frontier:
         }
         if dominated_open_ids:
             self._queued_ids.difference_update(dominated_open_ids)
+            for record_id in dominated_open_ids:
+                self._open_records_by_id.pop(record_id, None)
             self._revision += len(dominated_open_ids)
         if result.accepted:
             assert result.record is not None
@@ -138,6 +178,7 @@ class Frontier:
             (float(record.node.priority), next(self._counter), record.record_id),
         )
         self._queued_ids.add(record.record_id)
+        self._open_records_by_id[record.record_id] = record
         self._revision += 1
         return True
 
@@ -146,6 +187,7 @@ class Frontier:
         while self._queue:
             _, _, record_id = heapq.heappop(self._queue)
             self._queued_ids.discard(record_id)
+            self._open_records_by_id.pop(record_id, None)
             record = self.archive.record(record_id)
             if record is None or not self._is_open(record):
                 continue
@@ -167,6 +209,7 @@ class Frontier:
             return False
 
         self._queued_ids.discard(record.record_id)
+        self._open_records_by_id.pop(record.record_id, None)
         removed = self.archive.mark_expanded(record)
         if removed:
             self._revision += 1
@@ -174,24 +217,42 @@ class Frontier:
 
     def active_records(self) -> list[ArchiveRecord]:
         """Return currently selectable records in a deterministic order."""
-        # The frontier owns ``_queued_ids``.  Looking up only those record
-        # IDs avoids a full archive scan for every RL observation; a
-        # constrained normal-form search can retain many historical expanded
-        # witnesses while only a comparatively small open subset is eligible
-        # for selection.  Tombstoned stale IDs are filtered lazily exactly as
-        # heap entries are in ``pop``.
-        records = [
-            record
-            for record_id in tuple(self._queued_ids)
-            if (record := self.archive.record(record_id)) is not None
-            and self._is_open(record)
+        # Preserve the reviewed priority/record-ID enumeration exactly.  The
+        # cached tuple avoids repeated sorts when feature synchronization and
+        # policy ranking inspect the same immutable frontier revision.
+        self._remove_stale_open_records()
+        if self._ordered_cache_revision != self._revision:
+            self._ordered_active_records = tuple(
+                sorted(
+                    self._open_records_by_id.values(),
+                    key=lambda record: (record.node.priority, record.record_id),
+                )
+            )
+            self._ordered_cache_revision = self._revision
+        return list(self._ordered_active_records)
+
+    def _remove_stale_open_records(self) -> None:
+        stale_ids = [
+            record_id
+            for record_id, record in self._open_records_by_id.items()
+            if not self._is_open(record)
         ]
-        surviving_ids = {record.record_id for record in records}
-        removed_count = len(self._queued_ids - surviving_ids)
-        self._queued_ids.intersection_update(surviving_ids)
-        if removed_count:
-            self._revision += removed_count
-        return sorted(records, key=lambda record: (record.node.priority, record.record_id))
+        if stale_ids:
+            for record_id in stale_ids:
+                self._open_records_by_id.pop(record_id, None)
+                self._queued_ids.discard(record_id)
+            self._revision += len(stale_ids)
+
+    def active_records_by_id(self) -> list[ArchiveRecord]:
+        """Return the open set in persistent-record-ID order without sorting."""
+
+        self._remove_stale_open_records()
+        return list(self._open_records_by_id.values())
+
+    def active_nodes_by_id(self) -> list[SearchNode]:
+        """Return selectable nodes in persistent-record-ID order."""
+
+        return [record.node for record in self.active_records_by_id()]
 
     def nodes(self) -> list[SearchNode]:
         """Return currently selectable nodes ordered by priority then record ID."""

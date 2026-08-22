@@ -10,7 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import time
-from typing import Any, Iterable, Sequence
+from typing import Any, Callable, Iterable, Sequence
 import warnings
 
 import numpy as np
@@ -94,6 +94,9 @@ def evaluate(
     article_v1_beta: float = 1.0,
     instrumentation_enabled: bool = True,
     observation_features: bool = True,
+    process_cpu_limit_seconds: float | None = None,
+    process_cpu_clock_ns: Callable[[], int] = time.process_time_ns,
+    process_cpu_limit_status: str = "OPERABILITY_TIMEOUT",
 ) -> dict:
     """Run a baseline or frozen learned frontier-record scheduler.
 
@@ -212,13 +215,35 @@ def evaluate(
         raise ValueError("zero_policy scheduling requires exactly zero weights")
 
     started_ns = time.perf_counter_ns()
+    if process_cpu_limit_seconds is not None:
+        if (
+            isinstance(process_cpu_limit_seconds, bool)
+            or not np.isfinite(float(process_cpu_limit_seconds))
+            or float(process_cpu_limit_seconds) <= 0.0
+        ):
+            raise ValueError("process_cpu_limit_seconds must be finite and positive")
+    if process_cpu_limit_status not in {
+        "OPERABILITY_TIMEOUT",
+        "CPU_BUDGET_EXHAUSTED",
+    }:
+        raise ValueError("unsupported process CPU limit status")
+    started_process_cpu_ns = int(process_cpu_clock_ns())
     env.reset(seed=seed)
     terminated = env.solution_node is not None
     truncated = False
     trace: list[dict] = []
     external_ranking_time_ns = 0
+    operability_timeout = False
 
     while not (terminated or truncated):
+        # This check is deliberately at a safe decision boundary: reset or a
+        # fully completed exhaustive expansion.  It never interrupts child
+        # generation and does not manufacture a terminal transition/reward.
+        if process_cpu_limit_seconds is not None:
+            elapsed_cpu_ns = int(process_cpu_clock_ns()) - started_process_cpu_ns
+            if elapsed_cpu_ns >= int(float(process_cpu_limit_seconds) * 1e9):
+                operability_timeout = True
+                break
         nodes = env.current_nodes()
         current_records = getattr(env, "current_records", None)
         records = current_records() if callable(current_records) else nodes
@@ -354,7 +379,9 @@ def evaluate(
         witness_actions = env.solution_node.reconstruct_actions()
     solution_state = None if env.solution_node is None else env.solution_node.state
     total_wall_time_ns = time.perf_counter_ns() - started_ns
+    total_process_cpu_time_ns = int(process_cpu_clock_ns()) - started_process_cpu_ns
     runtime_seconds = float(total_wall_time_ns / 1e9)
+    process_cpu_seconds = float(total_process_cpu_time_ns / 1e9)
     search_metrics = dict(getattr(env, "search_metrics", {}))
     # The environment-level timer intentionally covers only executed step()
     # bodies.  Publication "wall time" must include reset, frontier ranking,
@@ -366,6 +393,9 @@ def evaluate(
     search_metrics["environment_step_time_ns"] = environment_step_time_ns
     search_metrics["wall_time_ns"] = (
         int(total_wall_time_ns) if instrumentation_enabled else 0
+    )
+    search_metrics["process_cpu_time_ns"] = (
+        int(total_process_cpu_time_ns) if instrumentation_enabled else 0
     )
     policy_metrics = policy.instrumentation()
     search_metrics["ranking_time_ns"] = int(
@@ -425,6 +455,14 @@ def evaluate(
         "certified": env.solution_node is not None,
         "terminated": terminated,
         "truncated": truncated,
+        "complete": not operability_timeout or process_cpu_limit_status == "CPU_BUDGET_EXHAUSTED",
+        "terminal_reason": (
+            process_cpu_limit_status
+            if operability_timeout
+            else "CERTIFIED"
+            if env.solution_node is not None
+            else "UNSOLVED_WITHIN_EXPANSION_BUDGET"
+        ),
         "expansions": env.steps,
         "frontier_size": len(env.current_nodes()),
         "witness": [repr(action) for action in witness_actions],
@@ -454,6 +492,9 @@ def evaluate(
         "canonicalization_mode": canonicalization_mode,
         "instrumentation_enabled": instrumentation_enabled,
         "runtime_seconds": runtime_seconds,
+        "wall_time_ns": int(total_wall_time_ns) if instrumentation_enabled else 0,
+        "process_cpu_time_ns": int(total_process_cpu_time_ns) if instrumentation_enabled else 0,
+        "process_cpu_seconds": process_cpu_seconds if instrumentation_enabled else 0.0,
         "time_to_solution": runtime_seconds if env.solution_node is not None else None,
         "search_metrics": search_metrics,
         "archive_size_final": int(search_metrics.get("archive_size", 0)),

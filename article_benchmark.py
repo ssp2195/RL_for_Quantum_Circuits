@@ -194,6 +194,15 @@ def main(argv: Iterable[str] | None = None) -> int:
         "capture-replay-checkpoint",
         "measure-replay-timing",
         "plan",
+        "validate-10min",
+        "freeze-10min-protocol",
+        "train-10min",
+        "evaluate-10min",
+        "audit-10min",
+        "calibrate-10min-horizon",
+        "plan-10min",
+        "evaluate-cpu-budget",
+        "report-10min",
     }
     if arguments and arguments[0] in article_v1_commands:
         from experiments.article_v1_runner import main as article_v1_main

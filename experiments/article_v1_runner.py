@@ -101,6 +101,12 @@ from experiments.article_v1_training_checkpoint import (
     validate_pending_resume_state,
     validate_resume_compatibility,
 )
+from experiments.article_v1_ten_minute_protocol import (
+    TEN_MINUTE_FRONTIER_ENUMERATION_SCHEMA,
+    TenMinuteCheckpoint,
+    freeze_ten_minute_config,
+    load_ten_minute_config,
+)
 from reporting.article_v1 import (
     ARTICLE_V1_RAW_RUN_SCHEMA,
     ArticleV1RunStore,
@@ -122,6 +128,7 @@ from train import Trainer, TrainerBoundaryEvent, TrainerEpisodeResume
 
 
 ARTICLE_V1_RUNNER_SCHEMA = "article-v1-publication-runner-v4"
+ARTICLE_V1_TEN_MINUTE_RAW_RUN_SCHEMA = "article-v1-10min-raw-run-v1"
 ARTICLE_V1_CAMPAIGN_AUDIT_SCHEMA = "article-v1-campaign-audit-v1"
 ARTICLE_V1_REPLAY_CAPTURE_SCHEMA = "article-v1-replay-checkpoint-capture-v1"
 PRIMARY_SCHEDULERS = (
@@ -2661,7 +2668,7 @@ def evaluate_article_v1_run(
     scheduler: str,
     expansion_budget: int,
     evaluation_seed: int,
-    checkpoint: ArticleV1Checkpoint | None = None,
+    checkpoint: ArticleV1Checkpoint | TenMinuteCheckpoint | None = None,
     checkpoint_scope: ArticleV1CheckpointScope | None = None,
     beta: float = 1.0,
     certification_tolerance: float = 1e-9,
@@ -2670,26 +2677,50 @@ def evaluate_article_v1_run(
     absorb_clifford_angles: bool = True,
     canonicalization_mode: str = "enhanced",
     config_digest: str = "unspecified-direct-run",
+    budget_mode: str = "independent-horizons-v1",
+    budget_thresholds: Sequence[int] = (),
+    process_cpu_limit_seconds: float | None = None,
+    process_cpu_clock_ns: Callable[[], int] = time.process_time_ns,
 ) -> dict[str, object]:
     """Run one fresh, witness-free Article V1 evaluation trajectory."""
 
     if scheduler not in PRIMARY_SCHEDULERS:
         raise ValueError(f"scheduler must be one of {PRIMARY_SCHEDULERS!r}")
+    if budget_mode not in {
+        "independent-horizons-v1",
+        "fixed-max-horizon-anytime-v1",
+        "equal-cpu-budget-secondary-v1",
+    }:
+        raise ValueError("unsupported Article V1 budget mode")
     if scheduler != "article_sarsa" and checkpoint is not None:
         raise ValueError("only article_sarsa accepts a trained checkpoint")
     if scheduler == "article_sarsa":
         if checkpoint is None:
             raise ValueError("article_sarsa requires a trained checkpoint")
-        checkpoint.validate_contract(require_nonzero=True)
-        if checkpoint_scope is None:
-            raise ValueError(
-                "article_sarsa requires an explicit checkpoint evaluation scope"
+        if isinstance(checkpoint, TenMinuteCheckpoint):
+            checkpoint.require_evaluation_eligible()
+            if not np.any(np.abs(np.asarray(checkpoint.weights)) > 0.0):
+                raise ValueError("article_sarsa requires nonzero trained weights")
+            if case.target_id in checkpoint.ordered_target_ids:
+                raise ValueError("V5 checkpoint cannot evaluate a training target")
+            if checkpoint_scope is not None:
+                raise ValueError("V5 checkpoint carries its own training scope")
+            if (
+                config_digest != "unspecified-direct-run"
+                and checkpoint.corpus_config_digest != config_digest
+            ):
+                raise ValueError("V5 checkpoint/config digest mismatch")
+        else:
+            checkpoint.validate_contract(require_nonzero=True)
+            if checkpoint_scope is None:
+                raise ValueError(
+                    "article_sarsa requires an explicit checkpoint evaluation scope"
+                )
+            checkpoint_scope.validate_evaluation_parameters(
+                beta=beta,
+                certification_tolerance=certification_tolerance,
             )
-        checkpoint_scope.validate_evaluation_parameters(
-            beta=beta,
-            certification_tolerance=certification_tolerance,
-        )
-        checkpoint.validate_for_evaluation(checkpoint_scope, case)
+            checkpoint.validate_for_evaluation(checkpoint_scope, case)
     target = _target(case)
     schema = (
         ARTICLE_V1_FEATURE_SCHEMA_VERSION
@@ -2752,8 +2783,19 @@ def evaluate_article_v1_run(
         target_metric=target_context,
         instrumentation_enabled=True,
         observation_features=False,
+        process_cpu_limit_seconds=process_cpu_limit_seconds,
+        process_cpu_clock_ns=process_cpu_clock_ns,
+        process_cpu_limit_status=(
+            "CPU_BUDGET_EXHAUSTED"
+            if budget_mode == "equal-cpu-budget-secondary-v1"
+            else "OPERABILITY_TIMEOUT"
+        ),
     )
     metrics = dict(report["search_metrics"])
+    ten_minute_mode = budget_mode != "independent-horizons-v1"
+    if not ten_minute_mode:
+        # Keep the exact legacy V4 raw-run schema stable.
+        metrics.pop("process_cpu_time_ns", None)
     witness_operations = list(report["witness_operations"])
     certification_diagnostics: dict[str, object] | None = None
     if bool(report["certified"]):
@@ -2770,9 +2812,14 @@ def evaluate_article_v1_run(
         name.removesuffix("_ns") + "_seconds": float(value) / 1e9
         for name, value in metrics.items()
         if name.endswith("_time_ns")
+        and (ten_minute_mode or name != "process_cpu_time_ns")
     }
     raw: dict[str, object] = {
-        "schema_version": ARTICLE_V1_RAW_RUN_SCHEMA,
+        "schema_version": (
+            ARTICLE_V1_TEN_MINUTE_RAW_RUN_SCHEMA
+            if ten_minute_mode
+            else ARTICLE_V1_RAW_RUN_SCHEMA
+        ),
         **_case_metadata(case),
         "config_digest": str(config_digest),
         "target_fingerprint": target_context.fingerprint,
@@ -2849,6 +2896,43 @@ def evaluate_article_v1_run(
         "evaluation_weights_frozen": True,
         "evaluation_reward_consumed_by_policy": False,
     }
+    if ten_minute_mode:
+        thresholds = tuple(int(value) for value in budget_thresholds)
+        if not thresholds:
+            thresholds = (int(expansion_budget),)
+        if thresholds != tuple(sorted(set(thresholds))) or any(
+            value < 1 or value > int(expansion_budget) for value in thresholds
+        ):
+            raise ValueError(
+                "budget thresholds must be sorted, unique, positive, and no "
+                "larger than the executed horizon"
+            )
+        raw.update(
+            {
+                "budget_mode": budget_mode,
+                "runtime_mode": (
+                    "equal-cpu-budget-secondary-v1"
+                    if budget_mode == "equal-cpu-budget-secondary-v1"
+                    else "expansion-budget-primary-v1"
+                ),
+                "frontier_enumeration_schema_version": (
+                    TEN_MINUTE_FRONTIER_ENUMERATION_SCHEMA
+                ),
+                "executed_max_horizon": int(expansion_budget),
+                "first_certified_hit_expansion": (
+                    int(report["expansions"])
+                    if bool(report["certified"])
+                    else None
+                ),
+                "budget_thresholds": list(thresholds),
+                "terminal_reason": str(report["terminal_reason"]),
+                "complete": bool(report["complete"]),
+                "process_cpu_time_ns": int(report["process_cpu_time_ns"]),
+                "process_cpu_seconds": float(report["process_cpu_seconds"]),
+                "wall_time_ns": int(report["wall_time_ns"]),
+                "wall_time_seconds": float(report["runtime_seconds"]),
+            }
+        )
     return raw
 
 
@@ -4930,6 +5014,87 @@ def main(argv: Iterable[str] | None = None) -> int:
     calibrate.add_argument("--config", type=Path, required=True)
     calibrate.add_argument("--output-root", type=Path, default=Path("outputs") / "article_v1")
     calibrate.add_argument("--run-id", default="article-v1-raw-metric-calibration")
+    ten_validate = subparsers.add_parser("validate-10min", help="validate a V3 ten-minute protocol config")
+    ten_validate.add_argument("--config", type=Path, required=True)
+    ten_validate.add_argument("--checkpoint", type=Path)
+    ten_validate.add_argument("--candidate-evidence", type=Path)
+    ten_validate.add_argument(
+        "--output-root", type=Path, default=Path("outputs") / "article_v1_10min"
+    )
+    ten_validate.add_argument("--run-id", default="protocol-sensitivity-validation")
+    ten_validate.add_argument("--maximum-targets", type=int, default=1)
+    ten_validate.add_argument("--horizon", type=int)
+    ten_freeze = subparsers.add_parser("freeze-10min-protocol", help="resolve a V3 publication template from validation-only evidence")
+    ten_freeze.add_argument("--template", type=Path, required=True)
+    ten_freeze.add_argument("--calibration", type=Path, required=True)
+    ten_freeze.add_argument("--validation", type=Path, required=True)
+    ten_freeze.add_argument("--output", type=Path, required=True)
+    ten_train = subparsers.add_parser(
+        "train-10min",
+        help="train one V3 fixed-total-interaction Article V1 checkpoint",
+    )
+    ten_train.add_argument("--config", type=Path, required=True)
+    ten_train.add_argument(
+        "--output-root", type=Path, default=Path("outputs") / "article_v1_10min"
+    )
+    ten_train.add_argument("--run-id", required=True)
+    ten_train.add_argument("--training-seed", type=int, required=True)
+    ten_train.add_argument("--total-expansions", type=int)
+    ten_train.add_argument("--checkpoint-every-expansions", type=int, default=64)
+    ten_train.add_argument("--no-resume", action="store_true")
+    ten_evaluate = subparsers.add_parser(
+        "evaluate-10min",
+        help="evaluate a frozen V3 fixed-maximum-horizon campaign",
+    )
+    ten_evaluate.add_argument("--config", type=Path, required=True)
+    ten_evaluate.add_argument(
+        "--output-root", type=Path, default=Path("outputs") / "article_v1_10min"
+    )
+    ten_evaluate.add_argument("--run-id", required=True)
+    ten_evaluate.add_argument("--checkpoint", type=Path, action="append", default=[])
+    ten_evaluate.add_argument(
+        "--schedulers", nargs="+", choices=PRIMARY_SCHEDULERS, default=PRIMARY_SCHEDULERS
+    )
+    ten_audit = subparsers.add_parser(
+        "audit-10min", help="reject incomplete or timed-out V3 raw runs"
+    )
+    ten_audit.add_argument("--raw-runs", type=Path, required=True)
+    ten_audit.add_argument("--output", type=Path)
+    ten_calibrate = subparsers.add_parser(
+        "calibrate-10min-horizon",
+        help="select a feasible hard cap using train/validation CPU evidence only",
+    )
+    ten_calibrate.add_argument("--config", type=Path, required=True)
+    ten_calibrate.add_argument(
+        "--output-root", type=Path, default=Path("outputs") / "article_v1_10min"
+    )
+    ten_calibrate.add_argument("--run-id", required=True)
+    ten_calibrate.add_argument("--correctness-evidence", type=Path, required=True)
+    ten_calibrate.add_argument("--checkpoint", type=Path)
+    ten_plan = subparsers.add_parser(
+        "plan-10min", help="report V3 physical and derived campaign cardinalities"
+    )
+    ten_plan.add_argument("--config", type=Path, required=True)
+    ten_plan.add_argument("--training-cpu-seconds-per-expansion", type=float)
+    ten_cpu = subparsers.add_parser(
+        "evaluate-cpu-budget",
+        help="run the separately labelled equal-process-CPU comparison",
+    )
+    ten_cpu.add_argument("--config", type=Path, required=True)
+    ten_cpu.add_argument(
+        "--output-root", type=Path, default=Path("outputs") / "article_v1_10min"
+    )
+    ten_cpu.add_argument("--run-id", required=True)
+    ten_cpu.add_argument("--cpu-seconds", type=float)
+    ten_cpu.add_argument("--checkpoint", type=Path, action="append", default=[])
+    ten_report = subparsers.add_parser(
+        "report-10min", help="aggregate audited V3 raw runs and create required figures"
+    )
+    ten_report.add_argument("--raw-runs", type=Path, required=True)
+    ten_report.add_argument("--output", type=Path, required=True)
+    ten_report.add_argument(
+        "--training-summary", type=Path, action="append", default=[]
+    )
     plan_parser = subparsers.add_parser("plan")
     plan_parser.add_argument("--config", type=Path, required=True)
     plan_parser.add_argument("--workers", type=int, default=1)
@@ -5014,6 +5179,134 @@ def main(argv: Iterable[str] | None = None) -> int:
         "--projected-full-episode-seconds", type=float, required=True
     )
     args = parser.parse_args(argv)
+
+    if args.command == "validate-10min":
+        config = load_ten_minute_config(args.config)
+        if args.checkpoint is not None and args.candidate_evidence is not None:
+            raise ValueError("choose protocol sensitivity or candidate-budget selection")
+        if args.candidate_evidence is not None:
+            from experiments.article_v1_ten_minute_runner import select_training_interaction_budget
+
+            evidence = json.loads(args.candidate_evidence.read_text(encoding="utf-8"))
+            if evidence.get("no_test_access") is not True:
+                raise ValueError("candidate evidence must assert no_test_access=true")
+            result = select_training_interaction_budget(
+                list(evidence.get("rows", ())),
+                candidate_totals=config.training.candidate_total_expansions_per_seed,
+            )
+            destination = args.output_root / args.run_id / "validation" / "validation.json"
+            _atomic_json(destination, result)
+            print(json.dumps(_json_ready(result), indent=2, sort_keys=True))
+            return 0
+        if args.checkpoint is not None:
+            from experiments.article_v1_ten_minute_runner import validate_protocol_sensitivity
+
+            result = validate_protocol_sensitivity(
+                args.config,
+                args.output_root / args.run_id / "validation",
+                checkpoint=TenMinuteCheckpoint.load(args.checkpoint),
+                maximum_targets=args.maximum_targets,
+                horizon_override=args.horizon,
+            )
+            print(json.dumps(_json_ready(result), indent=2, sort_keys=True))
+            return 0 if result["passed"] else 2
+        print(json.dumps({"schema_version": "article-v1-ten-minute-validation-v1", "config_digest": config.digest, "profile": config.payload.get("profile"), "frozen": config.frozen, "candidate_hard_expansion_caps": list(config.runtime.candidate_hard_expansion_caps), "candidate_total_expansions_per_seed": list(config.training.candidate_total_expansions_per_seed)}, indent=2, sort_keys=True))
+        return 0
+    if args.command == "freeze-10min-protocol":
+        config = freeze_ten_minute_config(args.template, args.calibration, args.validation, args.output)
+        print(json.dumps({"schema_version": "article-v1-ten-minute-freeze-v1", "config_digest": config.digest, "output": str(args.output.resolve()), "frozen": config.frozen}, indent=2, sort_keys=True))
+        return 0
+    if args.command == "train-10min":
+        from experiments.article_v1_ten_minute_runner import train_ten_minute
+
+        result = train_ten_minute(
+            args.config,
+            args.output_root / args.run_id,
+            training_seed=args.training_seed,
+            total_expansions_override=args.total_expansions,
+            resume_training=not bool(args.no_resume),
+            checkpoint_every_expansions=args.checkpoint_every_expansions,
+        )
+        print(json.dumps(_json_ready(result), indent=2, sort_keys=True))
+        return 0 if result["complete"] else 2
+    if args.command == "evaluate-10min":
+        from experiments.article_v1_ten_minute_protocol import TenMinuteCheckpoint
+        from experiments.article_v1_ten_minute_runner import evaluate_ten_minute
+
+        result = evaluate_ten_minute(
+            args.config,
+            args.output_root / args.run_id,
+            checkpoints=tuple(TenMinuteCheckpoint.load(path) for path in args.checkpoint),
+            schedulers=tuple(args.schedulers),
+            require_frozen=True,
+        )
+        print(json.dumps(_json_ready(result), indent=2, sort_keys=True))
+        return 0 if result["passed"] else 2
+    if args.command == "audit-10min":
+        from experiments.article_v1_ten_minute_protocol import audit_ten_minute_runs
+
+        rows = [
+            json.loads(line)
+            for line in args.raw_runs.read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+        result = audit_ten_minute_runs(rows)
+        if args.output is not None:
+            _atomic_json(args.output, result)
+        print(json.dumps(_json_ready(result), indent=2, sort_keys=True))
+        return 0 if result["passed"] else 2
+    if args.command == "calibrate-10min-horizon":
+        from experiments.article_v1_ten_minute_protocol import TenMinuteCheckpoint
+        from experiments.article_v1_ten_minute_runner import calibrate_ten_minute_horizon
+
+        evidence = json.loads(args.correctness_evidence.read_text(encoding="utf-8"))
+        if evidence.get("passed") is not True:
+            raise ValueError("correctness evidence must report passed=true")
+        result = calibrate_ten_minute_horizon(
+            args.config,
+            args.output_root / args.run_id,
+            correctness_parity_passed=True,
+            checkpoint=(
+                None
+                if args.checkpoint is None
+                else TenMinuteCheckpoint.load(args.checkpoint)
+            ),
+        )
+        print(json.dumps(_json_ready(result), indent=2, sort_keys=True))
+        return 0 if result["selected_hard_expansion_cap"] is not None else 2
+    if args.command == "plan-10min":
+        from experiments.article_v1_ten_minute_runner import plan_ten_minute_campaign
+
+        result = plan_ten_minute_campaign(
+            args.config,
+            training_cpu_seconds_per_expansion=(
+                args.training_cpu_seconds_per_expansion
+            ),
+        )
+        print(json.dumps(_json_ready(result), indent=2, sort_keys=True))
+        return 0
+    if args.command == "evaluate-cpu-budget":
+        from experiments.article_v1_ten_minute_protocol import TenMinuteCheckpoint
+        from experiments.article_v1_ten_minute_runner import evaluate_cpu_budget
+
+        result = evaluate_cpu_budget(
+            args.config,
+            args.output_root / args.run_id / "cpu_budget_secondary",
+            checkpoints=tuple(TenMinuteCheckpoint.load(path) for path in args.checkpoint),
+            cpu_seconds=args.cpu_seconds,
+        )
+        print(json.dumps(_json_ready(result), indent=2, sort_keys=True))
+        return 0 if result["passed"] else 2
+    if args.command == "report-10min":
+        from experiments.article_v1_ten_minute_runner import report_ten_minute
+
+        result = report_ten_minute(
+            args.raw_runs,
+            args.output,
+            training_summaries=tuple(args.training_summary),
+        )
+        print(json.dumps(_json_ready(result), indent=2, sort_keys=True))
+        return 0
 
     if args.command == "capture-replay-checkpoint":
         result = capture_article_v1_replay_checkpoint(

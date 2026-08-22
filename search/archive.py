@@ -178,6 +178,14 @@ class InsertResult:
         return self.rejection_kind == "strict_weak_dominance"
 
 
+@dataclass(frozen=True, slots=True)
+class PreparedArchiveCandidate:
+    """Complete exact insertion payload computed once per child."""
+
+    semantic_key: CanonicalKey
+    resources: ResourceVector
+
+
 class ParetoArchive:
     """Map each exact canonical key to its active resource antichain."""
 
@@ -213,6 +221,8 @@ class ParetoArchive:
         self._next_uncanonicalized_key = 0
         self._pareto_width_peak = 0
         self._active_record_peak = 0
+        self._active_record_count = 0
+        self._active_width_by_key: DefaultDict[CanonicalKey, int] = defaultdict(int)
         self.last_canonicalization_time_ns = 0
         self.last_archive_time_ns = 0
 
@@ -236,10 +246,40 @@ class ParetoArchive:
         from the archive.  Lazy tombstones make stale priority-queue entries
         harmless and preserve a useful diagnostic history.
         """
-        insert_started = time.perf_counter_ns()
         key_started = time.perf_counter_ns()
-        semantic_key = self.semantic_key(node.state)
+        prepared = self.prepare(node)
         self.last_canonicalization_time_ns = time.perf_counter_ns() - key_started
+        return self.insert_prepared(
+            node,
+            prepared,
+            canonicalization_time_ns=self.last_canonicalization_time_ns,
+        )
+
+    def prepare(self, node: SearchNode) -> PreparedArchiveCandidate:
+        """Compute the exact semantic key and resource vector once."""
+
+        return PreparedArchiveCandidate(
+            semantic_key=self.semantic_key(node.state),
+            resources=ResourceVector.from_state(node.state),
+        )
+
+    def insert_prepared(
+        self,
+        node: SearchNode,
+        prepared: PreparedArchiveCandidate,
+        *,
+        canonicalization_time_ns: int = 0,
+        debug_recompute: bool = False,
+    ) -> InsertResult:
+        """Insert using a caller-prepared complete payload, never a digest."""
+
+        if not isinstance(prepared, PreparedArchiveCandidate):
+            raise TypeError("prepared must be a PreparedArchiveCandidate")
+        if debug_recompute and prepared != self.prepare(node):
+            raise AssertionError("prepared archive candidate disagrees with node")
+        insert_started = time.perf_counter_ns()
+        self.last_canonicalization_time_ns = int(canonicalization_time_ns)
+        semantic_key = prepared.semantic_key
         if self.canonicalization_enabled:
             key = semantic_key
         else:
@@ -252,7 +292,7 @@ class ParetoArchive:
                 semantic_key,
             )
             self._next_uncanonicalized_key += 1
-        resources = ResourceVector.from_state(node.state)
+        resources = prepared.resources
         semantic_key_existed = key in self._records_by_key
         records = self._records_by_key[key]
         active_records = [record for record in records if record.active]
@@ -282,9 +322,7 @@ class ParetoArchive:
                     ),
                 )
                 self.last_archive_time_ns = (
-                    time.perf_counter_ns()
-                    - insert_started
-                    - self.last_canonicalization_time_ns
+                    time.perf_counter_ns() - insert_started
                 )
                 return result
 
@@ -309,14 +347,16 @@ class ParetoArchive:
         self._next_record_id += 1
         records.append(record)
         self._records_by_id[record.record_id] = record
+        self._active_record_count += 1
+        self._active_width_by_key[key] += 1
 
         node.record_id = record.record_id
         node.expanded = False
-        active_width = sum(candidate.active for candidate in records)
+        active_width = self._active_width_by_key[key]
         self._pareto_width_peak = max(self._pareto_width_peak, active_width)
         self._active_record_peak = max(
             self._active_record_peak,
-            sum(candidate.active for candidate in self._records_by_id.values()),
+            self._active_record_count,
         )
 
         # Since weakly dominated records were rejected above, every surviving
@@ -338,17 +378,19 @@ class ParetoArchive:
             previously_expanded=previously_expanded,
         )
         self.last_archive_time_ns = (
-            time.perf_counter_ns()
-            - insert_started
-            - self.last_canonicalization_time_ns
+            time.perf_counter_ns() - insert_started
         )
         return result
 
     def tombstone(self, record: ArchiveRecord) -> None:
         """Retire a strictly dominated archive record without deleting it."""
+        if not record.active:
+            return
         record.active = False
         record.queued = False
         record.tombstoned = True
+        self._active_record_count -= 1
+        self._active_width_by_key[record.key] -= 1
 
     def mark_expanded(self, record: ArchiveRecord) -> bool:
         """Remove a selected record from the open frontier, not the archive."""
@@ -396,7 +438,7 @@ class ParetoArchive:
     def active_record_count(self) -> int:
         """Number of non-tombstoned resource witnesses in the archive."""
 
-        return sum(record.active for record in self._records_by_id.values())
+        return self._active_record_count
 
     @property
     def active_record_peak(self) -> int:
@@ -411,4 +453,4 @@ class ParetoArchive:
     def pareto_width(self, key: CanonicalKey) -> int:
         """Current active Pareto-antichain width for ``key``."""
 
-        return sum(record.active for record in self._records_by_key.get(key, ()))
+        return self._active_width_by_key.get(key, 0)

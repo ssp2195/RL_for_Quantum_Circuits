@@ -707,7 +707,16 @@ class CircuitSynthesisEnv(gym.Env):
         self.search_metrics["num_generated"] += len(children)
 
         for child in children:
-            generated_key = self.canonicalizer.semantic_key(child.state)
+            prepare_started = (
+                time.perf_counter_ns() if self.instrumentation_enabled else 0
+            )
+            prepared = self.frontier.archive.prepare(child)
+            prepare_time_ns = (
+                time.perf_counter_ns() - prepare_started
+                if self.instrumentation_enabled
+                else 0
+            )
+            generated_key = prepared.semantic_key
             self.generation_counts[generated_key] += 1
             generation_count_updates[generated_key] = int(
                 self.generation_counts[generated_key]
@@ -759,7 +768,11 @@ class CircuitSynthesisEnv(gym.Env):
             certification_nonmatches += 1
             self.search_metrics["certification_nonmatch"] += 1
 
-            insertion = self.frontier.insert(child)
+            insertion = self.frontier.insert_prepared(
+                child,
+                prepared,
+                canonicalization_time_ns=prepare_time_ns,
+            )
             if self.instrumentation_enabled:
                 self.search_metrics["canonicalization_time_ns"] += int(
                     self.frontier.archive.last_canonicalization_time_ns
