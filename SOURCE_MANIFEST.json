@@ -1,0 +1,31 @@
+{
+  "schema_version": "hybrid-qcs-source-manifest-v2",
+  "package_version": "0.3.0",
+  "scientific_scope": {
+    "representation": [
+      "persistent dependency DAG",
+      "complete forward/inverse Clifford tableau",
+      "ordered signed Pauli rotations",
+      "global phase and monotone resources"
+    ],
+    "rl_action": "persistent frontier-record selection",
+    "unrestricted_gate_grammar": ["H", "S", "SDG", "T", "TDG", "CNOT"],
+    "certification": "independent dense DAG replay up to global phase"
+  },
+  "new_benchmarks": {
+    "qft2": "conventional exact forward QFT-2 with final native SWAP; unrestricted native held-out target",
+    "toffoli3": "separate certified seven-term CCZ parity-network stress test"
+  },
+  "qualification": {
+    "hard_deadline_seconds": 1800,
+    "training_seeds": [11, 19, 23, 31, 47],
+    "episodes_per_seed": 160,
+    "training_episodes_certified": 800,
+    "unrestricted_evaluations_certified": 35,
+    "qft2_evaluations_certified": 5,
+    "structured_toffoli_evaluations_certified": 5,
+    "tests_passed": 15,
+    "measured_process_cpu_seconds": 22.703,
+    "evidence_boundary": "local clean-source engineering qualification; runtime is environment-specific"
+  }
+}
