@@ -215,13 +215,13 @@ class HybridSearch:
             self.generated += 1
             self.generated_states += 1
             rotation_length = len(child_state.rotations)
-            self.rotation_length_sum = rotation_length
+            self.rotation_length_sum += rotation_length
             self.max_rotation_length = max(self.max_rotation_length, rotation_length)
             child = self._insert(child_state)
             if child is None:
                 continue
             accepted_now += 1
-            if child.state.canonical_key == self.target.canonical_key:
+            if child_state.canonical_key == self.target.canonical_key:
                 terminal_candidates.append(child.record_id)
 
         if terminal_candidates:
@@ -298,6 +298,7 @@ def _weakly_dominates(left: tuple[int, ...], right: tuple[int, ...]) -> bool:
 
 def _strictly_dominates(left: tuple[int, ...], right: tuple[int, ...]) -> bool:
     return _weakly_dominates(left, right) and left != right
+
 
 __all__ = [
     "ExpansionResult",
