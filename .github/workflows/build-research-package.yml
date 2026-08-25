@@ -1,0 +1,43 @@
+name: Build research article package
+
+on:
+  push:
+    branches:
+      - research-article-persistent-dag-r1
+    paths:
+      - '.article_package/**'
+      - '.github/workflows/build-research-package.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          ref: research-article-persistent-dag-r1
+          fetch-depth: 0
+
+      - name: Install Pandoc
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y pandoc
+
+      - name: Build Markdown, DOCX, LaTeX, and ZIP
+        run: python .article_package/build_package.py
+
+      - name: Commit generated package
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add research_package/
+          if git diff --cached --quiet; then
+            echo 'Research package already up to date.'
+          else
+            git commit -m 'Add revised persistent-DAG research article package'
+            git push origin HEAD:research-article-persistent-dag-r1
+          fi
