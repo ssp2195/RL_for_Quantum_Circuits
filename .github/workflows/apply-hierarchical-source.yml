@@ -25,8 +25,8 @@ jobs:
           test "$(stat -c%s /tmp/change.patch.xz)" = "38792"
           echo "62d510c72ae90e8d9eeebba910ceb45ab411590ee1476fdc3081b09395308010  /tmp/change.patch.xz" | sha256sum --check --strict
           xz --decompress --stdout /tmp/change.patch.xz > /tmp/change.patch
-          git apply --check /tmp/change.patch
-          git apply /tmp/change.patch
+          git apply --check --exclude=.github/workflows/delete-authorized-obsolete-branches.yml /tmp/change.patch
+          git apply --exclude=.github/workflows/delete-authorized-obsolete-branches.yml /tmp/change.patch
 
       - name: Remove one-time bootstrap material
         shell: bash
