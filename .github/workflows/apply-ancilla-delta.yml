@@ -65,8 +65,6 @@ jobs:
           echo "3ad5fa05fa21e8fd3c861d35d00327a621ed49d130172cf09d84f4f7134be6f1  /tmp/source_tree.tar.xz" | sha256sum -c -
           xz -t /tmp/source_tree.tar.xz
           tar -xJf /tmp/source_tree.tar.xz -C .
-          rm -f .github/workflows/apply-hierarchical-source.yml
-          rm -f .github/workflows/export-ancilla-source.yml
 
       - uses: actions/setup-python@v5
         with:
@@ -128,7 +126,7 @@ jobs:
           assert result["qft3"]["witness_certified"] is True, result["qft3"]
           PY
 
-      - name: Remove transport-only files and publish validated revision
+      - name: Publish validated source without modifying workflow files
         shell: bash
         run: |
           set -euo pipefail
@@ -136,10 +134,18 @@ jobs:
           rm -rf .pytest_cache hybrid_qcs.egg-info
           find . -type d -name __pycache__ -prune -exec rm -rf {} +
           find . -name '*.pyc' -delete
-          rm -f .github/workflows/apply-ancilla-delta.yml
+          # The Actions token cannot create or delete workflow files.  Keep the
+          # branch's existing workflows unchanged in this commit; a subsequent
+          # user-authorized GitHub API commit will replace them with final CI.
+          rm -f .github/workflows/ancilla-ci.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
+          if git diff --cached --name-only | grep -q '^.github/workflows/'; then
+            echo 'Refusing to publish a workflow-file change with the Actions token.'
+            git diff --cached --name-status -- .github/workflows
+            exit 1
+          fi
           git diff --cached --check
           git commit -m "Add ancilla-isometry contracts, hierarchical search, and QFT-3 qualification"
           git push origin HEAD:ancilla-isometry-hierarchical-v1
