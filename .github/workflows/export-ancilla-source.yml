@@ -1,0 +1,32 @@
+name: Export ancilla branch source
+
+on:
+  push:
+    branches: ["ancilla-isometry-hierarchical-v1"]
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Record exact source provenance
+        run: |
+          set -euo pipefail
+          mkdir -p export_metadata
+          git rev-parse HEAD > export_metadata/commit_sha.txt
+          git status --short > export_metadata/git_status_short.txt
+          git log -1 --format=fuller > export_metadata/commit.txt
+      - name: Upload source snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: ancilla-base-source
+          path: |
+            .
+            !.git/**
+          include-hidden-files: true
+          retention-days: 1
