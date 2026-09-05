@@ -1,0 +1,15 @@
+\begin{abstract}
+Exact synthesis over a finite quantum gate library is a combinatorial search problem whose branching and semantic-reduction costs grow rapidly with circuit length and physical-register width. This work develops a hierarchical learning-guided exact Clifford+$T$ synthesizer for circuits acting on logical qubits together with a fixed pool of clean workspace qubits and, optionally, borrowed workspace qubits. The full circuit remains unitary, but correctness is defined on the promised input subspace. If $J$ embeds the free logical and borrowed inputs into the physical register by inserting clean ancillas in $\lvert0\rangle$, a candidate $U_C$ is accepted when
+\[
+U_CJ=e^{i\alpha}J(U_\star\otimes I_{\mathrm{borrowed}}),
+\]
+or by exact equality when the contract requires phase-sensitive modular composition. Clean-workspace leakage and logical-action error are evaluated independently from the persistent circuit witness.
+
+Each search record contains a structurally shared dependency DAG, a complete forward--inverse Clifford tableau, an ordered word of signed Pauli rotations, explicit phase, monotone resources, an ancilla-role contract, an incrementally propagated candidate isometry, and a mask of native continuations not yet processed. An outer linear semi-gradient SARSA policy selects the frontier record that receives computation. A role-aware disjoint linear contextual bandit, trained by LinUCB, ranks the selected record's pending continuations, and the deterministic engine processes only a small exact batch. Gate legality, symbolic transitions, canonicalization, duplicate handling, resource-Pareto pruning, ancilla restoration, and final certification remain outside both learned policies.
+
+The archive retains a strengthened projective full-unitary key that extracts Clifford-valued Pauli rotations into the tableau. This key is a sound sufficient condition for ancilla-contract equivalence, while terminal acceptance uses the more general isometry contract and therefore does not require full-unitary key equality. Forty-seven regression and ancilla-specific tests pass. Warm-started ancilla fine-tuning increases the matched linear-policy training time by approximately $8.2\%$. Three held-out clean-ancilla contract targets are certified after $5$--$9$ exact continuation attempts. An independently constructed $47$-gate Clifford+$T$ implementation of the conventional three-qubit quantum Fourier transform using one clean workspace qubit is certified with projective isometry error $1.12\times10^{-15}$ and leakage $2.15\times10^{-32}$. A bounded unrestricted search probe does not rediscover this witness, delimiting the present result as ancilla-compatible exact search rather than scalable unrestricted QFT synthesis.
+\end{abstract}
+
+\begin{IEEEkeywords}
+quantum circuit synthesis, Clifford+$T$, clean ancilla, borrowed ancilla, isometry, uncomputation, reinforcement learning, SARSA, contextual bandit, LinUCB, canonicalization, Pareto pruning, quantum Fourier transform.
+\end{IEEEkeywords}

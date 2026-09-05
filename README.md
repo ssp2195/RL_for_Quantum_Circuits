@@ -126,15 +126,59 @@ The repository retains:
 The structured Toffoli experiment must not be interpreted as unrestricted
 native Toffoli discovery.
 
-## Ancilla boundary
+## Ancilla contract boundary
 
-Ancilla-assisted synthesis is not implemented in this branch. A clean-ancilla
-extension requires a semantic object based on the restricted isometry
+The branch now supports fixed, preallocated clean ancillas and optional borrowed
+ancillas under unitary Clifford+T evolution. Measurement, reset, classical
+feed-forward, discarded garbage channels, and learned ancilla release are still
+outside the declared model.
+
+## Fixed-pool clean and borrowed ancillas
+
+The `ancilla-isometry-hierarchical-v1` extension introduces an explicit
+`AncillaContract`. Physical wires are partitioned into logical data, clean
+workspace initialized in `|0>`, and optional borrowed workspace whose arbitrary
+input state must be returned unchanged. For a clean-input embedding `J`, a
+candidate full-register unitary `U_C` is accepted when
 
 \[
-V_C=U_C\bigl(I\otimes |0\rangle^{\otimes a}\bigr),
+U_C J = e^{i\phi}J(U_\star\otimes I_{\mathrm{borrowed}})
 \]
 
-rather than equality of full unitaries on arbitrary ancilla inputs. Ancilla
-liveness, restoration, and resource coordinates must be specified before they
-can participate in sound dominance pruning.
+in projective mode, or without the scalar phase in exact mode. Independent
+certification reports both phase-aligned isometry error and leakage outside the
+clean-output subspace. Full symbolic-key equality is not required for terminal
+acceptance.
+
+Archive pruning deliberately remains conservative. Projective contracts use
+the strengthened full-register Clifford/Pauli key, which is a sufficient but
+not necessary test for clean-ancilla equivalence. Exact-phase contracts disable
+semantic merging through a witness key because the current Clifford tableau is
+projective. This sacrifices pruning efficiency rather than risking an unsound
+phase merge.
+
+The generic ancilla search retains outer linear SARSA and a role-aware disjoint
+linear LinUCB policy. Gate contexts distinguish logical, clean-workspace, and
+borrowed-workspace operands. Existing mixed-gate policies provide a warm start;
+the recorded ancilla fine-tuning adds only three outer episodes and four inner
+episodes.
+
+Run the bounded qualification:
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 \
+  hybrid-qcs-ancilla \
+  --output-dir outputs/ancilla-qualification
+```
+
+The recorded qualification under
+`experiments/ancilla_isometry_20260905/` reports 47 passing tests, certified
+held-out clean-ancilla contracts on one to three logical qubits, and an 8.2%
+training-time increase relative to the matched pre-ancilla hierarchy. It also
+constructs and independently certifies an exact 47-gate QFT-3 witness using one
+clean ancilla to implement the controlled-`T` phase through
+compute-phase-uncompute. The unrestricted QFT-3 search probe did not certify
+within its 1.5-second bound and is reported as a negative bounded result.
+## Ancilla-aware article
+
+The complete standalone LaTeX article is stored in `Ancilla research article latex/`. It documents the clean/borrowed-ancilla isometry contract, phase modes, contract-safe canonicalization and Pareto pruning, role-aware outer SARSA and inner LinUCB features, the marginal training-cost protocol, and the independently certified one-clean-ancilla QFT-3 witness.

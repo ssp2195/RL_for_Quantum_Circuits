@@ -183,8 +183,8 @@ class HybridState:
 
     @classmethod
     def identity(cls, num_qubits: int, budget: Budget) -> "HybridState":
-        if isinstance(num_qubits, bool) or not isinstance(num_qubits, int) or not 1 <= num_qubits <= 6:
-            raise ValueError("num_qubits must lie in 1..6")
+        if isinstance(num_qubits, bool) or not isinstance(num_qubits, int) or num_qubits < 1:
+            raise ValueError("num_qubits must be a positive integer")
         tableau = CliffordTableau.identity(num_qubits)
         rotations: tuple[PauliRotation, ...] = ()
         return cls(

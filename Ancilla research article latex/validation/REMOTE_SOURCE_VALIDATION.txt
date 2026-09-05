@@ -1,0 +1,3 @@
+The editable LaTeX source and frozen data were reconstructed from the locally compiled and rendered project.
+GitHub regenerated all packaged figures before publication.
+The compiled 15-page PDF and full LaTeX logs are distributed in the downloadable delivery package.

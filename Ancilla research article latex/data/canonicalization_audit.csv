@@ -1,0 +1,3 @@
+num_qubits,max_depth,enumerated_prefixes,dense_projective_classes,legacy_unique_keys,strong_unique_keys,legacy_duplicate_excess,strong_duplicate_excess,duplicate_excess_reduction_fraction,strong_key_safety_violations,strong_to_legacy_key_time_ratio
+1,5,3906,155,412,281,257,126,0.5097276264591439,0,3.8087814081048053
+2,3,1885,545,649,597,104,52,0.5,0,4.382224698613259

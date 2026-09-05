@@ -1,0 +1,74 @@
+\usepackage{amsmath,amssymb,amsfonts,mathtools}
+\usepackage{amsthm}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{siunitx}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,fit,backgrounds,shapes.geometric,calc}
+\usepackage{microtype}
+\usepackage{url}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{xcolor}
+
+\hypersetup{
+  hidelinks,
+  pdftitle={Hierarchical Learning-Guided Exact Clifford+T Circuit Synthesis under Clean-Ancilla Isometry Contracts},
+  pdfauthor={Anonymous Authors},
+  pdfsubject={Exact Clifford+T synthesis with clean and borrowed ancilla contracts, outer SARSA, inner LinUCB, canonical pruning, and independent isometry certification},
+  pdfkeywords={quantum circuit synthesis, Clifford+T, ancilla, isometry, uncomputation, reinforcement learning, SARSA, contextual bandit, LinUCB, canonicalization, Pareto pruning}
+}
+\sisetup{detect-all=true,round-mode=places,round-precision=4}
+\graphicspath{{figures/}}
+\interdisplaylinepenalty=2500
+
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}{Lemma}
+\newtheorem{proposition}{Proposition}
+\newtheorem{corollary}{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\newtheorem{remark}{Remark}
+
+\newcommand{\cG}{\mathcal{G}}
+\newcommand{\cF}{\mathcal{F}}
+\newcommand{\cH}{\mathcal{H}}
+\newcommand{\cP}{\mathcal{P}}
+\newcommand{\cR}{\mathcal{R}}
+\newcommand{\cL}{\mathcal{L}}
+\newcommand{\cJ}{\mathcal{J}}
+\newcommand{\cV}{\mathcal{V}}
+\newcommand{\cI}{\mathcal{I}}
+\newcommand{\bF}{\mathbf{F}}
+\newcommand{\bB}{\mathbf{B}}
+\newcommand{\brho}{\boldsymbol{\rho}}
+\newcommand{\btheta}{\boldsymbol{\theta}}
+\newcommand{\bbeta}{\boldsymbol{\beta}}
+\newcommand{\bphi}{\boldsymbol{\varphi}}
+\newcommand{\bz}{\mathbf{z}}
+\newcommand{\bx}{\mathbf{x}}
+\newcommand{\ind}{\mathbf{1}}
+\newcommand{\Sem}{\operatorname{Sem}}
+\newcommand{\Cert}{\operatorname{Cert}}
+\newcommand{\payload}{\operatorname{payload}}
+\newcommand{\CNOT}{\operatorname{CNOT}}
+\newcommand{\SDG}{S^{\dagger}}
+\newcommand{\TDG}{T^{\dagger}}
+\newcommand{\proj}{\mathrel{\sim}}
+\newcommand{\RPauli}[2]{R_{#1}\!\left(#2\right)}
+\newcommand{\Span}{\operatorname{span}}
+\newcommand{\Tr}{\operatorname{Tr}}
+
+\tikzset{
+  block/.style={draw,rounded corners,align=center,minimum height=8mm,minimum width=26mm,fill=black!3},
+  policy/.style={draw,rounded corners,align=center,minimum height=9mm,minimum width=28mm,fill=black!8},
+  exact/.style={draw,rounded corners,align=center,minimum height=9mm,minimum width=29mm,fill=white},
+  register/.style={draw,rounded corners,align=center,minimum height=11mm,minimum width=30mm,fill=black!2},
+  flow/.style={-{Latex[length=2mm]},thick},
+  loop/.style={-{Latex[length=2mm]},thick,dashed}
+}

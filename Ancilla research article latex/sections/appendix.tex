@@ -1,0 +1,99 @@
+\appendices
+
+\section{Ancilla-Aware Feature Definitions}
+
+The outer feature vector is ordered as follows:
+\begin{enumerate}
+\item bias;
+\item normalized $T$, CNOT, total-gate, and depth resources;
+\item mean logical and workspace wire depths;
+\item rotation count, anticommutation density, and mean Pauli weight;
+\item tableau, ordered-rotation, multiset-rotation, and total symbolic mismatch;
+\item contract isometry distance and clean-workspace leakage;
+\item logical and workspace rotation-support fractions;
+\item workspace-touch and logical--workspace CNOT fractions;
+\item pending-continuation fraction;
+\item last-gate indicators for $H,S,S^\dagger,T,T^\dagger,$ and CNOT;
+\item logical-register and workspace fractions.
+\end{enumerate}
+
+The inner context is ordered as bias, contract distance, leakage, symbolic distance, projected tableau reduction, signed rotation match, axis-only rotation match, logical and workspace support of the candidate transported axis, operand-local target-tableau mismatch, post-action $T$/CNOT/gate/depth slack, last-gate operand overlap, and workspace depth.
+
+\section{QFT-3 Clean-Ancilla Witness}
+
+The exact controlled-$S$ decomposition used in the witness is
+\begin{equation}
+T_c\,T_t\,\CNOT_{c\to t}\,T_t^\dagger\,\CNOT_{c\to t}.
+\end{equation}
+An exact 15-gate CCX decomposition with controls $c_0,c_1$ and target $a$ is
+\begin{align}
+&H_a,T_{c_1},T_a,T_{c_0},\nonumber\\
+&\CNOT_{a\to c_0},T_{c_0}^\dagger,
+\CNOT_{a\to c_1},T_{c_1}^\dagger,\nonumber\\
+&\CNOT_{c_1\to c_0},T_{c_0}^\dagger,
+\CNOT_{a\to c_0},T_{c_0},\nonumber\\
+&\CNOT_{c_1\to c_0},
+\CNOT_{a\to c_1},H_a.
+\end{align}
+The controlled-$T$ is realized by
+\begin{equation}
+\operatorname{CCX}_{c,t\to a}
+\;T_a\;
+\operatorname{CCX}_{c,t\to a},
+\end{equation}
+which computes the conjunction into clean workspace, applies the phase, and uncomputes.
+
+With logical qubits $q_0,q_1,q_2$ and clean workspace $a=q_3$, the complete chronological witness is
+\begin{equation}
+\begin{aligned}
+&H_{q_2};\;\operatorname{CS}_{q_1,q_2};\;
+\operatorname{CT}_{q_0,q_2}^{(a)};\;H_{q_1};\\
+&\operatorname{CS}_{q_0,q_1};\;H_{q_0};\;
+\operatorname{SWAP}_{q_0,q_2},
+\end{aligned}
+\end{equation}
+where each controlled operation is expanded into the native Clifford+$T$ gates above and the SWAP is three CNOTs. The result has 47 native gates.
+
+\section{Contract Test Matrix}
+
+\begin{table*}[h]
+\caption{Deterministic ancilla semantics exercised by the test suite.}
+\centering
+\begin{tabularx}{\textwidth}{lXl}
+\toprule
+Case & Required interpretation & Expected\\
+\midrule
+$Z$ on clean $\lvert0\rangle$ workspace & Full unitary differs, contract isometry agrees & accept\\
+Workspace left in $\lvert1\rangle$ & Nonzero invalid-output amplitude & reject\\
+Residual logical--workspace entanglement & Clean-output subspace not restored coherently & reject\\
+Compute followed by inverse compute & Garbage is uncomputed & accept\\
+Borrowed workspace temporarily changed then restored & Identity on arbitrary borrowed input & accept\\
+Borrowed workspace not restored & Domain isometry differs from $U_\star\otimes I_B$ & reject\\
+Global phase in projective mode & Physically irrelevant complete-circuit phase & accept\\
+Global phase in exact mode & Relative phase under future control & reject\\
+\bottomrule
+\end{tabularx}
+\end{table*}
+
+\section{Reproduction Commands}
+
+Install and run the complete regression suite:
+\begin{verbatim}
+python -m pip install -e '.[dev]'
+python -m compileall -q hybrid_qcs tests
+python -m pytest -q
+\end{verbatim}
+
+Run the ancilla qualification:
+\begin{verbatim}
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 \
+python -m hybrid_qcs.ancilla_runner \
+  --output-dir \
+  experiments/ancilla_isometry_20260905
+\end{verbatim}
+
+Build this article:
+\begin{verbatim}
+latexmk -pdf -interaction=nonstopmode \
+  -halt-on-error main.tex
+\end{verbatim}

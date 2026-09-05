@@ -1,0 +1,148 @@
+\section{Clean and Borrowed Ancilla Contracts}
+\label{sec:ancilla-contract}
+
+\subsection{Clean workspace and uncomputation}
+
+A clean ancilla is promised to enter in $\lvert0\rangle$. A reversible computation may map
+\begin{equation}
+\lvert x\rangle\lvert0\rangle_A
+\longmapsto
+\lvert x\rangle\lvert f(x)\rangle_A,
+\end{equation}
+use the value $f(x)$ as a control or through phase kickback, and then apply the inverse computation so that
+\begin{equation}
+\lvert x\rangle\lvert f(x)\rangle_A
+\longmapsto
+\lvert x\rangle\lvert0\rangle_A.
+\end{equation}
+For a superposition of $x$, failure to erase the workspace can leave it entangled with the data and thereby change subsequent interference. The correctness contract therefore includes workspace restoration rather than comparing only reduced logical output states.
+
+\subsection{The input embedding}
+
+Let the domain Hilbert space be
+\begin{equation}
+\cH_D=\cH_L\otimes\cH_B,
+\qquad d_D=2^{n+b}.
+\end{equation}
+For computational basis indices $x$ on the logical and borrowed wires, the embedding $J$ places the corresponding bits on their declared physical wires and sets every clean-ancilla bit to zero. It satisfies
+\begin{equation}
+J^\dagger J=I_D.
+\end{equation}
+The projector onto the valid clean-output subspace is
+\begin{equation}
+P_0=JJ^\dagger.
+\label{eq:clean-projector}
+\end{equation}
+
+For borrowed workspace, the target operation on the free domain is
+\begin{equation}
+W_\star=U_\star\otimes I_B,
+\label{eq:domain-target}
+\end{equation}
+so that the target isometry is $V_\star=JW_\star$. The identity on $B$ must hold for arbitrary borrowed input, not only for a selected list of basis states. Because the isometry is a linear map on the full logical--borrowed domain, the same condition also protects a borrowed register entangled with an external reference.
+
+\begin{figure*}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[node distance=13mm and 14mm,font=\footnotesize]
+\node[register] (domain) {Free input domain\\$\cH_L\otimes\cH_B$};
+\node[exact,right=of domain] (embed) {Insert clean workspace\\$J:\lvert\psi\rangle\mapsto\lvert\psi\rangle\lvert0^a\rangle$};
+\node[block,right=of embed,minimum width=34mm] (circuit) {Physical Clifford+$T$ circuit\\$U(D_v)$ on $N=n+a+b$ wires};
+\node[exact,right=of circuit] (project) {Check clean return\\and logical/borrowed action};
+\node[register,right=of project] (target) {Target isometry\\$J(U_\star\otimes I_B)$};
+\draw[flow] (domain)--(embed);
+\draw[flow] (embed)--node[above]{$J$}(circuit);
+\draw[flow] (circuit)--node[above]{$U(D_v)J$}(project);
+\draw[flow] (project)--(target);
+\node[below=8mm of circuit,align=center] (note) {The circuit may act arbitrarily on inputs in which a declared clean ancilla is $\lvert1\rangle$;\\those columns are outside the synthesis contract.};
+\draw[dashed] (circuit)--(note);
+\end{tikzpicture}%
+}
+\caption{Contract-relative semantics. Correctness is equality of isometries on the promised input domain together with clean-workspace restoration and identity action on borrowed workspace.}
+\label{fig:ancilla-contract}
+\end{figure*}
+
+\subsection{Projective and exact phase modes}
+
+In projective mode, the contract is
+\begin{equation}
+\boxed{
+U(D_v)J=e^{i\alpha}J(U_\star\otimes I_B).
+}
+\label{eq:projective-contract}
+\end{equation}
+This is appropriate when the synthesized circuit is a complete physical operation for which a global phase is irrelevant.
+
+In exact mode, the contract is
+\begin{equation}
+\boxed{
+U(D_v)J=J(U_\star\otimes I_B).
+}
+\label{eq:exact-contract}
+\end{equation}
+Exact mode is needed when the block may subsequently be controlled. Replacing $U$ by $e^{i\alpha}U$ inside
+\begin{equation}
+\lvert0\rangle\!\langle0\rvert\otimes I
++\lvert1\rangle\!\langle1\rvert\otimes U
+\end{equation}
+changes a relative phase on the control branch and is not generally a global phase of the larger operation.
+
+\subsection{Contract distance and leakage}
+
+For a candidate isometry $V_v=U(D_v)J$, define the phase-invariant search distance
+\begin{equation}
+\boxed{
+d_{\mathrm{iso}}(v)=
+1-\frac{|\Tr(V_\star^\dagger V_v)|^2}{d_D^2}.
+}
+\label{eq:isometry-distance}
+\end{equation}
+Both $V_v$ and $V_\star$ have $d_D$ orthonormal columns, so $0\leq d_{\mathrm{iso}}\leq1$ and $d_{\mathrm{iso}}=0$ for projectively equal isometries.
+
+Clean-workspace leakage is
+\begin{equation}
+\boxed{
+\ell_A(v)=
+\frac{1}{d_D}\left\|(I-P_0)V_v\right\|_F^2.
+}
+\label{eq:leakage}
+\end{equation}
+The implementation evaluates this quantity by summing amplitudes in physical basis rows where at least one clean-ancilla bit is one.
+
+The final phase-aligned maximum-entry discrepancy is
+\begin{equation}
+\Delta_{\mathrm{proj}}(v)=
+\min_{|z|=1}\left\|V_v-zV_\star\right\|_{\max},
+\label{eq:projective-max-error}
+\end{equation}
+while exact mode uses
+\begin{equation}
+\Delta_{\mathrm{exact}}(v)=
+\left\|V_v-V_\star\right\|_{\max}.
+\end{equation}
+A candidate satisfies the contract only when the selected discrepancy and $\ell_A$ are below the fixed tolerance.
+
+\subsection{Independent certification procedure}
+
+The certifier performs the following operations independently of the learned feature caches:
+\begin{enumerate}
+\item materialize the chronological witness from the persistent DAG;
+\item replay the witness through the exact tableau--rotation transition system and compare the resulting symbolic state and resources with the stored terminal record;
+\item reconstruct the physical dense unitary from the witness;
+\item multiply by $J$ to obtain the candidate isometry;
+\item compare the candidate with $J(U_\star\otimes I_B)$ in the requested phase mode; and
+\item report the clean-workspace leakage separately.
+\end{enumerate}
+The terminal decision is therefore independent of the outer SARSA weights, inner LinUCB parameters, reward design, and frontier ordering.
+
+\subsection{Diagnostic examples}
+
+The test suite includes the following contract distinctions.
+\begin{itemize}
+\item $I_L\otimes Z_A$ is accepted as equivalent to $I_L\otimes I_A$ for a clean ancilla in projective or exact mode because $Z\lvert0\rangle=\lvert0\rangle$.
+\item A circuit that leaves a declared clean ancilla in $\lvert1\rangle$ is rejected by \eqref{eq:leakage} even if the logical reduced density operator happens to match for a restricted input.
+\item A borrowed ancilla is tested over the complete borrowed input space and must undergo the identity operation.
+\item A phase-shifted candidate is accepted in projective mode and rejected in exact mode.
+\item A compute--phase--uncompute witness is accepted only after the workspace has been restored coherently.
+\end{itemize}
+These cases distinguish an ancilla contract from a collection of basis-state examples.

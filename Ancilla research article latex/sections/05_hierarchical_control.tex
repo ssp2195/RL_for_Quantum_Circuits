@@ -1,0 +1,219 @@
+\section{Hierarchical Allocation of Exact Search Work}
+
+\subsection{Deferred frontier semantics}
+
+Let $\cF_t$ be the set of active resource-Pareto records whose pending continuation masks are nonempty. The complete search state contains the archive, frontier, synthesis contract, resource limits, and remaining external budgets:
+\begin{equation}
+s_t=(\cH_t,\cF_t,\Xi,\bB,B_t^{\mathrm{alloc}},B_t^{\mathrm{edge}}).
+\end{equation}
+The outer action selects a frontier record,
+\begin{equation}
+\boxed{
+a_t^{\mathrm{out}}=v_t,\qquad v_t\in\cF_t.
+}
+\label{eq:outer-action}
+\end{equation}
+Let $\cP_t(v_t)\subseteq\cG_N$ denote the continuations that remain unprocessed. The inner controller returns an ordered batch
+\begin{equation}
+\boxed{
+B_t=(g_{t,1},\ldots,g_{t,\tau_t}),
+\quad g_{t,j}\in\cP_t(v_t),
+\quad1\leq\tau_t\leq b.
+}
+\label{eq:inner-batch}
+\end{equation}
+The implementation uses $b=4$ in the qualification experiment. Each selected token is removed exactly once, and the parent remains active until its pending set is empty or it is removed by sound dominance.
+
+For every selected edge, the deterministic pipeline is
+\begin{equation}
+\begin{aligned}
+\text{legality}
+&\rightarrow\text{symbolic transition}
+\rightarrow\text{isometry update}\\
+&\rightarrow\text{canonical key}
+\rightarrow\text{Pareto archive}\\
+&\rightarrow\text{contract prefilter}
+\rightarrow\text{independent certification}.
+\end{aligned}
+\label{eq:exact-pipeline}
+\end{equation}
+The policies influence only the order in which this pipeline is invoked.
+
+\begin{figure*}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[node distance=9mm and 10mm,font=\footnotesize]
+\node[block] (frontier) {Active contract-aware frontier\\$\cF_t$};
+\node[policy,right=of frontier] (outer) {Outer linear SARSA\\rank frontier records};
+\node[block,right=of outer] (record) {Selected record $v_t$\\pending native mask};
+\node[policy,right=of record] (inner) {Role-aware disjoint LinUCB\\rank pending continuations};
+\node[exact,right=of inner] (batch) {Process at most $b$\\exact physical-register edges};
+\node[exact,below=10mm of batch] (canon) {Full-unitary canonical key\\and resource-Pareto archive};
+\node[exact,left=of canon] (contract) {Update $U(D_v)J$\\distance and clean leakage};
+\node[exact,left=of contract] (cert) {Independent isometry\\contract certification};
+\draw[flow] (frontier)--(outer);
+\draw[flow] (outer)--(record);
+\draw[flow] (record)--(inner);
+\draw[flow] (inner)--(batch);
+\draw[flow] (batch)--(canon);
+\draw[flow] (canon)--(contract);
+\draw[flow] (contract)--(cert);
+\draw[loop] (canon.south) to[out=-90,in=-90,looseness=0.68] node[below,align=center]{surviving children and\\partially processed parent} (frontier.south);
+\draw[flow] (cert.west)--++(-10mm,0) node[left,align=right]{certified logical action\\and restored workspace};
+\end{tikzpicture}%
+}
+\caption{Hierarchical ancilla-aware exact search. The two linear policies schedule computation; all physical semantics, workspace restoration checks, pruning decisions, and final acceptance remain deterministic.}
+\label{fig:hierarchy}
+\end{figure*}
+
+\subsection{Outer linear SARSA policy}
+
+The outer action-value function is shared across the variable frontier:
+\begin{equation}
+Q_{\btheta}(s_t,v)=\btheta^\mathsf T\bphi_{\mathrm{out}}(s_t,v).
+\label{eq:outer-q}
+\end{equation}
+The ancilla-aware feature vector has 29 coordinates. It retains normalized $T$ count, CNOT count, total gate count, total depth, rotation length, anticommutation density, mean Pauli weight, tableau mismatch, ordered- and multiset-rotation mismatch, symbolic distance, last-gate indicators, and register width. It adds only inexpensive role-aware quantities:
+\begin{itemize}
+\item mean logical-wire depth and mean workspace-wire depth;
+\item contract isometry distance $d_{\mathrm{iso}}$ and leakage $\ell_A$;
+\item fractions of residual Pauli support on logical and workspace wires;
+\item normalized workspace-touch and logical--workspace CNOT counts; and
+\item fraction of the selected record's native continuations still pending.
+\end{itemize}
+The model remains linear and all candidates are scored by a matrix--vector multiplication. No graph neural network or learned semantic predicate is introduced.
+
+Because one outer action can process $\tau_t$ exact edges, the correct update is semi-Markov SARSA:
+\begin{equation}
+\delta_t=R_t^{(\tau_t)}
++\gamma^{\tau_t}Q_{\btheta}(s_{t+1},v_{t+1})
+-Q_{\btheta}(s_t,v_t),
+\label{eq:smdp-sarsa}
+\end{equation}
+where
+\begin{equation}
+R_t^{(\tau_t)}=\sum_{j=0}^{\tau_t-1}\gamma^j r_{t,j}.
+\end{equation}
+The parameter update is
+\begin{equation}
+\btheta\leftarrow
+\btheta+\alpha_{\mathrm{out}}\delta_t
+\bphi_{\mathrm{out}}(s_t,v_t).
+\label{eq:outer-update}
+\end{equation}
+The finite episodic qualification uses $\gamma=1$.
+
+\subsection{Role-aware disjoint LinUCB}
+
+A plain concatenation of state-only and gate-only features would make the state term constant across all pending gates of one record. The inner policy instead uses action-conditioned contexts and separates models by both gate family and operand role. Examples include
+\begin{equation}
+\CNOT:\mathrm{logical}\!\rightarrow\!\mathrm{clean},
+\qquad
+T:\mathrm{clean},
+\qquad
+H:\mathrm{logical}.
+\end{equation}
+For every encountered family--role class $f$, LinUCB stores
+\begin{align}
+A_f&=\lambda I+\sum_{r:f_r=f}\bz_r\bz_r^\mathsf T,\\
+b_f&=\sum_{r:f_r=f}y_r\bz_r,\\
+\widehat\bbeta_f&=A_f^{-1}b_f.
+\label{eq:linucb-estimator}
+\end{align}
+The 16-dimensional context includes $d_{\mathrm{iso}}$, leakage, symbolic discrepancy, projected tableau-mismatch reduction, signed and unsigned target-rotation matches, candidate Pauli support on logical and workspace wires, operand-local tableau mismatch, post-action resource slack, overlap with the latest dependent gate, and workspace depth.
+
+During inner training, a pending edge is selected by
+\begin{equation}
+\begin{aligned}
+g_t\in\arg\max_{g\in\cP_t(v_t)}\bigl[&
+\widehat\bbeta_{f(g)}^\mathsf T\bz(v_t,g)\\
+&+\alpha_{\mathrm{UCB}}
+\sqrt{\bz(v_t,g)^\mathsf T A_{f(g)}^{-1}\bz(v_t,g)}\bigr].
+\end{aligned}
+\label{eq:linucb-score}
+\end{equation}
+At frozen evaluation the confidence bonus is removed, $\alpha_{\mathrm{UCB}}=0$, and pending continuations are ranked by posterior mean. The inverse covariance is updated using Sherman--Morrison,
+\begin{equation}
+A_f^{-1}\leftarrow A_f^{-1}
+-\frac{A_f^{-1}\bz\bz^\mathsf T A_f^{-1}}
+{1+\bz^\mathsf T A_f^{-1}\bz},
+\label{eq:sherman-morrison}
+\end{equation}
+so inner learning does not require repeated matrix inversion.
+
+\subsection{Contract-aware rewards}
+
+The outer frontier potential is
+\begin{equation}
+\Phi(\cF_t)=-\min_{v\in\cF_t}
+\left[d_{\mathrm{iso}}(v)+\min\{1,\ell_A(v)\}\right],
+\label{eq:ancilla-potential}
+\end{equation}
+with value zero after certification. A batch receives
+\begin{equation}
+R_t=-\tau_t
++\eta\left[\Phi(\cF_{t+1})-\Phi(\cF_t)\right]+b_t,
+\label{eq:outer-reward}
+\end{equation}
+where $b_t$ is positive only after independent contract certification and negative at exhaustion or a hard cap. Temporary workspace use is not penalized directly: compute--use--uncompute paths may legitimately move away from the clean final subspace before returning.
+
+The inner policy is trained against a frozen outer critic. If $V_{\bar\theta}(\cF)$ denotes the maximum frozen outer value over the current frontier, the one-edge response used in the implementation is
+\begin{equation}
+\boxed{
+\begin{aligned}
+y_t={}&0.05\left[V_{\bar\theta}(\cF_{t+1})-V_{\bar\theta}(\cF_t)\right]-0.01\\
+&-0.05\ind[\text{no child admitted}]
++2\ind[\text{certified}].
+\end{aligned}
+}
+\label{eq:bandit-response}
+\end{equation}
+This is a dense immediate label but contains a frozen estimate of downstream search value, allowing a useful compute step to receive credit even when it does not immediately minimize leakage.
+
+\subsection{Warm-started staged training}
+
+To keep training cost close to the existing hierarchy, parameters are transferred from the mixed Clifford+$T$ models by matching feature names and replicating gate-family posterior means across new operand-role classes. Contract-specific coordinates start at zero. Training then proceeds in stages:
+\begin{enumerate}
+\item train the existing mixed-gate outer SARSA and inner LinUCB references;
+\item warm-start the ancilla-aware outer model and fine-tune it with deterministic native continuation order;
+\item freeze the outer critic, warm-start the role-aware bandit, and fine-tune it one exact continuation at a time; and
+\item freeze both policies for held-out evaluation.
+\end{enumerate}
+The recorded protocol uses only three ancilla outer episodes and four ancilla inner episodes after 16 outer and 24 inner reference episodes. It therefore tests semantic and policy compatibility without introducing a large new training campaign.
+
+\subsection{Deterministic fairness}
+
+Learned deferral must not become learned deletion. Beginning after a warm-up, the scheduler forces the earliest still-valid pending continuation whenever
+\begin{equation}
+t=k^2,
+\qquad k\in\mathbb N.
+\label{eq:square-fairness}
+\end{equation}
+There are $\Theta(\sqrt T)$ forced selections through allocation $T$. Their density vanishes as $O(T^{-1/2})$, while the number of fairness opportunities diverges. Invalidated queue entries are skipped, and a soundly dominating replacement receives a fresh complete legal-continuation mask.
+
+\begin{algorithm}[t]
+\caption{Hierarchical exact synthesis under an ancilla contract}
+\label{alg:ancilla-search}
+\begin{algorithmic}[1]
+\Require Contract $\Xi$, resource bound $\bB$, outer scorer $Q_{\btheta}$, inner posterior means $\widehat\bbeta_f$
+\State Construct $J$, $V_\star$, and the empty root with $V_\varnothing=J$
+\State Canonicalize and archive the root
+\While{$\cF\neq\varnothing$ and no hard limit is reached}
+  \State Select $v\in\cF$ using outer SARSA or a fixed scheduler
+  \State Rank the pending set $\cP(v)$ with the role-aware inner model
+  \State Apply a forced fair edge instead when scheduled
+  \For{each selected continuation $g$ in the batch}
+    \State Remove $g$ from $\cP(v)$
+    \State Apply the exact physical-register gate and update $V\leftarrow U_gV$
+    \State Construct the strengthened full-unitary archive key
+    \State Perform duplicate and resource-Pareto pruning
+    \If{$d_{\mathrm{iso}}\leq\epsilon$ and $\ell_A\leq\epsilon$}
+      \State Reconstruct the DAG and run independent contract certification
+      \If{certification succeeds} \Return the certified witness \EndIf
+    \EndIf
+  \EndFor
+  \If{$\cP(v)=\varnothing$} \State Remove $v$ from the active frontier \EndIf
+\EndWhile
+\State \Return unsolved within the declared limits
+\end{algorithmic}
+\end{algorithm}

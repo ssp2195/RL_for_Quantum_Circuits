@@ -1,0 +1,43 @@
+\section{Discussion and Limitations}
+
+\subsection{What ancilla compatibility means here}
+
+The framework is compatible with fixed-pool clean and borrowed ancillas in an exact unitary circuit model. It distinguishes physical-register behavior from logical contract behavior, propagates only the promised input columns during search, permits physical unitaries that differ outside the clean input subspace, and independently verifies both logical action and workspace restoration. This is the essential semantic change required before ancillas can be treated as more than additional qubit indices.
+
+The result does not yet cover every operation commonly described as ancilla-assisted. Measurements, reset, classical feed-forward, postselection, and discarded garbage define quantum operations rather than a single unitary isometry with restored workspace. Dynamic allocation and release are also absent: the current workspace pool is fixed at the beginning of the synthesis instance. These restrictions preserve the current exact Clifford+$T$ transition algebra and clean correctness proof.
+
+\subsection{Archive completeness}
+
+The strengthened full-register projective key is sound for the ancilla contract but incomplete. Full-unitary equality implies equal isometries on the promised domain, while equal isometries need not imply equal full unitaries. The archive may therefore retain contract-equivalent records such as identity and $Z$ on a clean ancilla. This is a performance limitation rather than a correctness error.
+
+A complete contract-relative archive would require exact isometry equality. For small widths, exact entries in $\mathbb Z[1/\sqrt2,i]$ or an equivalent cyclotomic representation are a natural next step. Approximate floating-point fingerprints may be useful for retrieval, but they should not authorize irreversible pruning. Exact-phase mode likewise needs an exact scalar-sensitive Clifford canonicalizer before semantic merging can be re-enabled efficiently.
+
+\subsection{Resource modeling and liveness}
+
+Workspace-touch count and logical--workspace CNOT count are monotone and therefore suitable for Pareto dominance. Current cleanliness, current active-ancilla count, and estimated uncomputation distance are not monotone. They are useful policy features or semantic diagnostics but cannot be inserted into a componentwise resource order without a new continuation-simulation proof.
+
+A future dynamic allocator would need an explicit liveness interface $\cI(v)$ describing which workspace wires are available and what restoration promise each carries. Sound dominance would then require not only semantic equality and lower resource cost, but also that the retained record offer at least every legal workspace continuation available from the discarded record. The fixed preallocated pool avoids this additional state-dependent legality problem.
+
+\subsection{Training and policy complexity}
+
+The measured $8.2\%$ increase demonstrates that a role-aware ancilla extension need not produce a drastic training expansion. The result depends on three design choices: warm-starting shared linear coefficients, adding only small fixed-dimensional role-aware features, and staging the learners rather than updating SARSA and LinUCB jointly. The inner bandit receives dense edge-level observations; the outer controller continues to model delayed changes in the frontier.
+
+The qualification does not establish statistical generalization over a large ancilla corpus. The held-out set is deliberately small, the same frozen parameters are used for each recorded execution, and short timings characterize one environment. A publication-scale ancilla study should include several independently trained seeds, application-aligned compute--phase--uncompute families, paired wall-time comparisons, and targets for which workspace changes representability or resource cost rather than merely being optional.
+
+\subsection{Interpretation of the QFT-3 result}
+
+The QFT-3 witness is a strong semantic integration test: it combines Hadamards, controlled-$S$, a controlled-$T$ realized through a clean workspace qubit, exact uncomputation, and a final logical SWAP. Its successful isometry certification shows that the framework can express and verify a long mixed Clifford+$T$ ancilla circuit.
+
+The bounded search failure is equally important. The witness has 47 gates and the unrestricted native grammar on four physical wires has 32 candidate gate instances per state before local legality reductions. A 1.5-second probe cannot be interpreted as a completeness test. More importantly, the inner reward and small training curriculum have not yet learned the extended delayed structure needed to reconstruct a long QFT circuit. The next empirical stage should therefore use intermediate controlled-phase, parity, majority, and comparator targets before treating QFT-3 as a principal synthesis benchmark.
+
+\subsection{Borrowed ancillas}
+
+The contract implementation permits borrowed workspace by leaving its input free and placing an identity operator on it in the target domain. The unit tests verify this semantics. No large borrowed-ancilla synthesis corpus is reported. Borrowed workspace is more demanding than clean workspace because a useful temporary operation must be correct for an arbitrary input state and must restore that state coherently, including when it is entangled with a reference. Application experiments should therefore proceed from clean to borrowed ancillas rather than combining both immediately.
+
+\subsection{Path toward BNN verification oracles}
+
+The ultimate application motivation involves reversible evaluation of binary predicates, phase marking, and amplitude amplification. A practical BNN verification oracle will require registers for encoded inputs, neuron or layer predicates, temporary Hamming-weight or comparator information, a marked output or phase qubit, and exact uncomputation of workspace. The present contract supplies the semantic foundation for that construction. Suitable next targets are reversible AND, parity, majority, threshold comparison, and compute--phase--uncompute marked-state primitives. These targets contain precisely the delayed computation for which outer temporal-difference control and inner continuation allocation have a plausible advantage over a purely myopic target metric.
+
+\subsection{Scalability}
+
+Incremental isometry propagation and dense certification remain exponential in register width. They are appropriate for exact small-register qualification but not for large BNN circuits. More scalable symbolic equivalence or decision-diagram methods should eventually replace dense columns while preserving the architectural rule: learning proposes search priority, and an independent exact procedure decides semantic acceptance.

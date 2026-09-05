@@ -1,0 +1,96 @@
+\section{Results}
+
+\subsection{Deterministic validation}
+
+All 47 tests pass, including the complete 37-test regression suite and the ten ancilla-specific tests. Python bytecode compilation and Git whitespace validation also pass. No previous target, canonicalization identity, search invariant, or certification test was modified to accommodate the new contract.
+
+The contract tests demonstrate the intended distinction between full-unitary and isometry equality. In particular, a $Z$ acting only on a clean $\lvert0\rangle$ ancilla is accepted as contract-equivalent to identity, while a witness that leaves clean workspace populated or entangled is rejected. Borrowed workspace is restored on the entire borrowed input space, and exact mode rejects a phase difference accepted by projective mode.
+
+\subsection{Marginal training overhead}
+
+Table~\ref{tab:training-time} and Fig.~\ref{fig:ancilla-training} report the matched low-cost training protocol. The pre-ancilla mixed hierarchy requires \SI{2.134339}{\second}. Warm-started ancilla fine-tuning adds \SI{0.174266}{\second}, giving \SI{2.308604}{\second} in total.
+
+\begin{table}[t]
+\caption{Measured linear-policy training time.}
+\label{tab:training-time}
+\centering
+\begin{tabular}{lr}
+\toprule
+Training component & Wall time (s)\\
+\midrule
+Existing mixed hierarchy & 2.134339\\
+Ancilla-specific increment & 0.174266\\
+Total ancilla-aware protocol & 2.308604\\
+\midrule
+Total/reference ratio & $1.08165\times$\\
+Incremental fraction & $8.16\%$\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{ancilla_training_time.png}
+\caption{Matched training cost. The ancilla-aware outer and inner policies are warm-started from the existing linear models and require only a short staged fine-tuning pass.}
+\label{fig:ancilla-training}
+\end{figure}
+
+The measured increase is approximately $8.2\%$, satisfying the intended marginal-overhead requirement in this qualification environment. This timing is environment-specific; the structural claim is that no new neural model, replay buffer, or joint two-policy training loop is introduced.
+
+\subsection{Held-out clean-ancilla synthesis}
+
+All three held-out contracts are certified. Table~\ref{tab:ancilla-results} gives the complete frozen-policy outcomes. The projective isometry error and clean-workspace leakage are zero to reported precision for every result.
+
+\begin{table*}[t]
+\caption{Frozen hierarchical synthesis under one-clean-ancilla contracts.}
+\label{tab:ancilla-results}
+\centering
+\begin{tabular}{lrrrrrl}
+\toprule
+Target & Certified & Wall (s) & Allocations & Exact edges & Peak frontier & Returned witness\\
+\midrule
+H--T echo, 1 logical qubit
+& yes & 0.001870 & 2 & 6 & 7 & $H(0);T(0)$\\
+S--T product, 2 logical qubits
+& yes & 0.002029 & 2 & 5 & 6 & $S(1);T(0)$\\
+Mixed product, 3 logical qubits
+& yes & 0.004378 & 3 & 9 & 10 & $H(2);S(0);T^\dagger(1)$\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{ancilla_evaluation_edges.png}
+\caption{Exact continuation attempts for the three held-out contract targets.}
+\label{fig:ancilla-edges}
+\end{figure}
+
+The returned circuits happen not to touch the declared workspace. This is correct behavior: the synthesis contract makes clean workspace available but does not require its use. These small targets qualify the contract and scheduler integration; they are not evidence that the learner has discovered a transformation that is impossible without ancillas.
+
+\subsection{QFT-3 witness certification and search probe}
+
+The independently constructed one-clean-ancilla QFT-3 witness is accepted. Its metrics are
+\begin{equation}
+\Delta_{\mathrm{proj}}=1.1240\times10^{-15},
+\qquad
+\ell_A=2.1513\times10^{-32}.
+\end{equation}
+The residual values are at floating-point roundoff scale. The witness uses 47 native gates, 21 $T/T^\dagger$ gates, and 19 CNOTs, and returns the workspace qubit to $\lvert0\rangle$ for every logical input.
+
+The unrestricted hierarchical search probe does not rediscover a QFT-3 solution within the fixed 1.5-second bound. It stops at the wall limit after 150 outer allocations and 585 exact continuation attempts, with peak frontier 568. Figure~\ref{fig:qft3-probe} shows the recorded work counts.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\columnwidth]{qft3_search_probe.png}
+\caption{Bounded unrestricted QFT-3 search probe. The negative result separates representability and contract correctness from practical discovery at the tested search budget.}
+\label{fig:qft3-probe}
+\end{figure}
+
+Thus, the experiment establishes that the state representation, full-register canonicalizer, isometry propagation, clean-workspace restoration test, and independent certifier can represent a nontrivial ancilla-assisted QFT-3 implementation. It does not establish that the present linear policies can synthesize that 47-gate circuit from unrestricted search within a short wall-clock budget.
+
+\subsection{Component qualifications retained by the ancilla engine}
+
+The strengthened canonicalization audit reports no observed false semantic merges on the bounded sample. Relative to the earlier local key, unresolved duplicate excess decreases by $50.97\%$ for the one-qubit enumeration and $50.0\%$ for the two-qubit enumeration. Median key cost increases by factors $3.81$ and $4.38$, respectively. These measurements justify caching the canonical view and using deferred expansion to avoid constructing it for every sibling.
+
+The mixed Clifford+$T$ continuation suite remains a direct qualification of the two-level scheduler. On its selected four-, five-, and six-qubit targets, frozen LinUCB scheduling uses fewer exact continuations than deferred native ordering and eager outer SARSA. The ancilla extension retains the same policy architecture while adding role-aware contexts and contract-isometry features.

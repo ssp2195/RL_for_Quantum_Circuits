@@ -1,0 +1,51 @@
+\section{Introduction}
+
+Quantum circuit synthesis seeks a circuit over an admissible gate alphabet whose induced transformation realizes a prescribed logical operation. In the simplest ancilla-free setting, an $n$-qubit chronological sequence
+\begin{equation}
+C=(g_1,g_2,\ldots,g_L)
+\end{equation}
+implements
+\begin{equation}
+U(C)=U_{g_L}U_{g_{L-1}}\cdots U_{g_1},
+\label{eq:chronological}
+\end{equation}
+and exact synthesis ordinarily requires
+\begin{equation}
+U(C)\proj U_\star,
+\qquad
+U\proj V\iff \exists\alpha\in\mathbb R:\ U=e^{i\alpha}V.
+\label{eq:projective}
+\end{equation}
+Ancilla-assisted circuits require a more careful statement. A clean workspace qubit is initialized in $\lvert0\rangle$, may become entangled with the data during a reversible computation, and must be restored to $\lvert0\rangle$ before the subroutine terminates. A borrowed or dirty workspace qubit may begin in an arbitrary state and must be returned unchanged. In the terminology of Nielsen and Chuang, the intermediate workspace can contain garbage, but coherent algorithms generally require that garbage to be removed by \emph{uncomputation} before interference or modular reuse~\cite{nielsen2010quantum}.
+
+The distinction is semantic rather than cosmetic. Two physical-register unitaries can differ outside the promised clean-ancilla input subspace while implementing the same logical operation. For example, $I_L\otimes I_A$ and $I_L\otimes Z_A$ are different full unitaries but act identically on every $\lvert\psi\rangle_L\lvert0\rangle_A$. A synthesizer that merely appends extra wires to an ancilla-free target and continues to demand equality on the complete enlarged Hilbert space rejects valid workspace-assisted implementations.
+
+This paper formulates ancilla compatibility through an isometry contract. The physical register is partitioned into logical qubits, clean workspace qubits, and optional borrowed workspace qubits. The embedding $J$ inserts the clean state $\lvert0\rangle^{\otimes a}$ while leaving logical and borrowed inputs free. The candidate circuit is judged by its restricted action $U(C)J$, not by arbitrary behavior on invalid clean-ancilla inputs. This contract permits exact projective synthesis of a complete stand-alone circuit and exact-phase synthesis of a block whose global phase can become a relative phase when the block is controlled.
+
+The gate library over the $N$ physical wires is
+\begin{equation}
+\cG_N=
+\{H_i,S_i,S_i^\dagger,T_i,T_i^\dagger\}_{i=0}^{N-1}
+\cup
+\{\CNOT_{i\rightarrow j}:i\neq j\},
+\label{eq:gate-library}
+\end{equation}
+with
+\begin{equation}
+|\cG_N|=5N+N(N-1)=N^2+4N.
+\label{eq:branching}
+\end{equation}
+The quadratic growth of the native action set makes atomic exhaustive expansion increasingly expensive as workspace is added. The present search therefore uses a hierarchy of two lightweight linear controllers. An outer semi-gradient SARSA policy selects an already-admitted frontier record. An inner contextual bandit ranks the still-unprocessed native continuations of that record. Only a fixed-size batch is executed before control returns to the outer scheduler. The learner may defer exact work, but it cannot change the gate set, declare an ancilla clean, merge semantic states, prune a branch, or certify a solution.
+
+The exact state representation combines a persistent dependency DAG, a forward--inverse Clifford tableau, and an ordered signed-Pauli rotation word. This is particularly appropriate for workspace circuits: the tableau tracks the reversible Clifford frame on the complete physical register, transported $T/T^\dagger$ operations naturally produce multi-qubit Pauli axes spanning logical and workspace wires, and the DAG records the causal structure of computation, use, and uncomputation. A strengthened canonicalizer extracts every even-quarter-turn Pauli rotation that has become Clifford-valued and absorbs it into the tableau. Resource-Pareto pruning then retains only nondominated witnesses within each sound full-unitary semantic class.
+
+The principal contributions are as follows.
+\begin{enumerate}
+\item We define a synthesis contract for fixed pools of clean and borrowed workspace qubits using a physical input embedding and a logical target isometry. Projective and exact-phase modes are both supported.
+\item We implement an independent certifier that reconstructs the persistent DAG, checks symbolic replay, evaluates the candidate on the permitted input subspace, separates logical-action error from clean-workspace leakage, and verifies identity on arbitrary borrowed inputs.
+\item We integrate contract-aware isometry features into a deferred exact search controlled by outer linear SARSA and a role-aware disjoint LinUCB continuation ranker. The additional ancilla training is a short warm-started fine-tuning stage rather than a new high-capacity learning pipeline.
+\item We extend the resource record with monotone workspace-use coordinates and state a one-sided continuation-simulation theorem showing when full-unitary canonical equality and componentwise resource dominance remain sufficient for sound pruning under an ancilla contract.
+\item We validate the implementation through the complete pre-existing regression suite, dedicated clean/borrowed-ancilla tests, held-out contract targets, and an exact three-qubit QFT witness using one clean workspace qubit. We also report the unsuccessful bounded unrestricted QFT-3 search probe to distinguish semantic compatibility from scalable discovery.
+\end{enumerate}
+
+The scope is deliberately controlled. Ancillas are preallocated wires in a unitary circuit. Measurement, reset, classical feed-forward, discarded garbage channels, and dynamic allocation operations are excluded. These features require quantum operations or classical state beyond the unitary exact-synthesis model and should not be introduced before the isometry semantics and pruning invariants are established.

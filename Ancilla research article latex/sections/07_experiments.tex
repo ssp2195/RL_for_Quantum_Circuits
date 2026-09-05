@@ -1,0 +1,84 @@
+\section{Experimental Methodology}
+
+The experiments are designed to answer four distinct questions: whether the deterministic ancilla contract is correct; whether the pre-existing exact-search invariants survive the extension; whether the linear policies can be adapted with only marginal additional training; and whether a nontrivial three-qubit transformation can be represented and certified with clean workspace.
+
+\subsection{Regression and contract tests}
+
+The complete test suite contains the 37 pre-existing tests for Pauli and tableau algebra, persistent DAG reconstruction, strengthened canonicalization, duplicate and Pareto pruning, hierarchical pending-continuation semantics, QFT-2, structured Toffoli, mixed Clifford+$T$ search, and runner behavior. Ten new tests cover:
+\begin{enumerate}
+\item exact agreement between incremental isometry updates and dense gate multiplication;
+\item equivalence of full-unitary-distinct operations on the clean input subspace;
+\item rejection of dirty clean workspace;
+\item identity action on arbitrary borrowed workspace;
+\item projective versus exact phase contracts;
+\item coherent compute--phase--uncompute certification;
+\item analytical QFT-3 agreement and clean return for a one-ancilla witness;
+\item finite role-aware outer and inner features under deferred search;
+\item staged SARSA/LinUCB training and frozen evaluation; and
+\item symbolic construction beyond the former six-wire guard.
+\end{enumerate}
+No pre-existing expected result is weakened or removed.
+
+\subsection{Warm-started training protocol}
+
+The reference mixed-gate training uses 16 outer SARSA episodes and 24 inner LinUCB episodes on four- and five-qubit Clifford+$T$ targets. Ancilla parameters are then initialized by matching shared feature names and by copying each gate-family posterior mean into the corresponding logical/workspace role classes. Only three outer and four inner ancilla episodes are added. The outer ancilla stage uses deterministic native continuation order; the inner stage holds the outer value function fixed and trains one edge at a time. Frozen evaluation sets both outer exploration and the LinUCB optimism coefficient to zero.
+
+The protocol is intentionally a low-cost qualification rather than a large hyperparameter study. All measurements use
+\begin{equation}
+\begin{aligned}
+\texttt{OPENBLAS\_NUM\_THREADS}&=1,\\
+\texttt{OMP\_NUM\_THREADS}&=1,
+\end{aligned}
+\end{equation}
+so the reported short timings are not distorted by multithreaded startup.
+
+\subsection{Held-out clean-ancilla contracts}
+
+Three targets evaluate increasing logical width with one preallocated clean workspace qubit. Their hidden witnesses use compute--phase--uncompute constructions, but the witness is not exposed to the scheduler. Importantly, workspace is an available resource rather than a mandatory syntactic requirement. If the same logical map admits a cheaper ancilla-free realization under the contract, that realization is valid.
+
+\begin{table}[t]
+\caption{Held-out contract targets. The physical width is one larger than the logical width because each target declares one clean workspace qubit.}
+\label{tab:ancilla-targets}
+\centering
+\begin{tabular}{lccc}
+\toprule
+Target & Logical & Clean & Split\\
+\midrule
+H--T echo & 1 & 1 & test\\
+S--T product & 2 & 1 & test\\
+Mixed product & 3 & 1 & OOD width\\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The search uses the complete physical-register grammar \eqref{eq:gate-library}, batch size four, role-aware outer features, and a frozen disjoint LinUCB posterior mean. Every successful state is independently certified by DAG replay and isometry comparison.
+
+\subsection{Three-qubit QFT with one clean ancilla}
+
+The conventional forward QFT on three logical qubits is
+\begin{equation}
+(F_8)_{jk}=\frac{1}{\sqrt8}e^{2\pi ijk/8},
+\qquad j,k\in\{0,\ldots,7\}.
+\label{eq:qft3}
+\end{equation}
+Its circuit contains a controlled-$T$ rotation. The qualification witness realizes this controlled-$T$ using one clean workspace qubit $a$:
+\begin{equation}
+\begin{aligned}
+&\text{CCX compute into }a\\
+&\qquad\rightarrow T_a
+\rightarrow\text{CCX uncompute}.
+\end{aligned}
+\end{equation}
+Each CCX is decomposed into the same exact 15-gate Clifford+$T$ sequence used by the structured Toffoli validation. Together with two controlled-$S$ decompositions, three Hadamards, and the final logical SWAP, the complete QFT-3 witness contains 47 native gates, including 21 $T/T^\dagger$ gates and 19 CNOTs.
+
+Two separate tests are reported. First, the analytical $F_8$ matrix is compared with the logical action of the known witness under the clean-ancilla contract. Second, the witness is withheld and the unrestricted hierarchical search is given the same target under a 1.5-second wall-clock probe. The first test validates exact representability and certification; the second probes discovery difficulty and is not assumed to succeed.
+
+\subsection{Core canonicalization and hierarchy qualification}
+
+The article retains two pre-ancilla qualifications because they test components used unchanged by the ancilla engine. The strengthened canonicalization audit enumerates 3906 one-qubit prefixes through depth five and 1885 two-qubit prefixes through depth three, comparing production keys with dense projective classes. The mixed Clifford+$T$ continuation suite uses four-, five-, and six-qubit targets with $H$, $S/S^\dagger$, $T/T^\dagger$, and CNOT gates to test whether deferred contextual continuation selection can amortize policy overhead. These measurements are reported as component qualifications, not as substitutes for ancilla-contract tests.
+
+\subsection{Measured quantities}
+
+For training, the runner records reference time, incremental ancilla fine-tuning time, total time, and the ratio to the reference protocol. For search, it records certification, stop reason, wall and process-CPU time, outer allocations, exact edge attempts, peak frontier, isometry error, clean-workspace leakage, and reconstructed witness. The QFT-3 probe additionally reports its allocation cap, edge work, and frontier growth.
+
+All numerical artifacts, frozen linear-policy checkpoints, and plotting inputs are included with the code branch and the accompanying LaTeX project.

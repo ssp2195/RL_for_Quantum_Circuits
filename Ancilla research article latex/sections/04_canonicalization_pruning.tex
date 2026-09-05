@@ -1,0 +1,126 @@
+\section{Canonicalization and Contract-Safe Pruning}
+\label{sec:canonicalization}
+
+The execution factorization in \eqref{eq:semantic-invariant} is exact but not unique. The archive therefore computes a stronger full-register projective view. Ancilla compatibility introduces a second equivalence relation: two full unitaries can induce the same contract isometry. The implementation uses the former relation for sound archive merging and the latter for terminal acceptance.
+
+\subsection{Canonical commuting-word normalization}
+
+Let $\mathcal N_{\mathrm{loc}}$ repeatedly apply the following exact transformations until stable:
+\begin{enumerate}
+\item choose a deterministic positive signed-Pauli representative using \eqref{eq:sign-normalization};
+\item reduce quarter-turn coefficients modulo a full turn while recording the scalar phase;
+\item fuse equal axes using \eqref{eq:same-axis-fusion};
+\item remove zero-angle factors; and
+\item sort factors only when commutation is proved by \eqref{eq:commuting-swap}.
+\end{enumerate}
+Anticommuting rotations are never globally sorted merely to obtain a convenient serialization.
+
+\subsection{Extraction of Clifford-valued rotations}
+
+A Pauli rotation with an even quarter-turn coefficient is Clifford-valued up to phase:
+\begin{equation}
+K=\RPauli{P}{k\pi/4},
+\qquad k\equiv0\pmod2.
+\label{eq:clifford-valued}
+\end{equation}
+If $K$ occurs after a prefix $R_1\cdots R_{i-1}$, then
+\begin{equation}
+R_1\cdots R_{i-1}K
+=K(K^\dagger R_1K)\cdots(K^\dagger R_{i-1}K).
+\label{eq:extract-identity}
+\end{equation}
+Because $K$ is Clifford, every conjugated axis remains a signed Pauli. The procedure moves $K$ left through the word, right-multiplies the Clifford tableau by $K$, deletes $K$, and renormalizes. Each extraction strictly shortens the rotation word, so the procedure terminates.
+
+The resulting projective view is
+\begin{equation}
+(\widetilde\Theta_v,\widetilde{\cR}_v)
+=\mathcal N_{\mathrm{proj}}(\Theta_v,\cR_v),
+\end{equation}
+where every residual quarter-turn coefficient is odd. In projective phase mode, the full-register archive key is
+\begin{equation}
+\boxed{
+\kappa_{\mathrm{full}}(v)=
+\left(
+N,\payload(\widetilde\Theta_v),
+\payload(\widetilde{\cR}_v)
+\right).
+}
+\label{eq:canonical-key}
+\end{equation}
+The separately maintained phase remains available for exact semantics.
+
+\begin{figure*}[t]
+\centering
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[node distance=8mm and 8mm,font=\footnotesize]
+\node[block] (input) {Exact execution state\\$(\Theta,\cR,\phi)$};
+\node[exact,right=of input] (local) {Signed-axis and angle normalization\\fusion and commuting order};
+\node[exact,right=of local] (detect) {Find an even-quarter-turn\\Pauli rotation $K$};
+\node[exact,right=of detect] (transport) {Conjugate preceding axes\\and move $K$ to the boundary};
+\node[exact,right=of transport] (absorb) {Absorb $K$ into\\the Clifford tableau};
+\node[block,right=of absorb] (output) {Full-register key\\$(\widetilde\Theta,\widetilde\cR)$};
+\draw[flow] (input)--(local);
+\draw[flow] (local)--(detect);
+\draw[flow] (detect)--node[above]{found}(transport);
+\draw[flow] (transport)--(absorb);
+\draw[flow] (absorb)--(output);
+\draw[loop] (absorb.south) to[out=-90,in=-90,looseness=0.72] node[below]{renormalize} (local.south);
+\draw[flow] (detect.north) to[out=90,in=90,looseness=0.60] node[above]{none} (output.north);
+\end{tikzpicture}%
+}
+\caption{Sound strengthened canonicalization of the full physical-register unitary. The persistent DAG and execution factorization are unchanged; only the archive view is normalized.}
+\label{fig:canonical-pipeline}
+\end{figure*}
+
+\subsection{Full-unitary and contract equivalence}
+
+Define full-register projective equivalence by
+\begin{equation}
+u\equiv_{\mathrm{full}}v
+\iff U(D_u)\proj U(D_v),
+\end{equation}
+and contract equivalence by
+\begin{equation}
+u\equiv_Jv
+\iff U(D_u)J\proj U(D_v)J.
+\label{eq:contract-equivalence}
+\end{equation}
+The canonicalizer is required to satisfy
+\begin{equation}
+\kappa_{\mathrm{full}}(u)=\kappa_{\mathrm{full}}(v)
+\Longrightarrow
+u\equiv_{\mathrm{full}}v.
+\label{eq:key-soundness}
+\end{equation}
+Full-unitary equivalence immediately implies contract equivalence:
+\begin{equation}
+u\equiv_{\mathrm{full}}v
+\Longrightarrow u\equiv_Jv.
+\label{eq:full-implies-contract}
+\end{equation}
+The converse need not hold. Thus, the current archive key is a sound but incomplete key for ancilla contracts. It may retain both $I_L\otimes I_A$ and $I_L\otimes Z_A$ even though they have the same action on clean input $\lvert0\rangle_A$. This costs search effort but does not cause an unsound deletion.
+
+An exact contract-relative isometry canonicalizer over the Clifford+$T$ coefficient ring would merge additional valid states. It is left as a subsequent optimization; floating-point isometry fingerprints are never used as authoritative merge predicates.
+
+\subsection{Exact-phase mode}
+
+The Clifford tableau identifies a projective Clifford action. In exact-phase mode, silently using a projective key could merge witnesses whose scalar phases differ. The implementation therefore disables semantic archive merging conservatively by using a witness-specific exact-mode key. Exact-phase terminal certification remains available. This choice sacrifices pruning efficiency rather than correctness until an exact-phase Clifford canonicalizer is introduced.
+
+\subsection{Target-independent local reductions}
+
+Before a complete symbolic transition, the engine rejects an inverse pair when the preceding inverse is the latest dependency on every affected wire. It also imposes a deterministic order on gates acting on disjoint wire sets. These reductions are valid across logical and workspace roles because they depend only on exact unitary identities and wire disjointness, not on a heuristic notion of ancilla usefulness.
+
+\subsection{Resource-Pareto archive}
+
+For a fixed archive key $k$, let $\cH_t(k)$ contain the current resource antichain. Define
+\begin{equation}
+u\preceq_\rho v
+\iff \rho_i(u)\leq\rho_i(v)\quad\forall i.
+\end{equation}
+A new record $v$ is rejected if an archived record $u$ has the same full-register key and $u\preceq_\rho v$. Otherwise $v$ removes same-key active records that it strictly dominates, and all incomparable resource states remain.
+
+The inclusion of workspace-touch and logical--workspace CNOT counts remains sound because identical future gates add the same nonnegative increments. The vector does not include current cleanliness, current active-ancilla count, or estimated distance to uncomputation because these are not monotone under a common suffix.
+
+\subsection{Terminal and archive roles}
+
+Archive equality and terminal correctness have different roles. Equality of $\kappa_{\mathrm{full}}$ is sufficient for sound merging, but terminal acceptance is decided by the contract isometry. A candidate is allowed to reach the independent certifier whenever its incrementally propagated contract distance and leakage fall below the fixed tolerance; full-register target-key equality is not required. This avoids the principal false-negative that would arise from using a full-unitary terminal prefilter for a clean-ancilla problem.

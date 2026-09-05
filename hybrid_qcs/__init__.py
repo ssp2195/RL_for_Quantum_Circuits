@@ -1,4 +1,24 @@
-"""Exact hybrid Clifford+T synthesis with online frontier-ranking SARSA."""
+"""Exact hybrid Clifford+T synthesis with hierarchical and ancilla-aware search."""
+from .ancilla_benchmarks import (
+    ancilla_evaluation_targets,
+    ancilla_training_targets,
+    qft3_clean_ancilla_target,
+)
+from .ancilla_certify import AncillaCertificationResult, certify_ancilla_state
+from .ancilla_contract import (
+    AncillaContract,
+    AncillaSynthesisTarget,
+    PhaseMode,
+    target_from_hidden_ancilla_gates,
+)
+from .ancilla_search import (
+    AncillaDeferredSearch,
+    DisjointAncillaLinUCB,
+    LinearAncillaOuterSarsa,
+    evaluate_ancilla_hierarchy,
+    train_ancilla_inner_bandit,
+    train_ancilla_outer_sarsa,
+)
 from .benchmarks import (
     held_out_targets,
     qft2_target,
@@ -35,6 +55,13 @@ from .search import HybridSearch
 from .structured_toffoli import StructuredToffoliSearch
 
 __all__ = [
+    "AncillaCertificationResult",
+    "AncillaContract",
+    "AncillaDeferredSearch",
+    "AncillaSynthesisTarget",
+    "DisjointAncillaLinUCB",
+    "LinearAncillaOuterSarsa",
+    "PhaseMode",
     "Budget",
     "DeferredCnotSearch",
     "DeferredMixedSearch",
@@ -64,4 +91,12 @@ __all__ = [
     "train_online_sarsa",
     "training_targets",
     "validation_targets",
+    "ancilla_evaluation_targets",
+    "ancilla_training_targets",
+    "certify_ancilla_state",
+    "evaluate_ancilla_hierarchy",
+    "qft3_clean_ancilla_target",
+    "target_from_hidden_ancilla_gates",
+    "train_ancilla_inner_bandit",
+    "train_ancilla_outer_sarsa",
 ]
