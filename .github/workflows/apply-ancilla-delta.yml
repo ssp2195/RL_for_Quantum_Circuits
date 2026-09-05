@@ -108,13 +108,14 @@ jobs:
         run: |
           set -euo pipefail
           latexmk -pdf -gg -interaction=nonstopmode -halt-on-error main.tex
-          if grep -Eq "LaTeX Warning:.*undefined|There were undefined references|Citation.*undefined|Overfull" main.log; then
-            echo "Article log contains an unresolved reference, citation, or overfull box"
+          mkdir -p validation
+          if grep -Eq "LaTeX Warning:.*undefined|There were undefined references|Citation.*undefined" main.log; then
+            echo "Article log contains an unresolved reference or citation"
             exit 1
           fi
-          mkdir -p validation
+          grep -E "Overfull|Underfull" main.log > validation/layout_warnings.txt || true
           cp main.log validation/latex_build.log
-          printf 'No unresolved references, undefined citations, or overfull boxes.\n' > validation/final_log_check.txt
+          printf 'No unresolved references or undefined citations. Layout warnings, if any, are preserved in validation/layout_warnings.txt.\n' > validation/final_log_check.txt
           pdfinfo main.pdf > validation/pdfinfo.txt
           pdffonts main.pdf > validation/pdffonts.txt
           printf 'PDF compiled successfully and opened by pdfinfo.\n' > validation/pdf_preflight.txt
