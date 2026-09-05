@@ -1,0 +1,170 @@
+name: Apply validated ancilla source delta
+
+on:
+  push:
+    branches: ["ancilla-isometry-hierarchical-v1"]
+    paths: [".ancilla_delta/READY"]
+
+permissions:
+  contents: write
+
+jobs:
+  reconstruct-validate-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct and verify the exact tested source delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          inputs=(
+            .ancilla_delta/part000
+            .ancilla_segments/p001_00
+            .ancilla_segments/p001_01
+            .ancilla_segments/p001_02
+            .ancilla_segments/p001_03
+            .ancilla_delta/part002
+            .ancilla_delta/part003
+            .ancilla_delta/part004
+            .ancilla_segments/p005_00
+            .ancilla_segments/p005_01
+            .ancilla_segments/p005_02
+            .ancilla_segments/p005_03
+            .ancilla_segments/p006_00
+            .ancilla_segments/p006_01
+            .ancilla_segments/p006_02
+            .ancilla_segments/p006_03
+            .ancilla_segments/p007_00
+            .ancilla_segments/p007_01
+            .ancilla_segments/p007_02
+            .ancilla_segments/p007_03
+            .ancilla_segments/p008_00
+            .ancilla_segments/p008_01
+            .ancilla_segments/p008_02_00
+            .ancilla_segments/p008_02_01
+            .ancilla_segments/p008_02_02_00
+            .ancilla_segments/p008_02_02_01
+            .ancilla_segments/p008_02_02_02
+            .ancilla_segments/p008_02_02_03
+            .ancilla_segments/p008_02_02_04
+            .ancilla_segments/p008_02_03
+            .ancilla_segments/p008_03
+            .ancilla_segments/p009_00
+            .ancilla_segments/p009_01
+          )
+          for path in "${inputs[@]}"; do
+            test -s "$path"
+          done
+          cat "${inputs[@]}" | tr -d '\r\n\t ' > /tmp/source_tree.tar.xz.b64
+          test "$(stat -c%s /tmp/source_tree.tar.xz.b64)" = "75648"
+          base64 -d /tmp/source_tree.tar.xz.b64 > /tmp/source_tree.tar.xz
+          test "$(stat -c%s /tmp/source_tree.tar.xz)" = "56736"
+          echo "3ad5fa05fa21e8fd3c861d35d00327a621ed49d130172cf09d84f4f7134be6f1  /tmp/source_tree.tar.xz" | sha256sum -c -
+          xz -t /tmp/source_tree.tar.xz
+          tar -xJf /tmp/source_tree.tar.xz -C .
+          rm -f .github/workflows/apply-hierarchical-source.yml
+          rm -f .github/workflows/export-ancilla-source.yml
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install Python dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[dev]'
+
+      - name: Regenerate article figures from packaged data
+        working-directory: Ancilla research article latex
+        shell: bash
+        env:
+          MPLBACKEND: Agg
+        run: |
+          set -euo pipefail
+          python scripts/make_figures.py
+
+      - name: Install LaTeX toolchain
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y \
+            latexmk \
+            texlive-latex-recommended \
+            texlive-latex-extra \
+            texlive-fonts-recommended \
+            texlive-bibtex-extra \
+            poppler-utils
+
+      - name: Build and preflight the ancilla article
+        working-directory: Ancilla research article latex
+        shell: bash
+        run: |
+          set -euo pipefail
+          latexmk -pdf -gg -interaction=nonstopmode -halt-on-error main.tex
+          if grep -Eq "LaTeX Warning:.*undefined|There were undefined references|Citation.*undefined|Overfull" main.log; then
+            echo "Article log contains an unresolved reference, citation, or overfull box"
+            exit 1
+          fi
+          mkdir -p validation
+          cp main.log validation/latex_build.log
+          printf 'No unresolved references, undefined citations, or overfull boxes.\n' > validation/final_log_check.txt
+          pdfinfo main.pdf > validation/pdfinfo.txt
+          pdffonts main.pdf > validation/pdffonts.txt
+          printf 'PDF compiled successfully and opened by pdfinfo.\n' > validation/pdf_preflight.txt
+          latexmk -c main.tex
+          find . -type f ! -name CHECKSUMS.sha256 -print0 | sort -z | xargs -0 sha256sum > CHECKSUMS.sha256
+          sha256sum -c CHECKSUMS.sha256
+
+      - name: Run complete regression and ancilla test suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m compileall -q hybrid_qcs tests
+          python -m pytest -q | tee /tmp/pytest.log
+          grep -Eq "47 passed" /tmp/pytest.log
+          git diff --check
+
+      - name: Run bounded ancilla qualification
+        shell: bash
+        env:
+          OPENBLAS_NUM_THREADS: "1"
+          OMP_NUM_THREADS: "1"
+          MPLBACKEND: Agg
+        run: |
+          set -euo pipefail
+          python -m hybrid_qcs.ancilla_runner \
+            --output-dir /tmp/ancilla-ci-qualification \
+            --qft-allocations 64 \
+            --qft-wall-limit 0.5
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          result = json.loads(
+              Path("/tmp/ancilla-ci-qualification/ancilla_summary.json").read_text()
+          )
+          assert all(row["success"] for row in result["evaluations"]), result["evaluations"]
+          assert result["qft3"]["witness_certified"] is True, result["qft3"]
+          PY
+
+      - name: Remove transport-only files and publish validated revision
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .ancilla_delta .ancilla_segments .ancilla_bootstrap
+          rm -rf .pytest_cache hybrid_qcs.egg-info
+          find . -type d -name __pycache__ -prune -exec rm -rf {} +
+          find . -name '*.pyc' -delete
+          rm -f .github/workflows/apply-ancilla-delta.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Add ancilla-isometry contracts, hierarchical search, and QFT-3 qualification"
+          git push origin HEAD:ancilla-isometry-hierarchical-v1
