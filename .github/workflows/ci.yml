@@ -1,8 +1,8 @@
-name: Validate ancilla-isometry hierarchical QCS
+name: Validate guided QFT-3 ancilla QCS
 
 on:
   push:
-    branches: ["ancilla-isometry-hierarchical-v1"]
+    branches: ["qft3-guided-ancilla-v1"]
   workflow_dispatch:
 
 permissions:
@@ -40,10 +40,13 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-
-          result = json.loads(
-              Path("outputs/ancilla-ci-qualification/ancilla_summary.json").read_text()
-          )
+          result = json.loads(Path("outputs/ancilla-ci-qualification/ancilla_summary.json").read_text())
           assert all(row["success"] for row in result["evaluations"]), result["evaluations"]
           assert result["qft3"]["witness_certified"] is True, result["qft3"]
+          guided = result["qft3"]["decomposition_guided_generation"]
+          assert guided["certified"] is True, guided
+          assert guided["native_gate_count"] == 35, guided
+          assert guided["t_count"] == 15, guided
+          assert guided["cnot_count"] == 13, guided
+          assert guided["ancilla_leakage"] < 1e-12, guided
           PY
