@@ -42,7 +42,20 @@
       "evidence": "experiments/ancilla_isometry_20260905",
       "inner_policy": "role-aware disjoint linear LinUCB, posterior mean at evaluation",
       "outer_policy": "warm-started linear semi-gradient SARSA",
-      "qft3_witness": {
+      "qft3_decomposition_guided_generation": {
+        "certified": true,
+        "clean_ancillas": 1,
+        "cnot_count": 13,
+        "controlled_t_lowering": "relative-phase AND compute; T on clean ancilla; exact inverse compute",
+        "depth": 26,
+        "evidence": "experiments/qft3_guided_20260905",
+        "extra_training_episodes": 0,
+        "logical_qubits": 3,
+        "method": "analytical QFT macro plan lowered to native Clifford+T",
+        "native_gates": 35,
+        "t_count": 15
+      },
+      "qft3_reference_witness": {
         "certified": true,
         "clean_ancillas": 1,
         "cnot_count": 19,
@@ -52,7 +65,7 @@
       },
       "recorded_total_training_ratio": 1.0816485133850453,
       "terminal_semantics": "U_C J = phase * J (U_target tensor I_borrowed), with exact clean-workspace return",
-      "unrestricted_qft3_probe": "not certified within 1.5-second wall bound",
+      "unrestricted_qft3_probe": "not certified within the bounded probe; retained as a distinct negative unrestricted-discovery result",
       "wire_roles": [
         "logical",
         "clean workspace",
@@ -87,8 +100,8 @@
     "structured_toffoli3": "certified seven-term CCZ parity-network stress test; not unrestricted native discovery",
     "unrestricted_toffoli_probe": "not certified under the bounded probe cap"
   },
-  "package_version": "0.7.0",
-  "schema_version": "hybrid-qcs-source-manifest-v6",
+  "package_version": "0.8.0",
+  "schema_version": "hybrid-qcs-source-manifest-v7",
   "scientific_scope": {
     "certification": "independent dense DAG replay using either full-unitary or contract-relative isometry equality",
     "claim_boundary": "exact finite-library unitary search with fixed clean/borrowed ancilla contracts; no measurement, reset, or feed-forward",
@@ -116,7 +129,7 @@
   "validation": {
     "compileall": "passed",
     "git_diff_check": "passed",
-    "regression_tests_passed": 47,
+    "regression_tests_passed": 52,
     "runtime_boundary": "reported wall times are environment-specific measurements"
   }
 }

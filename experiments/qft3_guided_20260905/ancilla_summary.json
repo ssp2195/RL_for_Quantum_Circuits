@@ -1,0 +1,133 @@
+{
+  "config": {
+    "OMP_NUM_THREADS": "1",
+    "OPENBLAS_NUM_THREADS": "1",
+    "ancilla_inner_finetune_episodes": 4,
+    "ancilla_outer_finetune_episodes": 3,
+    "batch_size": 4,
+    "inner_episodes": 24,
+    "linucb_alpha_evaluation": 0.0,
+    "linucb_alpha_training": 0.5,
+    "numpy": "2.3.5",
+    "outer_episodes": 16,
+    "platform": "Linux-6.18.35-x86_64-with-glibc2.41",
+    "python": "3.13.5 (main, Jul 15 2026, 20:25:40) [GCC 14.2.0]",
+    "seed": 11
+  },
+  "evaluations": [
+    {
+      "allocations": 2,
+      "ancilla_leakage": 0.0,
+      "attempted_edges": 6,
+      "certified": true,
+      "cpu_seconds": 0.001649972000000055,
+      "frontier_peak": 7,
+      "method": "ancilla_deferred_outer_sarsa_inner_linucb",
+      "projective_isometry_error": 0.0,
+      "stop_reason": "certified",
+      "success": true,
+      "target": "heldout-clean-h-t-echo-1q",
+      "wall_seconds": 0.0016473609999820837,
+      "witness": "H(0); T(0)"
+    },
+    {
+      "allocations": 2,
+      "ancilla_leakage": 0.0,
+      "attempted_edges": 5,
+      "certified": true,
+      "cpu_seconds": 0.0019810619999995893,
+      "frontier_peak": 6,
+      "method": "ancilla_deferred_outer_sarsa_inner_linucb",
+      "projective_isometry_error": 0.0,
+      "stop_reason": "certified",
+      "success": true,
+      "target": "heldout-clean-s-t-product-2q",
+      "wall_seconds": 0.001979271000038807,
+      "witness": "S(1); T(0)"
+    },
+    {
+      "allocations": 3,
+      "ancilla_leakage": 0.0,
+      "attempted_edges": 9,
+      "certified": true,
+      "cpu_seconds": 0.004844739999999792,
+      "frontier_peak": 10,
+      "method": "ancilla_deferred_outer_sarsa_inner_linucb",
+      "projective_isometry_error": 0.0,
+      "stop_reason": "certified",
+      "success": true,
+      "target": "heldout-clean-mixed-product-3q",
+      "wall_seconds": 0.004842954999958238,
+      "witness": "H(2); S(0); TDG(1)"
+    }
+  ],
+  "plots": [
+    "ancilla_training_time.png",
+    "ancilla_evaluation_edges.png",
+    "qft3_search_probe.png",
+    "qft3_guided_gate_reduction.png"
+  ],
+  "qft3": {
+    "clean_ancillas": 1,
+    "decomposition_guided_generation": {
+      "ancilla_leakage": 3.830125836251023e-33,
+      "certified": true,
+      "cnot_count": 13,
+      "cpu_seconds": 0.003160617999999893,
+      "depth": 26,
+      "exact_isometry_error": 1.3827737518436079e-15,
+      "macro_count": 7,
+      "macros": [
+        "H(q2)",
+        "CS(q1->q2)",
+        "CT(q0->q2;a3)",
+        "H(q1)",
+        "CS(q0->q1)",
+        "H(q0)",
+        "SWAP(q0,q2)"
+      ],
+      "method": "qft_exact_verified_macro_plan",
+      "native_gate_count": 35,
+      "projective_isometry_error": 1.2440567926383356e-15,
+      "stop_reason": "certified",
+      "success": true,
+      "t_count": 15,
+      "target": "heldout-qft3-clean-ancilla",
+      "wall_seconds": 0.0031562140000005456,
+      "witness": "H(2); T(1); T(2); CNOT(1,2); TDG(2); CNOT(1,2); H(3); T(3); CNOT(2,3); TDG(3); CNOT(0,3); T(3); CNOT(2,3); TDG(3); H(3); T(3); H(3); T(3); CNOT(2,3); TDG(3); CNOT(0,3); T(3); CNOT(2,3); TDG(3); H(3); H(1); T(0); T(1); CNOT(0,1); TDG(1); CNOT(0,1); H(0); CNOT(0,2); CNOT(2,0); CNOT(0,2)"
+    },
+    "guided_gate_reduction": 12,
+    "guided_gate_reduction_fraction": 0.2553191489361702,
+    "hidden_witness_cnot_count": 19,
+    "hidden_witness_gates": 47,
+    "hidden_witness_t_count": 21,
+    "logical_qubits": 3,
+    "target": "heldout-qft3-clean-ancilla",
+    "unrestricted_search": {
+      "allocations": 149,
+      "ancilla_leakage": null,
+      "attempted_edges": 581,
+      "certified": false,
+      "cpu_seconds": 1.5162937190000005,
+      "frontier_peak": 564,
+      "method": "ancilla_deferred_outer_sarsa_inner_linucb",
+      "projective_isometry_error": null,
+      "stop_reason": "wall_limit",
+      "success": false,
+      "target": "heldout-qft3-clean-ancilla",
+      "wall_seconds": 1.5166100479999614,
+      "witness": ""
+    },
+    "witness_certified": true,
+    "witness_leakage": 2.1512556897225278e-32,
+    "witness_projective_error": 1.1240151438116956e-15
+  },
+  "schema": "ancilla-hierarchical-qualification-v1",
+  "training": {
+    "ancilla_incremental_seconds": 0.1832317999999873,
+    "existing_reference_seconds": 2.11810617499998,
+    "incremental_fraction": 0.08650737255887989,
+    "total_ratio": 1.0865073725588799,
+    "total_seconds": 2.301337974999967
+  }
+}

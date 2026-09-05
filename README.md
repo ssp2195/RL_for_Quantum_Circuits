@@ -138,7 +138,7 @@ outside the declared model.
 
 ## Fixed-pool clean and borrowed ancillas
 
-The `ancilla-isometry-hierarchical-v1` extension introduces an explicit
+The `qft3-guided-ancilla-v1` extension retains the explicit
 `AncillaContract`. Physical wires are partitioned into logical data, clean
 workspace initialized in `|0>`, and optional borrowed workspace whose arbitrary
 input state must be returned unchanged. For a clean-input embedding `J`, a
@@ -175,13 +175,53 @@ OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 \
 ```
 
 The recorded qualification under
-`experiments/ancilla_isometry_20260905/` reports 47 passing tests, certified
+`experiments/ancilla_isometry_20260905/` reports certified
 held-out clean-ancilla contracts on one to three logical qubits, and an 8.2%
 training-time increase relative to the matched pre-ancilla hierarchy. It also
 constructs and independently certifies an exact 47-gate QFT-3 witness using one
 clean ancilla to implement the controlled-`T` phase through
 compute-phase-uncompute. The unrestricted QFT-3 search probe did not certify
 within its 1.5-second bound and is reported as a negative bounded result.
+
+## Decomposition-guided QFT-3 mitigation
+
+The negative unrestricted probe is a search-depth result, not a failure of the
+ancilla semantics or certifier. Four physical qubits expose 32 native one-gate
+continuations, whereas the original exact witness has 47 gates and contains a
+long compute--phase--uncompute detour. Hundreds of attempted native edges are
+therefore not a realistic unrestricted-discovery budget.
+
+The branch adds a separate, explicit structured generator for analytically
+recognized QFT targets. It derives the standard Hadamard, controlled-phase,
+and final bit-reversal blocks from the logical-wire order, lowers each block to
+the unchanged native grammar, and independently certifies the final DAG. It
+does not inspect the hidden benchmark witness.
+
+For controlled-`T`, the generator uses a nine-gate relative-phase AND compute
+circuit `R`, applies `T` to the clean ancilla, and executes the exact inverse
+`R^dagger`. The input-dependent phases of `R` cancel against `R^dagger`, so the
+logical controlled phase is exact on the declared clean-input subspace. This
+reduces the complete QFT-3 realization to:
+
+| Quantity | Original certified witness | Guided generator |
+|---|---:|---:|
+| Native gates | 47 | 35 |
+| `T`/`TDG` gates | 21 | 15 |
+| CNOT gates | 19 | 13 |
+| Depth | 34 | 26 |
+
+Run the structured generator directly:
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 \
+  hybrid-qcs-qft3 \
+  --output outputs/qft3-guided/result.json
+```
+
+The current regression suite contains 52 passing tests. The guided path adds
+no training episodes, so it does not increase policy-training time. The
+unrestricted native-search result remains reported separately and must not be
+relabelled as successful unrestricted discovery.
 
 ## Ancilla-aware article
 

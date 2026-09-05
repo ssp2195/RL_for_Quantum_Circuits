@@ -51,6 +51,15 @@ from .mixed_crossover import (
 )
 from .model import Budget, Gate, HybridState
 from .rl import LinearSarsaRanker, train_online_sarsa
+from .qft_guided import (
+    NativeMacro,
+    QFTGuidedResult,
+    controlled_t_relative_phase_compute,
+    exact_qft_macros,
+    qft_matrix,
+    relative_phase_and_compute,
+    synthesize_qft_decomposition_guided,
+)
 from .search import HybridSearch
 from .structured_toffoli import StructuredToffoliSearch
 
@@ -75,6 +84,8 @@ __all__ = [
     "LinearMixedOuterSarsa",
     "LinearOuterSarsa",
     "LinearSarsaRanker",
+    "NativeMacro",
+    "QFTGuidedResult",
     "ProjectiveCanonicalization",
     "StructuredToffoliSearch",
     "canonicalize_projective",
@@ -87,6 +98,11 @@ __all__ = [
     "mixed_training_targets",
     "projective_key",
     "qft2_target",
+    "qft_matrix",
+    "exact_qft_macros",
+    "relative_phase_and_compute",
+    "controlled_t_relative_phase_compute",
+    "synthesize_qft_decomposition_guided",
     "structured_toffoli_target",
     "train_online_sarsa",
     "training_targets",

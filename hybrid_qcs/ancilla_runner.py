@@ -35,6 +35,7 @@ from .mixed_crossover import (
     train_mixed_outer_sarsa,
 )
 from .model import HybridState
+from .qft_guided import synthesize_qft_decomposition_guided
 
 
 def _write_csv(path: Path, rows: list[dict[str, object]]) -> None:
@@ -90,6 +91,7 @@ def _qft3_probe(
             raise AssertionError("QFT-3 witness cannot be replayed")
         witness_state = child
     witness_certification = certify_ancilla_state(target, witness_state)
+    guided_result = synthesize_qft_decomposition_guided(target)
     search_result = evaluate_ancilla_hierarchy(
         outer,
         bandit,
@@ -112,6 +114,14 @@ def _qft3_probe(
         "witness_certified": witness_certification.success,
         "witness_projective_error": witness_certification.projective_isometry_error,
         "witness_leakage": witness_certification.ancilla_leakage,
+        "decomposition_guided_generation": guided_result.to_dict(),
+        "guided_gate_reduction": (
+            target.generator_length - guided_result.native_gate_count
+        ),
+        "guided_gate_reduction_fraction": (
+            (target.generator_length - guided_result.native_gate_count)
+            / max(1, target.generator_length)
+        ),
         "unrestricted_search": search_result.to_dict(),
     }
 
@@ -172,6 +182,21 @@ def _make_plots(output: Path, summary: dict[str, object]) -> list[str]:
     fig.savefig(path, dpi=180)
     plt.close(fig)
     paths.append(path.name)
+
+    guided = qft["decomposition_guided_generation"]
+    fig, ax = plt.subplots(figsize=(7.2, 4.6))
+    labels = ["Reference", "Guided"]
+    gate_values = [int(qft["hidden_witness_gates"]), int(guided["native_gate_count"])]
+    ax.bar(labels, gate_values)
+    ax.set_ylabel("Native gates")
+    ax.set_title("QFT-3 exact decomposition guidance")
+    for index, value in enumerate(gate_values):
+        ax.text(index, value, str(value), ha="center", va="bottom")
+    fig.tight_layout()
+    path = output / "qft3_guided_gate_reduction.png"
+    fig.savefig(path, dpi=180)
+    plt.close(fig)
+    paths.append(path.name)
     return paths
 
 
@@ -180,6 +205,7 @@ def _write_report(output: Path, summary: dict[str, object]) -> None:
     evaluations = summary["evaluations"]
     qft = summary["qft3"]
     search = qft["unrestricted_search"]
+    guided = qft["decomposition_guided_generation"]
     lines = [
         "# Clean-ancilla hierarchical QCS qualification",
         "",
@@ -211,6 +237,12 @@ def _write_report(output: Path, summary: dict[str, object]) -> None:
             "## QFT-3 with one clean ancilla",
             "",
             f"The independently constructed 47-gate native witness is certified: **{qft['witness_certified']}**. Its projective isometry error is {float(qft['witness_projective_error']):.3e} and its clean-ancilla leakage is {float(qft['witness_leakage']):.3e}.",
+            "",
+            "### Decomposition-guided mitigation",
+            "",
+            f"The exact QFT block planner generated and independently certified a {guided['native_gate_count']}-gate native circuit with {guided['t_count']} T/TDG gates, {guided['cnot_count']} CNOTs, and depth {guided['depth']}. Its projective isometry error is {float(guided['projective_isometry_error']):.3e} and its clean-ancilla leakage is {float(guided['ancilla_leakage']):.3e}.",
+            "",
+            "The planner derives the standard Hadamard, controlled-phase, and final bit-reversal blocks from the analytical QFT target. Controlled-T is lowered through a relative-phase AND compute circuit, a T gate on the clean ancilla, and the exact inverse compute circuit. The input-dependent relative phases cancel, reducing the QFT-3 implementation from 47 to 35 native gates without adding training episodes.",
             "",
             f"The unrestricted hierarchical search result is **{search['stop_reason']}** after {search['allocations']} outer allocations and {search['attempted_edges']} exact continuation attempts. This bounded probe is reported honestly; witness certification establishes representability and contract correctness, while an unsuccessful search does not establish unrestricted synthesis at this depth.",
             "",

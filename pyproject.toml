@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hybrid-qcs"
-version = "0.7.0"
-description = "Hierarchical exact Clifford+T synthesis with clean-ancilla isometry contracts"
+version = "0.8.0"
+description = "Hierarchical exact Clifford+T synthesis with ancilla contracts and guided QFT generation"
 requires-python = ">=3.11"
 dependencies = ["numpy>=1.24"]
 
@@ -18,6 +18,7 @@ hybrid-qcs-crossover = "hybrid_qcs.crossover_runner:main"
 hybrid-qcs-mixed-crossover = "hybrid_qcs.mixed_crossover_runner:main"
 hybrid-qcs-canonicalization-audit = "hybrid_qcs.canonicalization_audit:main"
 hybrid-qcs-ancilla = "hybrid_qcs.ancilla_runner:main"
+hybrid-qcs-qft3 = "hybrid_qcs.qft_guided:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
