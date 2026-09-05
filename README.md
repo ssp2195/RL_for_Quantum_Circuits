@@ -1,8 +1,11 @@
 # Hierarchical Learning-Guided Exact Clifford+T Synthesis
 
-This branch implements an exact, ancilla-free Clifford+T synthesis framework in
-which learning allocates search effort but never determines circuit semantics or
-correctness.
+This branch implements exact unitary Clifford+T synthesis with hierarchical
+outer-SARSA frontier allocation, role-aware inner LinUCB continuation
+allocation, strengthened projective canonicalization, and fixed-pool clean or
+borrowed ancilla contracts certified through logical isometries. Learning
+allocates search effort but never determines gate legality, circuit semantics,
+pruning validity, or correctness.
 
 Each accepted circuit prefix retains
 
@@ -179,6 +182,7 @@ constructs and independently certifies an exact 47-gate QFT-3 witness using one
 clean ancilla to implement the controlled-`T` phase through
 compute-phase-uncompute. The unrestricted QFT-3 search probe did not certify
 within its 1.5-second bound and is reported as a negative bounded result.
+
 ## Ancilla-aware article
 
 The complete standalone LaTeX article is stored in `Ancilla research article latex/`. It documents the clean/borrowed-ancilla isometry contract, phase modes, contract-safe canonicalization and Pareto pruning, role-aware outer SARSA and inner LinUCB features, the marginal training-cost protocol, and the independently certified one-clean-ancilla QFT-3 witness.
