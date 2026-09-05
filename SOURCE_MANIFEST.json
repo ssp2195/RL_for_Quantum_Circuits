@@ -1,6 +1,6 @@
 {
-  "schema_version": "hybrid-qcs-source-manifest-v2",
-  "package_version": "0.3.0",
+  "schema_version": "hybrid-qcs-source-manifest-v5",
+  "package_version": "0.6.0",
   "scientific_scope": {
     "representation": [
       "persistent dependency DAG",
@@ -8,24 +8,67 @@
       "ordered signed Pauli rotations",
       "global phase and monotone resources"
     ],
-    "rl_action": "persistent frontier-record selection",
-    "unrestricted_gate_grammar": ["H", "S", "SDG", "T", "TDG", "CNOT"],
-    "certification": "independent dense DAG replay up to global phase"
+    "hierarchical_action": [
+      "outer persistent frontier-record selection",
+      "inner scheduling of exact pending native continuations"
+    ],
+    "outer_policy": "shared linear semi-gradient SARSA",
+    "inner_policy": "disjoint linear LinUCB contextual bandit; posterior-mean ranking at frozen evaluation",
+    "native_gate_grammar": ["H", "S", "SDG", "T", "TDG", "CNOT"],
+    "certification": "independent dense replay of the persistent DAG up to global phase",
+    "claim_boundary": "ancilla-free exact finite-library search; selected continuation-cost crossover instances rather than arbitrary-unitary scalability"
   },
-  "new_benchmarks": {
-    "qft2": "conventional exact forward QFT-2 with final native SWAP; unrestricted native held-out target",
-    "toffoli3": "separate certified seven-term CCZ parity-network stress test"
+  "canonicalization": {
+    "key_version": "hybrid-clifford-pauli-projective-v2",
+    "execution_representation_changed": false,
+    "pipeline": [
+      "incremental sign and angle normalization",
+      "same-axis fusion",
+      "canonical ordering within commuting regions",
+      "exact extraction of even-quarter-turn Pauli rotations into a copied Clifford tableau",
+      "resource-Pareto pruning only after semantic-key equality"
+    ],
+    "soundness": "equal production keys imply projective unitary equality",
+    "completeness": "not claimed for general noncommuting odd Clifford+T rotations",
+    "bounded_audit": {
+      "evidence": "experiments/hierarchical_canonicalizer_20260905/canonicalization_audit",
+      "one_qubit_prefixes": 3906,
+      "one_qubit_duplicate_excess_reduction_fraction": 0.5097276264591439,
+      "two_qubit_prefixes": 1885,
+      "two_qubit_duplicate_excess_reduction_fraction": 0.5,
+      "observed_false_merges": 0
+    }
   },
-  "qualification": {
-    "hard_deadline_seconds": 1800,
-    "training_seeds": [11, 19, 23, 31, 47],
-    "episodes_per_seed": 160,
-    "training_episodes_certified": 800,
-    "unrestricted_evaluations_certified": 35,
-    "qft2_evaluations_certified": 5,
-    "structured_toffoli_evaluations_certified": 5,
-    "tests_passed": 15,
-    "measured_process_cpu_seconds": 22.703,
-    "evidence_boundary": "local clean-source engineering qualification; runtime is environment-specific"
+  "experimental_extensions": {
+    "mixed_clifford_t_hierarchy": {
+      "evidence": "experiments/hierarchical_canonicalizer_20260905/mixed_crossover",
+      "qubits": "4-6",
+      "training_widths": [4, 5],
+      "heldout_widths": [4, 5, 6],
+      "batch_size": 4,
+      "fairness": "deterministic fallback; learned scheduling never deletes a pending continuation",
+      "validated_median_speedup_over_eager_outer_sarsa": {
+        "4q": 1.128,
+        "5q": 1.359,
+        "6q_ood_width": 1.329
+      }
+    },
+    "directed_cnot_crossover": {
+      "evidence": "experiments/cnot_crossover_20260904",
+      "qubits": "4-6"
+    },
+    "qft2": "conventional exact forward QFT-2 including final native SWAP",
+    "structured_toffoli3": "certified seven-term CCZ parity-network stress test; not unrestricted native discovery",
+    "unrestricted_toffoli_probe": "not certified under the bounded probe cap"
+  },
+  "validation": {
+    "regression_tests_passed": 37,
+    "compileall": "passed",
+    "git_diff_check": "passed",
+    "runtime_boundary": "reported wall times are environment-specific measurements"
+  },
+  "ancilla_status": {
+    "implemented": false,
+    "required_next_semantics": "clean-ancilla restricted isometry plus restoration-aware resource and continuation relations"
   }
 }

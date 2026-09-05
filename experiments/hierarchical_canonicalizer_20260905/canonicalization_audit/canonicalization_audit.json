@@ -1,0 +1,42 @@
+{
+  "canonicalizer": "projective Clifford-tableau extraction of even Pauli rotations plus canonical commuting-word normalization",
+  "claim_boundary": "The dense fingerprint is a bounded differential-test oracle, not a production archive key. The symbolic canonicalizer remains sound and intentionally incomplete for general noncommuting Clifford+T identities.",
+  "plot": "canonicalization_audit.png",
+  "schema": "hybrid-qcs-canonicalization-audit-v1",
+  "widths": [
+    {
+      "dense_projective_classes": 155,
+      "duplicate_excess_reduction_fraction": 0.5097276264591439,
+      "enumerated_prefixes": 3906,
+      "key_time_ratio": 3.8087814081048053,
+      "legacy_duplicate_excess": 257,
+      "legacy_key_seconds_median": 0.0028450790000533743,
+      "legacy_pareto_survivors": 412,
+      "legacy_unique_keys": 412,
+      "max_depth": 5,
+      "num_qubits": 1,
+      "strong_duplicate_excess": 126,
+      "strong_key_safety_violations": 0,
+      "strong_key_seconds_median": 0.010836283999992702,
+      "strong_pareto_survivors": 281,
+      "strong_unique_keys": 281
+    },
+    {
+      "dense_projective_classes": 545,
+      "duplicate_excess_reduction_fraction": 0.5,
+      "enumerated_prefixes": 1885,
+      "key_time_ratio": 4.382224698613259,
+      "legacy_duplicate_excess": 104,
+      "legacy_key_seconds_median": 0.0015237659999911557,
+      "legacy_pareto_survivors": 653,
+      "legacy_unique_keys": 649,
+      "max_depth": 3,
+      "num_qubits": 2,
+      "strong_duplicate_excess": 52,
+      "strong_key_safety_violations": 0,
+      "strong_key_seconds_median": 0.006677485000068373,
+      "strong_pareto_survivors": 601,
+      "strong_unique_keys": 597
+    }
+  ]
+}

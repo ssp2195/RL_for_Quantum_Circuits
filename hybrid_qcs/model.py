@@ -5,6 +5,7 @@ from dataclasses import dataclass
 import time
 from typing import Optional
 
+from .canonicalize import canonicalize_projective
 from .pauli import Pauli
 from .rotation import (
     PauliRotation,
@@ -142,6 +143,8 @@ class TransitionProfile:
     inverse_pauli_transport_ns: int = 0
     rotation_insertion_ns: int = 0
     canonical_key_ns: int = 0
+    canonicalization_passes: int = 0
+    clifford_rotations_extracted: int = 0
     attempted: int = 0
     accepted: int = 0
 
@@ -153,6 +156,8 @@ class TransitionProfile:
             "inverse_pauli_transport_ns": self.inverse_pauli_transport_ns,
             "rotation_insertion_ns": self.rotation_insertion_ns,
             "canonical_key_ns": self.canonical_key_ns,
+            "canonicalization_passes": self.canonicalization_passes,
+            "clifford_rotations_extracted": self.clifford_rotations_extracted,
             "attempted": self.attempted,
             "accepted": self.accepted,
         }
@@ -178,8 +183,8 @@ class HybridState:
 
     @classmethod
     def identity(cls, num_qubits: int, budget: Budget) -> "HybridState":
-        if isinstance(num_qubits, bool) or not isinstance(num_qubits, int) or not 1 <= num_qubits <= 3:
-            raise ValueError("num_qubits must lie in 1..3")
+        if isinstance(num_qubits, bool) or not isinstance(num_qubits, int) or not 1 <= num_qubits <= 6:
+            raise ValueError("num_qubits must lie in 1..6")
         tableau = CliffordTableau.identity(num_qubits)
         rotations: tuple[PauliRotation, ...] = ()
         return cls(
@@ -305,7 +310,7 @@ class HybridState:
             profile.dag_append_ns += time.perf_counter_ns() - started
 
         started = time.perf_counter_ns()
-        key = _canonical_key(self.num_qubits, tableau, rotations)
+        key = _canonical_key(self.num_qubits, tableau, rotations, profile=profile)
         if profile is not None:
             profile.canonical_key_ns += time.perf_counter_ns() - started
             profile.accepted += 1
@@ -375,13 +380,18 @@ def _canonical_key(
     num_qubits: int,
     tableau: CliffordTableau,
     rotations: tuple[PauliRotation, ...],
+    *,
+    profile: TransitionProfile | None = None,
 ) -> tuple[object, ...]:
-    return (
-        "hybrid-clifford-pauli-incremental-v1",
-        num_qubits,
-        tableau.canonical_payload(),
-        tuple(rotation.canonical_payload() for rotation in rotations),
-    )
+    if num_qubits != tableau.num_qubits:
+        raise ValueError("num_qubits does not match the tableau")
+    normalized = canonicalize_projective(tableau, rotations)
+    if profile is not None:
+        profile.canonicalization_passes += normalized.normalization_passes
+        profile.clifford_rotations_extracted += (
+            normalized.extracted_clifford_rotations
+        )
+    return normalized.payload
 
 
 def _valid_gate(gate: Gate, num_qubits: int) -> bool:

@@ -7,6 +7,7 @@ from .pauli import (
     INVERSE_CLIFFORD_GATE,
     Pauli,
     conjugate_by_gate,
+    conjugate_by_pauli_rotation,
     transform_pauli,
 )
 
@@ -68,6 +69,57 @@ class CliffordTableau:
                 )
             )
             for q in range(self.num_qubits)
+        )
+        return CliffordTableau(
+            self.num_qubits,
+            forward_x,
+            forward_z,
+            inverse_x,
+            inverse_z,
+        )
+
+    def right_multiply_pauli_rotation(
+        self,
+        axis: Pauli,
+        quarter_turns: int,
+    ) -> "CliffordTableau":
+        """Return the projective tableau for ``C' = C R_axis(k*pi/4)``.
+
+        The method is defined only for even ``k`` because those rotations are
+        Clifford.  Forward and inverse maps are updated directly from the
+        conjugation identities, so no decomposition into elementary gates or
+        dense matrix is required.
+        """
+
+        self._validate_axis(axis)
+        if isinstance(quarter_turns, bool) or not isinstance(quarter_turns, int):
+            raise TypeError("quarter_turns must be an integer")
+        if quarter_turns & 1:
+            raise ValueError("right multiplication requires a Clifford-valued rotation")
+
+        forward_x = tuple(
+            self.forward_conjugate(
+                conjugate_by_pauli_rotation(
+                    Pauli.x_axis(self.num_qubits, q), axis, quarter_turns
+                )
+            )
+            for q in range(self.num_qubits)
+        )
+        forward_z = tuple(
+            self.forward_conjugate(
+                conjugate_by_pauli_rotation(
+                    Pauli.z_axis(self.num_qubits, q), axis, quarter_turns
+                )
+            )
+            for q in range(self.num_qubits)
+        )
+        inverse_x = tuple(
+            conjugate_by_pauli_rotation(image, axis, -quarter_turns)
+            for image in self.inverse_x
+        )
+        inverse_z = tuple(
+            conjugate_by_pauli_rotation(image, axis, -quarter_turns)
+            for image in self.inverse_z
         )
         return CliffordTableau(
             self.num_qubits,

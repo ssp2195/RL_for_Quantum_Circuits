@@ -4,16 +4,19 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hybrid-qcs"
-version = "0.3.0"
-description = "Online-RL frontier ranking for exact small Clifford+T synthesis"
+version = "0.6.0"
+description = "Hierarchical learning-guided exact Clifford+T synthesis with strengthened projective canonicalization"
 requires-python = ">=3.11"
 dependencies = ["numpy>=1.24"]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.4"]
+dev = ["pytest>=7.4", "matplotlib>=3.7"]
 
 [project.scripts]
 hybrid-qcs = "hybrid_qcs.runner:main"
+hybrid-qcs-crossover = "hybrid_qcs.crossover_runner:main"
+hybrid-qcs-mixed-crossover = "hybrid_qcs.mixed_crossover_runner:main"
+hybrid-qcs-canonicalization-audit = "hybrid_qcs.canonicalization_audit:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

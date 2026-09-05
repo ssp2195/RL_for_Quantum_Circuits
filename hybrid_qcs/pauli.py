@@ -234,12 +234,76 @@ def _conjugate_by_gate_cached(
     return transform_pauli(pauli, *_elementary_images(pauli.num_qubits, name, qubits))
 
 
+def conjugate_by_pauli_rotation(
+    pauli: Pauli,
+    axis: Pauli,
+    quarter_turns: int,
+) -> Pauli:
+    """Conjugate a Pauli by an even-quarter-turn Pauli rotation.
+
+    The unitary is
+
+    ``R_axis(k*pi/4) = exp(-i k*pi axis/8)``.
+
+    Even values of ``k`` are Clifford operations, so conjugation maps every
+    Hermitian Pauli to another signed Hermitian Pauli.  This helper is used by
+    the stronger projective canonicalizer to move Clifford-valued Pauli
+    rotations into the Clifford tableau without introducing dense matrices.
+    """
+
+    if not isinstance(pauli, Pauli) or not isinstance(axis, Pauli):
+        raise TypeError("pauli and axis must be Pauli instances")
+    if pauli.num_qubits != axis.num_qubits:
+        raise ValueError("Pauli operators have incompatible widths")
+    if isinstance(quarter_turns, bool) or not isinstance(quarter_turns, int):
+        raise TypeError("quarter_turns must be an integer")
+    if axis.sign < 0:
+        axis = axis.positive_axis()
+        quarter_turns = -quarter_turns
+    turns = quarter_turns % 8
+    if turns & 1:
+        raise ValueError("only Clifford-valued even quarter turns are supported")
+    return _conjugate_by_pauli_rotation_cached(pauli, axis, turns)
+
+
+@lru_cache(maxsize=262_144)
+def _conjugate_by_pauli_rotation_cached(
+    pauli: Pauli,
+    axis: Pauli,
+    turns_mod_8: int,
+) -> Pauli:
+    if turns_mod_8 == 0 or pauli.commutes_with(axis):
+        return pauli
+    if turns_mod_8 == 4:
+        return pauli.negated()
+
+    # For anticommuting P,Q,
+    #   R_P(pi/2) Q R_P(-pi/2) = -i P Q,
+    #   R_P(-pi/2) Q R_P(pi/2) = +i P Q.
+    x_mask, z_mask, phase = multiply_binary_paulis(
+        axis.x_mask,
+        axis.z_mask,
+        axis.binary_phase,
+        pauli.x_mask,
+        pauli.z_mask,
+        pauli.binary_phase,
+    )
+    scalar_phase = 3 if turns_mod_8 == 2 else 1
+    return Pauli.from_binary_phase(
+        pauli.num_qubits,
+        x_mask,
+        z_mask,
+        (phase + scalar_phase) & 3,
+    )
+
+
 def clear_algebra_caches() -> None:
     """Clear performance caches for deterministic microbenchmarks/tests."""
 
     _transform_pauli_cached.cache_clear()
     _elementary_images.cache_clear()
     _conjugate_by_gate_cached.cache_clear()
+    _conjugate_by_pauli_rotation_cached.cache_clear()
 
 
 
@@ -251,6 +315,7 @@ __all__ = [
     "Pauli",
     "clear_algebra_caches",
     "conjugate_by_gate",
+    "conjugate_by_pauli_rotation",
     "multiply_binary_paulis",
     "transform_pauli",
 ]
