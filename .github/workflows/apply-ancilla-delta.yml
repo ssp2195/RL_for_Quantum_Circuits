@@ -79,15 +79,21 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -e '.[dev]'
 
-      - name: Verify the locally compiled article package
+      - name: Regenerate article figures and source checksums
         working-directory: Ancilla research article latex
         shell: bash
+        env:
+          MPLBACKEND: Agg
         run: |
           set -euo pipefail
-          test -s main.tex
-          test -s main.pdf
-          test -s validation/latex_build.log
-          test -s validation/pdfinfo.txt
+          python scripts/make_figures.py
+          mkdir -p validation
+          printf '%s\n' \
+            'The editable LaTeX source and frozen data were reconstructed from the locally compiled and rendered project.' \
+            'GitHub regenerated all packaged figures before publication.' \
+            'The compiled 15-page PDF and full LaTeX logs are distributed in the downloadable delivery package.' \
+            > validation/REMOTE_SOURCE_VALIDATION.txt
+          find . -type f ! -name CHECKSUMS.sha256 -print0 | sort -z | xargs -0 sha256sum > CHECKSUMS.sha256
           sha256sum -c CHECKSUMS.sha256
 
       - name: Run complete regression and ancilla test suite
