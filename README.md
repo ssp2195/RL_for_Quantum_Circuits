@@ -138,7 +138,7 @@ outside the declared model.
 
 ## Fixed-pool clean and borrowed ancillas
 
-The `qft3-guided-ancilla-v1` extension retains the explicit
+The `bnn-oracle-hierarchical-v1` extension retains the explicit
 `AncillaContract`. Physical wires are partitioned into logical data, clean
 workspace initialized in `|0>`, and optional borrowed workspace whose arbitrary
 input state must be returned unchanged. For a clean-input embedding `J`, a
@@ -218,11 +218,55 @@ OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 \
   --output outputs/qft3-guided/result.json
 ```
 
-The current regression suite contains 52 passing tests. The guided path adds
+The current regression suite contains 59 passing tests. The guided path adds
 no training episodes, so it does not increase policy-training time. The
 unrestricted native-search result remains reported separately and must not be
 relabelled as successful unrestricted discovery.
 
-## Ancilla-aware article
+## Hierarchical RL synthesis of a BNN verification phase oracle
 
-The complete standalone LaTeX article is stored in `Ancilla research article latex/`. It documents the clean/borrowed-ancilla isometry contract, phase modes, contract-safe canonicalization and Pareto pruning, role-aware outer SARSA and inner LinUCB features, the marginal training-cost protocol, and the independently certified one-clean-ancilla QFT-3 witness.
+The branch adds a specification-level Boolean-oracle synthesizer.  The input is
+an exact Boolean truth table rather than a target-specific gate sequence.  A
+generic reversible macro grammar contains NOT, CNOT, and Toffoli operations;
+outer linear SARSA selects a persistent mapping-frontier record and disjoint
+linear LinUCB ranks the record's still-pending macros.  Exact mapping equality,
+continuation masks, resource-Pareto pruning, deterministic fairness, native
+Clifford+T lowering, and clean-ancilla certification remain outside learning.
+
+After a reversible evaluator `U_g` is independently certified, the phase oracle
+is assembled through the universal identity
+
+\[
+O_g = U_g^\dagger Z_f U_g.
+\]
+
+For the three-input BNN robustness example with unique violating input `100`,
+the frozen hierarchy discovers a six-macro evaluator without receiving a
+hidden evaluator circuit.  Native lowering produces a 48-gate evaluator and a
+98-gate exact phase oracle with 42 `T`/`TDG` gates and 42 CNOTs.  The exact
+clean-input isometry error is approximately `1.22e-15`, and clean-workspace
+leakage is approximately `3.26e-32`.
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 \
+  hybrid-qcs-oracle \
+  --output-dir outputs/bnn-oracle
+```
+
+The exact mapping target-potential control remains faster on this deliberately
+small three-bit instance.  The result therefore establishes generation and
+certification feasibility, not universal learned-policy superiority.  The
+truth-table implementation is currently restricted to at most three inputs;
+larger BNN and arithmetic predicates require a symbolic Boolean IR and
+compositional reversible compiler rather than an exponentially listed table.
+
+Evidence is stored under `experiments/bnn_oracle_20260905/`.
+
+## Research articles
+
+The complete standalone oracle-synthesis article is stored in
+`Oracle research article latex/`.  It integrates the hierarchical exact search,
+strengthened canonicalization, fixed clean/borrowed ancilla contracts, the
+RL-generated BNN verification phase oracle, and the restricted QFT-3 stress
+test.  The earlier ancilla-contract article remains under
+`Ancilla research article latex/` for provenance.

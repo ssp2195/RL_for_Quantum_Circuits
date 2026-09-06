@@ -98,10 +98,47 @@
     },
     "qft2": "conventional exact forward QFT-2 including final native SWAP",
     "structured_toffoli3": "certified seven-term CCZ parity-network stress test; not unrestricted native discovery",
-    "unrestricted_toffoli_probe": "not certified under the bounded probe cap"
+    "unrestricted_toffoli_probe": "not certified under the bounded probe cap",
+    "verification_oracle_synthesis": {
+      "application": "three-input BNN robustness phase oracle with unique marked input 100",
+      "canonicalization": "exact reversible input-subspace mapping equality followed by native strengthened Clifford/Pauli canonicalization",
+      "certified_phase_oracle": {
+        "clean_workspace_leakage": 3.26493941301335e-32,
+        "cnot_count": 42,
+        "depth": 76,
+        "exact_isometry_error": 1.2237659599594665e-15,
+        "native_gate_count": 98,
+        "projective_isometry_error": 1.2218759727930592e-15,
+        "t_count": 42
+      },
+      "claim_boundary": "generation and exact certification feasibility for small truth-table predicates; no universal performance-superiority claim",
+      "discovered_evaluator": {
+        "cnot_count": 21,
+        "depth": 38,
+        "macro_count": 6,
+        "native_gate_count": 48,
+        "t_count": 21
+      },
+      "evidence": "experiments/bnn_oracle_20260905",
+      "inner_policy": "disjoint linear LinUCB over pending macros; posterior mean at frozen evaluation",
+      "input_representation": "complete exact Boolean truth table; no hidden evaluator circuit supplied",
+      "macro_grammar": [
+        "X",
+        "CNOT",
+        "TOFFOLI"
+      ],
+      "outer_policy": "linear semi-gradient SARSA over persistent reversible-mapping frontier records",
+      "phase_wrapper": "U_g^dagger Z_flag U_g with exact clean-workspace restoration",
+      "training": {
+        "inner_episodes": 4,
+        "inner_updates": 14,
+        "outer_episodes": 2,
+        "outer_updates": 4
+      }
+    }
   },
-  "package_version": "0.8.0",
-  "schema_version": "hybrid-qcs-source-manifest-v7",
+  "package_version": "0.9.0",
+  "schema_version": "hybrid-qcs-source-manifest-v8",
   "scientific_scope": {
     "certification": "independent dense DAG replay using either full-unitary or contract-relative isometry equality",
     "claim_boundary": "exact finite-library unitary search with fixed clean/borrowed ancilla contracts; no measurement, reset, or feed-forward",
@@ -118,6 +155,7 @@
       "TDG",
       "CNOT"
     ],
+    "oracle_synthesis": "small exact Boolean evaluator search followed by universal compute-phase-uncompute phase-oracle assembly",
     "outer_policy": "shared linear semi-gradient SARSA",
     "representation": [
       "persistent dependency DAG",
@@ -129,7 +167,7 @@
   "validation": {
     "compileall": "passed",
     "git_diff_check": "passed",
-    "regression_tests_passed": 52,
+    "regression_tests_passed": 59,
     "runtime_boundary": "reported wall times are environment-specific measurements"
   }
 }

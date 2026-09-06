@@ -1,0 +1,178 @@
+\section{Correctness and Search Guarantees}
+
+\begin{theorem}[Exact physical-register invariant]
+For every resource-feasible record generated from the root by native gates in $\cG_N$, the tableau--rotation state satisfies
+\begin{equation}
+\Sem(v)\proj U(D_v).
+\end{equation}
+The separately tracked scalar phase restores the exact factorization used by replay.
+\end{theorem}
+\begin{proof}
+The empty circuit is represented by the identity tableau and empty rotation word. Appending a Clifford gate left-multiplies the Clifford factor exactly. Appending $T_q$ or $T_q^\dagger$ uses \eqref{eq:t-rotation} and transports $Z_q$ through the inverse Clifford frame by \eqref{eq:clifford-conjugation}. Every canonicalization rewrite is an exact Pauli-rotation identity. Induction on the chronological witness length proves the claim.
+\end{proof}
+
+\begin{lemma}[Incremental isometry invariant]
+For every record,
+\begin{equation}
+V_v=U(D_v)J.
+\label{eq:isometry-invariant}
+\end{equation}
+\end{lemma}
+\begin{proof}
+At the root $V_\varnothing=J$. If \eqref{eq:isometry-invariant} holds for $v$, then the update \eqref{eq:isometry-update} gives
+\begin{equation}
+V_{\delta(v,g)}=U_gV_v=U_gU(D_v)J=U(D_v\oplus g)J.
+\end{equation}
+\end{proof}
+
+\begin{proposition}[Sound full-register canonical merging]
+If
+\begin{equation}
+\kappa_{\mathrm{full}}(u)=\kappa_{\mathrm{full}}(v),
+\end{equation}
+then
+\begin{equation}
+U(D_u)\proj U(D_v)
+\quad\text{and hence}\quad
+U(D_u)J\proj U(D_v)J.
+\end{equation}
+\end{proposition}
+\begin{proof}
+Equal canonical payloads result from exact sign, angle, fusion, commuting, Clifford-conjugation, and Clifford-extraction identities. The physical unitaries are therefore projectively equal. Right multiplication by the common input embedding $J$ preserves that equality.
+\end{proof}
+
+\begin{remark}[Intentional incompleteness]
+Contract-equivalent records need not share a full-register key. The archive can therefore retain redundant isometries, but it never removes a record solely because of an unverified floating-point contract fingerprint. Terminal certification is more general than archive equality.
+\end{remark}
+
+\begin{lemma}[Contract equivalence is preserved by a common suffix]
+If
+\begin{equation}
+U(D_u)J=e^{i\alpha}U(D_v)J,
+\end{equation}
+then for every physical-register suffix $K$,
+\begin{equation}
+U(K)U(D_u)J=e^{i\alpha}U(K)U(D_v)J.
+\label{eq:common-suffix-contract}
+\end{equation}
+\end{lemma}
+\begin{proof}
+Left-multiply the assumed equality by the same unitary $U(K)$.
+\end{proof}
+
+\begin{lemma}[Monotonicity of the ancilla resource vector]
+Suppose $\brho(u)\preceq\brho(v)$. For any common native suffix $K$,
+\begin{equation}
+\brho(u\oplus K)\preceq\brho(v\oplus K).
+\label{eq:resource-monotonicity}
+\end{equation}
+\end{lemma}
+\begin{proof}
+$T$ count, CNOT count, total gate count, workspace-touch count, and logical--workspace CNOT count receive identical nonnegative increments under the same gate. The per-wire depth update \eqref{eq:depth-update} is monotone componentwise because $\max$ is monotone. Induction over the suffix establishes \eqref{eq:resource-monotonicity}.
+\end{proof}
+
+\begin{theorem}[One-sided simulation and sound Pareto pruning]
+Let $u$ and $v$ have the same full-register archive key and satisfy
+\begin{equation}
+\brho(u)\preceq\brho(v).
+\end{equation}
+For every suffix $K$ feasible from $v$ under $\bB$, the same suffix is feasible from $u$. Moreover, if $v\oplus K$ satisfies the ancilla contract, then $u\oplus K$ satisfies the same contract with no worse resource vector.
+\end{theorem}
+\begin{proof}
+Canonical-key equality implies full-unitary projective equality and therefore contract equivalence. Resource monotonicity implies that every common suffix feasible from $v$ remains feasible from $u$. Equation~\eqref{eq:common-suffix-contract} shows that the resulting isometries remain projectively equal, so clean-workspace leakage, borrowed identity, and the logical action agree. The resource vector after the suffix is no worse by \eqref{eq:resource-monotonicity}.
+\end{proof}
+
+\begin{theorem}[Policy-independent terminal correctness]
+If the synthesizer returns a circuit only after the independent certifier verifies
+\begin{equation}
+U(D_v)J\proj J(U_\star\otimes I_B)
+\end{equation}
+for projective mode, or exact equality for exact mode, and verifies clean-workspace leakage below the declared tolerance, then every returned witness satisfies the synthesis contract independently of both learned policies.
+\end{theorem}
+\begin{proof}
+Outer SARSA and inner LinUCB select only which existing record and pending legal continuation receive computation. They cannot alter the gate matrix, input embedding, target isometry, persistent witness, replay operation, phase mode, leakage computation, or acceptance predicate. A returned circuit therefore satisfies exactly the deterministic condition checked by the certifier.
+\end{proof}
+
+\begin{theorem}[Fair bounded-domain exhaustion]
+Assume a finite resource-bounded raw search, sound archive merging, sound Pareto pruning, and a scheduler that eventually processes every pending edge that remains represented by an active nondominated record. If no external allocation, edge, time, or memory cutoff is imposed, every contract-satisfying solution in the bounded domain is eventually generated and certified.
+\end{theorem}
+\begin{proof}[Proof sketch]
+The gate-count bound makes the raw prefix set finite. Deferred expansion changes only edge order. If a solution prefix survives, fairness eventually processes its next edge. If a prefix is removed by dominance, the one-sided simulation theorem supplies a semantically equivalent no-worse representative from which the same remaining suffix is feasible. Repeating this replacement argument preserves a feasible path until a contract-satisfying terminal record is generated. The independent certifier then accepts it.
+\end{proof}
+
+
+\begin{lemma}[Exact evaluator-mapping invariant]
+Let $M_v$ be initialized by the promised input embedding and updated by the exact basis permutation of every $X$, CNOT, or Toffoli macro.  Then each entry of $M_v$ is the computational-basis output of the macro witness $W_v$ on the corresponding allowed input.  In particular,
+\begin{equation}
+M_v=M_\star
+\end{equation}
+if and only if $W_v$ implements the required reversible evaluator on every truth-table input and restores the declared clean workspace.
+\end{lemma}
+\begin{proof}
+The root statement follows from the definition of $\iota(j)$.  Each macro is a reversible computational-basis permutation, and the update applies that permutation pointwise to all entries.  Induction over the witness length proves the invariant.  The target mapping includes the unchanged data, the predicate bit in the flag, and zero on every work wire, so equality is exactly the evaluator contract on the finite domain.
+\end{proof}
+
+\begin{lemma}[Mapping equality is preserved by a common reversible suffix]
+If $M_u=M_v$, then for every macro suffix $K$,
+\begin{equation}
+M_{u\oplus K}=M_{v\oplus K}.
+\label{eq:mapping-common-suffix}
+\end{equation}
+\end{lemma}
+\begin{proof}
+A macro suffix induces one deterministic permutation $F_K$ of physical basis states.  Applying it pointwise gives $F_K(M_u(j))=F_K(M_v(j))$ for every truth-table index $j$.
+\end{proof}
+
+\begin{theorem}[Sound mapping/Pareto pruning]
+Suppose $M_u=M_v$ and $\brho_{\mathrm{rev}}(u)\preceq\brho_{\mathrm{rev}}(v)$.  Every common macro suffix feasible from $v$ under the fixed native-derived resource budget is feasible from $u$, produces the same evaluator mapping, and consumes no more of any recorded resource.  Hence $v$ may be discarded without eliminating a resource-superior evaluator.
+\end{theorem}
+\begin{proof}
+Mapping equality after the suffix follows from \eqref{eq:mapping-common-suffix}.  Every macro has a fixed native lowering, so applying the same suffix adds the same nonnegative $T$, CNOT, gate, macro, and per-wire depth transitions.  These transitions are monotone componentwise.  The usual one-sided continuation-simulation argument then applies.
+\end{proof}
+
+\begin{theorem}[Correctness of phase-oracle assembly]
+If the certified evaluator satisfies
+\begin{equation}
+U_g\lvert x\rangle\lvert0\rangle_f\lvert0^a\rangle_A
+=\lvert x\rangle\lvert g(x)\rangle_f\lvert0^a\rangle_A
+\end{equation}
+for every $x$, then
+\begin{equation}
+U_g^\dagger Z_fU_g
+\lvert x\rangle\lvert0\rangle_f\lvert0^a\rangle_A
+=(-1)^{g(x)}
+\lvert x\rangle\lvert0\rangle_f\lvert0^a\rangle_A.
+\label{eq:phase-assembly-theorem}
+\end{equation}
+\end{theorem}
+\begin{proof}
+After $U_g$, the flag is the computational-basis value $g(x)$.  The $Z$ gate contributes the eigenvalue $(-1)^{g(x)}$.  Linearity allows this scalar to pass through $U_g^\dagger$, which reverses the evaluator and restores the flag and workspace.  The same equality holds coherently for an arbitrary superposition of inputs.
+\end{proof}
+
+\begin{corollary}[Policy-independent oracle correctness]
+Every returned phase-oracle witness implements the requested truth-table phase pattern and restores all clean workspace independently of the outer SARSA parameters, LinUCB parameters, training seed, or search order.
+\end{corollary}
+\begin{proof}
+The policies can only determine which exact mapping edge is processed next.  A result is returned only after exact mapping equality, native lowering, persistent-DAG replay, and the independent exact-isometry certificate all succeed.  Apply the preceding theorem.
+\end{proof}
+
+\subsection{Computational cost}
+
+At the evaluator layer, let $F_t=|\cF_t|$, let $p=15$ be the outer feature dimension, let $m_t=|P_t(v_t)|$, let $q=15$ be the inner context dimension, and let $b$ be the fixed batch size.  One mapping-level allocation has approximate cost
+\begin{equation}
+\begin{aligned}
+O\!\bigl(F_tp+m_tq+b(2^nN+C_{\mathrm{res}}+C_{\mathrm{arch}})\bigr),
+\end{aligned}
+\label{eq:allocation-cost}
+\end{equation}
+The stored candidate isometry requires
+\begin{equation}
+O\!\left(2^{2n+a+2b}\right)
+\end{equation}
+complex entries, whereas a full physical unitary requires
+\begin{equation}
+O\!\left(4^{n+a+b}\right).
+\end{equation}
+The isometry is therefore smaller by a factor $2^a$ for fixed logical and borrowed dimensions. These costs remain exponential and motivate the present small-width qualification. The contribution is a correct ancilla semantic layer and bounded training overhead, not a claim of polynomial exact synthesis.
+
+The square fairness schedule contributes $\Theta(\sqrt T)$ forced edges through allocation $T$, so its asymptotic density vanishes. In frozen evaluation, LinUCB uses posterior means only, and both policies remain small matrix--vector products.

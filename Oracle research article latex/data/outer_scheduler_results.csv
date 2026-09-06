@@ -1,0 +1,8 @@
+scheduler,success,ci_low,ci_high,conditional_first_hit,wall_seconds
+FIFO,0.440,0.333,0.547,38.18,5.80
+LIFO,0.256,0.160,0.360,23.68,6.43
+Uniform cost,0.363,0.253,0.467,32.81,6.17
+Seeded random,0.455,0.408,0.504,37.66,13.57
+Zero-weight linear,0.440,0.333,0.547,38.18,44.62
+Target potential,0.507,0.400,0.627,43.08,8.27
+Outer SARSA,0.549,0.485,0.619,57.46,49.20

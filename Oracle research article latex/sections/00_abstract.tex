@@ -1,0 +1,14 @@
+\begin{abstract}
+Efficient amplitude-amplification procedures presuppose a coherent phase oracle, yet constructing the reversible predicate evaluator required by that oracle can dominate the practical circuit cost. This work develops a hierarchical learning-guided exact synthesizer for small Boolean verification oracles over the Clifford+$T$ library with fixed clean workspace. A problem is supplied as an exact Boolean truth table rather than as a target-specific circuit decomposition. The synthesizer first searches for a reversible evaluator $U_g$ satisfying
+\[
+U_g\lvert x\rangle\lvert y\rangle\lvert0^a\rangle
+=\lvert x\rangle\lvert y\oplus g(x)\rangle\lvert0^a\rangle.
+\]
+An outer linear semi-gradient SARSA policy allocates computation among persistent frontier records, while a disjoint linear LinUCB contextual bandit ranks each selected record's unprocessed reversible continuations. Exact mapping semantics, continuation legality, canonicalization, resource-Pareto pruning, and certification remain deterministic. The certified evaluator is lowered through a generic NOT--CNOT--Toffoli intermediate grammar to native $H,S,S^\dagger,T,T^\dagger,$ and CNOT gates, after which the phase oracle is formed by the universal compute--phase--uncompute identity $O_g=U_g^\dagger Z_fU_g$. Native lowering uses a persistent dependency DAG, a forward--inverse Clifford tableau, ordered signed Pauli rotations, and a strengthened canonicalizer that extracts Clifford-valued rotations before Pareto pruning. Final acceptance is based on exact clean-ancilla isometry semantics rather than full-register equality.
+
+For the three-input BNN robustness example in which $x_1x_2x_3=100$ is the unique violating input, the hierarchy discovers a six-macro reversible evaluator without receiving a hidden circuit. Native lowering yields a 48-gate evaluator, and the complete 98-gate exact phase oracle has 42 $T/T^\dagger$ gates, 42 CNOTs, exact-isometry error $1.22\times10^{-15}$, and clean-workspace leakage $3.26\times10^{-32}$. All 59 regression and oracle tests pass. A deterministic exact target-potential control remains faster on this small instance, so the result establishes synthesis and certification feasibility rather than universal learned-policy superiority. A separate restricted QFT-3 construction is retained as an ancilla-semantic stress test, while its bounded unrestricted search remains negative.
+\end{abstract}
+
+\begin{IEEEkeywords}
+quantum circuit synthesis, phase oracle, binarized neural network verification, Clifford+$T$, clean ancilla, reversible computation, uncomputation, reinforcement learning, SARSA, contextual bandit, LinUCB, canonicalization, Pareto pruning.
+\end{IEEEkeywords}

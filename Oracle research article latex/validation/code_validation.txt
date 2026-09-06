@@ -1,0 +1,9 @@
+python -m compileall -q hybrid_qcs tests: passed
+python -m pytest -q: 59 passed in 21.04s
+git diff --check: passed
+bounded oracle rerun: passed
+bounded oracle wall time including plotting and output generation: 3.94 s
+RL evaluator: 6 macros, 48 native gates, 21 T/TDG, 21 CNOT, depth 38
+Exact phase oracle: 98 native gates, 42 T/TDG, 42 CNOT, depth 76
+Exact isometry error: 1.2237659599594665e-15
+Clean-workspace leakage: 3.26493941301335e-32

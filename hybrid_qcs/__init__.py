@@ -51,6 +51,24 @@ from .mixed_crossover import (
 )
 from .model import Budget, Gate, HybridState
 from .rl import LinearSarsaRanker, train_online_sarsa
+from .oracle_benchmarks import (
+    bnn_verification_oracle_spec,
+    bnn_verification_oracle_target,
+    oracle_training_targets,
+)
+from .oracle_synthesis import (
+    BooleanOracleSpec,
+    DisjointOracleLinUCB,
+    LinearOracleOuterSarsa,
+    OracleEvaluatorTarget,
+    OracleLayout,
+    OracleMacroDeferredSearch,
+    OracleSynthesisResult,
+    assemble_phase_oracle,
+    evaluate_oracle_hierarchy,
+    train_oracle_inner_bandit,
+    train_oracle_outer_sarsa,
+)
 from .qft_guided import (
     NativeMacro,
     QFTGuidedResult,
@@ -64,6 +82,20 @@ from .search import HybridSearch
 from .structured_toffoli import StructuredToffoliSearch
 
 __all__ = [
+    "BooleanOracleSpec",
+    "DisjointOracleLinUCB",
+    "LinearOracleOuterSarsa",
+    "OracleEvaluatorTarget",
+    "OracleLayout",
+    "OracleMacroDeferredSearch",
+    "OracleSynthesisResult",
+    "assemble_phase_oracle",
+    "bnn_verification_oracle_spec",
+    "bnn_verification_oracle_target",
+    "evaluate_oracle_hierarchy",
+    "oracle_training_targets",
+    "train_oracle_inner_bandit",
+    "train_oracle_outer_sarsa",
     "AncillaCertificationResult",
     "AncillaContract",
     "AncillaDeferredSearch",

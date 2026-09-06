@@ -1,0 +1,27 @@
+{
+  "ancilla_leakage": 3.830125836251023e-33,
+  "certified": true,
+  "cnot_count": 13,
+  "cpu_seconds": 0.006287355999999966,
+  "depth": 26,
+  "exact_isometry_error": 1.3827737518436079e-15,
+  "macro_count": 7,
+  "macros": [
+    "H(q2)",
+    "CS(q1->q2)",
+    "CT(q0->q2;a3)",
+    "H(q1)",
+    "CS(q0->q1)",
+    "H(q0)",
+    "SWAP(q0,q2)"
+  ],
+  "method": "qft_exact_verified_macro_plan",
+  "native_gate_count": 35,
+  "projective_isometry_error": 1.2440567926383356e-15,
+  "stop_reason": "certified",
+  "success": true,
+  "t_count": 15,
+  "target": "heldout-qft3-clean-ancilla",
+  "wall_seconds": 0.006281520000015917,
+  "witness": "H(2); T(1); T(2); CNOT(1,2); TDG(2); CNOT(1,2); H(3); T(3); CNOT(2,3); TDG(3); CNOT(0,3); T(3); CNOT(2,3); TDG(3); H(3); T(3); H(3); T(3); CNOT(2,3); TDG(3); CNOT(0,3); T(3); CNOT(2,3); TDG(3); H(3); H(1); T(0); T(1); CNOT(0,1); TDG(1); CNOT(0,1); H(0); CNOT(0,2); CNOT(2,0); CNOT(0,2)"
+}

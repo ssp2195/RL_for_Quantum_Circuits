@@ -1,0 +1,4 @@
+All 17 pages were rendered at 160 dpi with the PDF skill render pipeline.
+Pages 1, 9, and 14 were inspected individually at full resolution; the full 17-page montage was also inspected.
+No clipped text, overlapping objects, broken glyphs, black boxes, or unreadable TikZ/PGFPlots elements were observed.
+New architecture, macro-circuit, and oracle-flow illustrations are TikZ; new quantitative manuscript plots are PGFPlots.

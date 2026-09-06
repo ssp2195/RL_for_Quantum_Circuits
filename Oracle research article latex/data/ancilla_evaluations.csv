@@ -1,0 +1,4 @@
+method,target,success,certified,stop_reason,wall_seconds,cpu_seconds,allocations,attempted_edges,frontier_peak,projective_isometry_error,ancilla_leakage,witness
+ancilla_deferred_outer_sarsa_inner_linucb,heldout-clean-h-t-echo-1q,True,True,certified,0.001870493000069473,0.0018728060000001712,2,6,7,0.0,0.0,H(0); T(0)
+ancilla_deferred_outer_sarsa_inner_linucb,heldout-clean-s-t-product-2q,True,True,certified,0.0020288409998556745,0.002030500999999685,2,5,6,0.0,0.0,S(1); T(0)
+ancilla_deferred_outer_sarsa_inner_linucb,heldout-clean-mixed-product-3q,True,True,certified,0.0043776329998763686,0.004379585999999769,3,9,10,0.0,0.0,H(2); S(0); TDG(1)

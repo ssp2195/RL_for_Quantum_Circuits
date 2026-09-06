@@ -1,0 +1,169 @@
+\section{Hierarchical Allocation of Exact Oracle-Search Work}
+\label{sec:hierarchical-control}
+
+\subsection{Deferred evaluator-search state}
+
+Let $\cH_t$ denote the exact mapping/Pareto archive and let $\cF_t$ contain every active record whose pending macro mask is nonempty.  The search state is
+\begin{equation}
+s_t=(\cH_t,\cF_t,\Xi_g,\bB,B_t^{\mathrm{alloc}},B_t^{\mathrm{edge}}),
+\end{equation}
+where $\Xi_g$ contains the truth table, layout, and clean-workspace contract.  A record is
+\begin{equation}
+v=(M_v,\brho_v,W_v,P_v,\zeta_v),
+\label{eq:oracle-record}
+\end{equation}
+with exact input-domain mapping $M_v$, native-derived resource state $\brho_v$, persistent macro witness $W_v$, pending continuation set $P_v$, and bookkeeping $\zeta_v$.
+
+The outer action selects a frontier record,
+\begin{equation}
+\boxed{a_t^{\mathrm{out}}=v_t,\qquad v_t\in\cF_t.}
+\label{eq:outer-action}
+\end{equation}
+The inner policy orders a batch
+\begin{equation}
+\boxed{
+B_t=(m_{t,1},\ldots,m_{t,\tau_t}),
+\quad m_{t,j}\in P_t(v_t),
+\quad 1\leq\tau_t\leq b.
+}
+\label{eq:inner-batch}
+\end{equation}
+The experiment uses $b=4$.  Every executed token is removed exactly once.  The parent remains active until its pending set is empty or a soundly dominating record replaces it.
+
+For each chosen macro, the deterministic transition is
+\begin{equation}
+\begin{aligned}
+\text{exact mapping}
+&\rightarrow \text{native-resource update}\\
+&\rightarrow \text{mapping/Pareto archive}\\
+&\rightarrow \text{evaluator terminal test}.
+\end{aligned}
+\label{eq:macro-exact-pipeline}
+\end{equation}
+Only after a terminal evaluator has been found does the implementation lower the witness to native Clifford+$T$, apply the universal phase wrapper, and run the independent quantum certifier.
+
+\begin{figure*}[t]
+\centering
+\resizebox{0.96\textwidth}{!}{%
+\begin{tikzpicture}[node distance=8mm and 10mm,font=\footnotesize]
+\node[block] (frontier) {Exact evaluator frontier\\$\cF_t$};
+\node[learn,right=of frontier] (outer) {Outer linear SARSA\\select mapping record};
+\node[block,right=of outer] (record) {Selected $v_t$\\pending macro mask};
+\node[learn,right=of record] (inner) {Disjoint LinUCB\\rank $X$/CNOT/Toffoli};
+\node[exact,right=of inner] (batch) {Process at most $b$\\exact macro edges};
+\node[verify,below=10mm of batch] (archive) {Mapping equality +\\native-resource Pareto archive};
+\node[exact,left=of archive] (lower) {Certified evaluator\\native Clifford+$T$ lowering};
+\node[verify,left=of lower] (cert) {$U_g^\dagger Z_fU_g$ and\\exact isometry certificate};
+\draw[flow] (frontier)--(outer);
+\draw[flow] (outer)--(record);
+\draw[flow] (record)--(inner);
+\draw[flow] (inner)--(batch);
+\draw[flow] (batch)--(archive);
+\draw[loop] (archive.south) to[out=-90,in=-90,looseness=0.72] node[below]{surviving records} (frontier.south);
+\draw[flow] (archive)--node[above]{terminal mapping}(lower);
+\draw[flow] (lower)--(cert);
+\end{tikzpicture}%
+}
+\caption{Hierarchical control for specification-level oracle synthesis.  Learned decisions schedule exact work; mapping equality, resource dominance, native lowering, clean-ancilla restoration, and final acceptance are deterministic.}
+\label{fig:oracle-hierarchy}
+\end{figure*}
+
+\subsection{Outer linear SARSA}
+
+The outer score is shared across a variable-size frontier:
+\begin{equation}
+Q_{\btheta}(s_t,v)=\btheta^\mathsf T\bphi_{\mathrm{out}}(s_t,v).
+\label{eq:outer-q}
+\end{equation}
+The 15-dimensional feature map contains: a bias; exact target distance; flag, data, and workspace mismatch fractions; normalized native $T$, CNOT, gate, depth, and macro resources; the pending-continuation fraction; three last-macro indicators; and, for a uniquely marked target, the fraction of required zero literals already prepared by temporary data complementation.  All coordinates are target- or resource-normalized and remain interpretable.
+
+Because an outer action processes $\tau_t$ macro edges, the update is semi-Markov SARSA:
+\begin{equation}
+\delta_t=R_t^{(\tau_t)}
++\gamma^{\tau_t}Q_{\btheta}(s_{t+1},v_{t+1})
+-Q_{\btheta}(s_t,v_t),
+\label{eq:smdp-sarsa}
+\end{equation}
+followed by
+\begin{equation}
+\btheta\leftarrow\btheta+
+\alpha_{\mathrm{out}}\delta_t\bphi_{\mathrm{out}}(s_t,v_t).
+\label{eq:outer-update}
+\end{equation}
+The finite experiment uses $\gamma=1$.  The initialization assigns negative weight to mismatch and resource consumption; two short curriculum episodes then update the parameters through the exact environment.
+
+\subsection{Disjoint linear contextual bandit}
+
+The inner action has an immediate exact consequence, so it is represented by a contextual bandit rather than a second temporal-difference learner.  Separate linear models are maintained for $X$, CNOT, and Toffoli.  For family $r$,
+\begin{equation}
+\begin{aligned}
+A_r&=\lambda I+\sum_{k:r_k=r}\bz_k\bz_k^\mathsf T,\\
+b_r&=\sum_{k:r_k=r}y_k\bz_k,\qquad
+\widehat\bbeta_r=A_r^{-1}b_r.
+\end{aligned}
+\label{eq:linucb-estimator}
+\end{equation}
+The 15-dimensional action-conditioned context contains current and projected mapping distance, immediate distance reduction, projected flag/data/workspace mismatch, exact native gate/$T$/CNOT cost, whether the macro targets the flag or workspace, whether an $X$ prepares a required zero literal, whether the controls are active on a unique marked input, and overlap with the latest macro.
+
+During training, LinUCB selects
+\begin{equation}
+\begin{aligned}
+\arg\max_{m\in P(v)}\bigl[&
+\widehat\bbeta_{r(m)}^\mathsf T\bz(v,m)\\
+&+\alpha_{\mathrm{UCB}}
+\sqrt{\bz(v,m)^\mathsf T A_{r(m)}^{-1}\bz(v,m)}\bigr].
+\end{aligned}
+\label{eq:linucb-score}
+\end{equation}
+The inverse covariance is updated through Sherman--Morrison, avoiding repeated matrix inversion.  At held-out evaluation, $\alpha_{\mathrm{UCB}}=0$ and continuations are ranked by posterior mean only.
+
+The observed one-edge response combines exact immediate progress, a small change in a frozen outer frontier value, native macro cost, archive rejection, and terminal success.  In compact form,
+\begin{equation}
+y_t=\Delta d_t
++\eta_V\Delta V_{\bar\theta,t}
+-\lambda_C C(m_t)
+-\lambda_R\ind[\text{rejected}]
++R_G\ind[\text{goal}].
+\label{eq:bandit-response}
+\end{equation}
+No reward is assigned merely for enlarging the frontier.
+
+\subsection{Staged low-cost training}
+
+The training corpus contains small literal, negated-literal, parity, and conjunction predicates.  The outer policy is trained first with deterministic projected-distance continuation order.  It is then frozen while LinUCB receives one-edge feedback.  Both policies are frozen before the BNN target is exposed.  The reported experiment uses two outer episodes and four inner episodes, producing four outer updates and 14 bandit updates in approximately $0.011$~s on the evaluation environment.  This is a qualification-scale training protocol, not a large hyperparameter search.
+
+\subsection{Fairness}
+
+Deferred expansion must not become learned pruning.  A deterministic square-index schedule forces the oldest valid pending continuation when
+\begin{equation}
+t=k^2,
+\qquad k\in\mathbb N,
+\label{eq:square-fairness}
+\end{equation}
+after an initial warm-up.  The number of forced selections through time $T$ is $\Theta(\sqrt T)$, so their density vanishes while fairness opportunities diverge.  A dominating replacement receives a fresh complete legal mask; pending bits from a discarded record are never transferred as if they had already been explored.
+
+\begin{algorithm}[t]
+\caption{Hierarchical exact synthesis of a Boolean phase oracle}
+\label{alg:oracle-search}
+\begin{algorithmic}[1]
+\Require Truth table $\TT(g)$, wire layout, native budget $\bB$, outer weights $\btheta$, inner posteriors $\widehat\bbeta_r$
+\State Build the exact root mapping and target mapping $M_\star$
+\State Insert the root into the mapping/Pareto archive
+\While{$\cF\neq\varnothing$ and no hard limit is reached}
+  \State Select $v\in\cF$ with outer SARSA
+  \State Rank $P(v)$ with frozen LinUCB means
+  \State Apply a forced fair token when scheduled
+  \For{each selected macro $m$ in the batch}
+    \State Remove $m$ from $P(v)$ and compute the exact child mapping
+    \State Update native-derived resources and the mapping/Pareto archive
+    \If{the child mapping equals $M_\star$}
+      \State Lower its macro witness to native Clifford+$T$
+      \State Independently certify $U_g$
+      \State Form and certify $O_g=U_g^\dagger Z_fU_g$
+      \If{both certificates succeed} \Return the phase-oracle witness \EndIf
+    \EndIf
+  \EndFor
+\EndWhile
+\State \Return unsolved within the declared limits
+\end{algorithmic}
+\end{algorithm}

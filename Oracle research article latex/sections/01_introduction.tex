@@ -1,0 +1,68 @@
+\section{Introduction}
+
+Many quantum algorithms are stated in an oracle model.  The algorithm assumes access to a unitary that computes or phase-marks a classical predicate, while the cost of realizing that unitary is suppressed into a query.  For amplitude amplification, a Boolean predicate
+\begin{equation}
+g:\{0,1\}^{n}\rightarrow\{0,1\}
+\end{equation}
+is represented by the phase oracle
+\begin{equation}
+\boxed{
+O_g\lvert x\rangle=(-1)^{g(x)}\lvert x\rangle.
+}
+\label{eq:phase-oracle-intro}
+\end{equation}
+The standard coherent construction first computes $g(x)$ into a flag qubit, applies $Z$ to that flag, and then applies the inverse computation.  If $U_g$ is a reversible evaluator,
+\begin{equation}
+U_g\lvert x\rangle\lvert y\rangle\lvert0^a\rangle
+=\lvert x\rangle\lvert y\oplus g(x)\rangle\lvert0^a\rangle,
+\label{eq:evaluator-intro}
+\end{equation}
+then
+\begin{equation}
+\boxed{
+O_g=U_g^\dagger(I\otimes Z_f)U_g
+}
+\label{eq:compute-phase-uncompute-intro}
+\end{equation}
+acts as \eqref{eq:phase-oracle-intro} on the data register and returns all workspace to its initial state.  In the terminology of Nielsen and Chuang, the second application of the computation removes garbage by \emph{uncomputation}, thereby preserving interference and permitting coherent reuse of the workspace~\cite{nielsen2010quantum}.
+
+The construction is universal, but it does not make oracle implementation automatic.  One must still synthesize $U_g$, decide how temporary values are represented, respect an ancilla budget, lower the reversible logic to a fault-tolerant gate library, and prove that the logical action and workspace restoration are exact.  A monolithic native-gate search is generally unsuitable even for modest predicates: the branching factor grows with the number of physical qubits, useful circuits contain long compute--use--uncompute detours, and many different gate prefixes implement the same continuation-relevant transformation.
+
+This difficulty is particularly relevant to formal verification of binarized neural networks (BNNs).  A robustness property can be represented by a Boolean violation predicate $g(x)$ and then integrated into amplitude amplification or estimation.  The motivating BNN example considered here has three input bits and one violating input in the stated Hamming-ball experiment: $x_1x_2x_3=100$.  Its verification oracle is therefore the exact diagonal transformation
+\begin{equation}
+O_g=I-2\lvert100\rangle\!\langle100\rvert.
+\label{eq:bnn-marked-oracle}
+\end{equation}
+The present work addresses the missing synthesis layer between the Boolean predicate and the coherent oracle call.
+
+We formulate this layer as \emph{hierarchical learning-guided exact search}.  The input is the exact truth table of a small Boolean predicate, not a target-specific quantum circuit.  A generic reversible macro grammar contains NOT, CNOT, and Toffoli operations whose targets are restricted to the flag and clean workspace, while data wires may be temporarily complemented to express negative literals.  Search records retain the exact mapping of every promised input basis state, a monotone native-resource vector, a persistent macro witness, and a mask of unprocessed continuations.  Equality of these finite mappings is an exact contract-relative semantic key for the reversible evaluator.
+
+Two lightweight policies allocate search effort.  An outer linear semi-gradient SARSA policy chooses which accepted frontier record is processed next.  An inner disjoint linear contextual bandit, trained by LinUCB, ranks the pending reversible continuations of that record.  Only a small continuation batch is attempted before control returns to the outer scheduler.  The policies may defer work but cannot invent an operation, modify a truth table, declare two mappings equivalent, prune a state, or certify a circuit.
+
+Every accepted macro witness is lowered to the native physical library
+\begin{equation}
+\cG_N=
+\{H_i,S_i,S_i^\dagger,T_i,T_i^\dagger\}_{i=0}^{N-1}
+\cup
+\{\CNOT_{i\rightarrow j}:i\neq j\}.
+\label{eq:gate-library}
+\end{equation}
+Native execution is represented by a structurally shared dependency DAG, a complete forward--inverse Clifford tableau, an ordered word of signed Pauli rotations, explicit phase, and monotone resources.  The strengthened canonicalizer normalizes signed axes, fuses equal rotations, orders commuting factors, extracts every Clifford-valued even quarter turn, and absorbs it into the tableau.  Duplicate and resource-Pareto pruning use this sound full-register key.  Terminal correctness is stricter: an independent certifier reconstructs the native DAG and verifies the required clean-ancilla isometry.
+
+The resulting architecture is neither direct gate-generating RL nor a manually programmed oracle circuit.  It is an exact reversible synthesis procedure in which learning controls the order of a finite, target-independent transition system.  The universal phase wrapper in \eqref{eq:compute-phase-uncompute-intro} is deterministic because it is part of the oracle definition, just as inverse computation is deterministic once $U_g$ has been synthesized.
+
+The main contributions are as follows.
+\begin{enumerate}
+\item We define a specification-level Boolean-oracle interface and a clean-ancilla evaluator contract.  An exact truth table determines the target mapping, while a generic reversible grammar determines the search space.
+\item We introduce a two-layer semantic pipeline: exact contract-relative mapping canonicalization during reversible evaluator search, followed by strengthened Clifford-tableau/Pauli-rotation canonicalization after native lowering.
+\item We use outer linear SARSA and inner disjoint LinUCB to schedule fair deferred exact expansion.  The policies are trained on a small predicate curriculum and frozen before the held-out BNN oracle is generated.
+\item We prove that exact mapping equality is preserved by common reversible suffixes, that componentwise native-resource dominance gives one-sided continuation simulation, and that the compute--phase--uncompute wrapper preserves clean-workspace correctness.
+\item We generate and independently certify the BNN verification phase oracle.  The learned hierarchy discovers the evaluator
+\begin{equation}
+ g(x_1,x_2,x_3)=x_1\land\neg x_2\land\neg x_3
+\end{equation}
+through six reversible macros, and the complete native phase oracle is verified in exact-phase mode.
+\item We retain the one-clean-ancilla QFT-3 experiment as a separate restricted construction and report the bounded unrestricted-search failure explicitly.  This distinguishes a semantic integration benchmark from generic oracle synthesis.
+\end{enumerate}
+
+The current scope is intentionally finite.  Truth-table search is restricted to one--three input predicates and fixed clean workspace.  Measurement, reset, classical feed-forward, discarded garbage channels, dynamic qubit allocation, approximate rotations, and large BNN networks remain outside the model.  The contribution is a rigorously certified first oracle-synthesis layer on which scalable Boolean intermediate representations and reversible pebbling can subsequently be built.

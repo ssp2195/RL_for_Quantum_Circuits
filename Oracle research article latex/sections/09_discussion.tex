@@ -1,0 +1,47 @@
+\section{Discussion and Limitations}
+
+\subsection{What has been demonstrated}
+
+The experiment closes a concrete gap between an abstract verification predicate and a certified native phase-oracle circuit.  The BNN target is supplied as eight Boolean values.  A frozen hierarchical search discovers a reversible evaluator in a target-independent NCT grammar, the witness is lowered to native Clifford+$T$ through the same strengthened symbolic engine used elsewhere in the framework, and the universal compute--phase--uncompute construction is independently certified in exact phase mode.  No learned component decides whether an ancilla is restored or whether the final phase pattern is correct.
+
+The discovered six-macro network is also interpretable.  It computes the negative-literal conjunction $x_1\bar x_2$ in clean workspace, combines it with $\bar x_3$ in the flag, and reverses the workspace computation.  This is the kind of reversible logical structure required by verification oracles: the intermediate value is useful only transiently, and correctness depends on removing it before the phase-oracle call returns.
+
+\subsection{Role of the learned hierarchy}
+
+The learned hierarchy is feasible but not dominant on this benchmark.  LinUCB reduces exact edge attempts modestly relative to fixed continuation order, while exact target potential reaches the same evaluator with substantially less work.  This outcome is unsurprising for a three-bit truth table with one marked basis state: an exact one-step mapping distance is exceptionally informative.  The policies should therefore be viewed as a general scheduling mechanism whose value must be tested on larger plateau, detour, and workspace-allocation problems, not as a replacement for every exact heuristic.
+
+The result nevertheless answers a different and necessary question: the outer/inner policy architecture remains compatible with exact contract-relative Boolean semantics, fixed clean workspace, native Clifford+$T$ lowering, superior canonicalization, Pareto pruning, and independent phase-oracle certification.  The method can generate a nontrivial oracle without being given its circuit.
+
+\subsection{Restriction to small truth tables}
+
+The current Boolean specification explicitly lists $2^n$ truth values and is therefore limited to $n\leq3$ in the experiment.  This is not an appropriate front end for large BNNs, arithmetic predicates, or SAT instances.  The natural extension is an exact Boolean intermediate representation such as an XOR--AND--inverter graph, algebraic normal form, or reversible logic network.  The hierarchy would then synthesize small local cones while a deterministic reversible pebbling procedure schedules compute, reuse, and uncompute across the global graph.
+
+Such a compiler would remain specification-guided rather than target-circuit-guided.  The user would supply a Boolean expression, network, or BNN graph; deterministic front-end transformations would derive local truth tables and workspace dependencies; the exact RL-guided synthesizer would fill in missing certified blocks.  No new learning level is required until profiling shows that deterministic pebbling is the dominant cost.
+
+\subsection{Macro grammar and native optimality}
+
+The evaluator grammar contains $X$, CNOT, and exact Toffoli macros.  It is universal for reversible Boolean logic, but selecting a macro commits to one fixed native lowering.  The returned 98-gate oracle is therefore exact, not claimed $T$-optimal, CNOT-optimal, or depth-optimal.  A larger block library could retain several Pareto-optimal native implementations of the same reversible macro, including relative-phase constructions when they occur inside a verified compute--diagonal--uncompute sandwich.
+
+The present architecture deliberately keeps this choice deterministic.  Allowing the inner policy to select among certified native realizations is a low-risk future extension because every proposed realization can be checked against the same macro contract before use.
+
+\subsection{Canonicalization boundary}
+
+The macro layer has an exact canonical key on the promised truth-table domain.  The native layer retains a sound but incomplete full-register Clifford+$T$ key.  Consequently, native prefixes that are contract-equivalent but full-unitary-distinct may remain separate, and noncommuting odd Pauli-rotation identities may be missed.  This increases search and archive cost but does not make a false certificate possible.
+
+An exact contract-relative isometry key over the Clifford+$T$ coefficient ring would merge more native states safely.  It becomes increasingly important as the number of clean ancillas grows.  Floating-point fingerprints must remain lookup aids rather than authoritative pruning predicates.
+
+\subsection{Restricted QFT-3}
+
+The QFT-3 result is intentionally separated from the oracle experiment.  It proves that a one-clean-ancilla controlled phase can be lowered and certified, but the generator is supplied with the QFT block structure.  The bounded unrestricted search failure confirms that long mixed native circuits remain difficult.  It would be incorrect to describe the restricted result as unconstrained RL discovery.
+
+\subsection{Scale and verification}
+
+Dense isometry certification scales exponentially with the number of free and physical qubits.  It is appropriate for the current five-qubit physical register and provides a strong independent boundary.  Larger Boolean oracles should use compositional certification: exact truth-table or decision-diagram verification for local reversible blocks, a symbolic proof that the assembled Boolean network computes the requested function, and a liveness proof that all clean workspace is uncomputed.
+
+Measurement, reset, classical feed-forward, discarded garbage, approximate synthesis, and noise-aware implementation remain outside the present unitary model.  Incorporating them would require quantum channels or instruments rather than merely extending the current isometry contract.
+
+\subsection{Implications for BNN verification}
+
+The synthesized oracle marks the unique violating input from the concrete three-bit example.  This validates the oracle-construction interface needed by amplitude amplification.  It does not by itself establish an end-to-end quantum advantage: state preparation, repeated oracle calls, diffusion, fault-tolerant overhead, and comparison with the best classical verifier must all be accounted for separately.  The proper current claim is exact oracle realization and certification.
+
+For a larger BNN, the next targets should be XNOR blocks, population-count fragments, majority and threshold predicates, and shared compute--phase--uncompute networks.  These contain more plateaus and delayed workspace effects than a uniquely marked three-bit function and are consequently better tests of whether temporal-difference frontier allocation and contextual continuation selection outperform exact greedy potential.

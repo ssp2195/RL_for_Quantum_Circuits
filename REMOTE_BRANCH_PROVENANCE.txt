@@ -1,9 +1,7 @@
-Remote branch: qft3-guided-ancilla-v1
-Base branch: ancilla-isometry-hierarchical-v1
-Base commit: dc16872276c5c4ef01d1f58d734fb793b9309050
-Validated QFT-3 implementation commit: 2e42c5b90cfd9fb25334d197d170a1ae118a589e
-Permanent CI/finalization commit: 185841360fef24d90fb55796ea8476519a7b7890
-Validation workflow run: 33973083025 (success)
-Regression status: 52 tests passed
-Guided QFT-3 status: independently certified; 35 native gates; 15 T/TDG; 13 CNOT; depth 26
-Unrestricted native-search probe: negative within its bounded wall-clock limit
+Remote branch: bnn-oracle-hierarchical-v1
+Base branch: qft3-guided-ancilla-v1
+Base remote commit: 96b9e1e7b7a4dbf1d60383c9b4ffab2134c18d54
+Validated implementation source: local commit 92e9bcf2007db507566e5ca439482f0e288f298a
+Validated provenance source: local commit d317d0a32f8a1c634ef205f049cd0eba964318e2
+Remote validation: 59 tests passed; 17-page article built; exact BNN phase-oracle recertification passed.
+Article: editable standalone LaTeX with inline TikZ and PGFPlots figures.

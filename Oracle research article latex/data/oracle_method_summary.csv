@@ -1,0 +1,4 @@
+method,label,success_rate,median_wall_seconds,macro_edges,allocations,frontier_peak
+oracle_deferred_fixed_order,Deferred fixed,1.0,0.0953391630000624,371,100,252
+oracle_exact_target_potential,Exact potential,1.0,0.038466844999902605,180,48,139
+oracle_hierarchical_sarsa_linucb,SARSA+LinUCB,1.0,0.10328774699996757,352,94,236

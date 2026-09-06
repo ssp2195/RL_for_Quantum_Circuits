@@ -1,0 +1,13 @@
+target,qubits,actions_per_record,method,certified,median_wall_seconds,attempted_edges,outer_decisions,peak_frontier,stop_reason
+heldout-mixed-frame-phase-4q,4,32,Deferred SARSA + LinUCB,true,0.010347,52,15,48,certified
+heldout-mixed-frame-phase-4q,4,32,Deferred SARSA + native order,true,0.012000,87,24,70,certified
+heldout-mixed-frame-phase-4q,4,32,Eager outer SARSA,true,0.011671,192,6,105,certified
+heldout-mixed-frame-phase-4q,4,32,Eager target potential,true,0.151232,5440,170,833,certified
+heldout-mixed-basis-echo-5q,5,45,Deferred SARSA + LinUCB,true,0.033724,162,44,154,certified
+heldout-mixed-basis-echo-5q,5,45,Deferred SARSA + native order,true,0.041622,245,66,229,certified
+heldout-mixed-basis-echo-5q,5,45,Eager outer SARSA,true,0.045832,585,13,281,certified
+heldout-mixed-basis-echo-5q,5,45,Eager target potential,false,2.002262,29475,655,4775,wall_limit
+heldout-mixed-frame-phase-6q-ood,6,60,Deferred SARSA + LinUCB,true,0.015884,50,14,32,certified
+heldout-mixed-frame-phase-6q-ood,6,60,Deferred SARSA + native order,true,0.020256,102,27,84,certified
+heldout-mixed-frame-phase-6q-ood,6,60,Eager outer SARSA,true,0.021108,360,6,146,certified
+heldout-mixed-frame-phase-6q-ood,6,60,Eager target potential,false,1.292049,30720,512,1376,expansion_cap

@@ -1,0 +1,8 @@
+scheduler,easy,medium,hard_ood
+FIFO,0.800,0.520,0.000
+LIFO,0.520,0.240,0.008
+Uniform cost,0.600,0.480,0.008
+Seeded random,0.800,0.560,0.006
+Zero-weight linear,0.800,0.520,0.000
+Target potential,1.000,0.480,0.040
+Outer SARSA,0.960,0.688,0.000

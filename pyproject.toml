@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hybrid-qcs"
-version = "0.8.0"
-description = "Hierarchical exact Clifford+T synthesis with ancilla contracts and guided QFT generation"
+version = "0.9.0"
+description = "Hierarchical exact Clifford+T synthesis of clean-ancilla Boolean phase oracles"
 requires-python = ">=3.11"
 dependencies = ["numpy>=1.24"]
 
@@ -19,6 +19,7 @@ hybrid-qcs-mixed-crossover = "hybrid_qcs.mixed_crossover_runner:main"
 hybrid-qcs-canonicalization-audit = "hybrid_qcs.canonicalization_audit:main"
 hybrid-qcs-ancilla = "hybrid_qcs.ancilla_runner:main"
 hybrid-qcs-qft3 = "hybrid_qcs.qft_guided:main"
+hybrid-qcs-oracle = "hybrid_qcs.oracle_runner:main"
 
 [tool.setuptools.packages.find]
 where = ["."]

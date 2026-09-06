@@ -1,0 +1,175 @@
+\section{Specification-Level Boolean Oracle Synthesis}
+\label{sec:boolean-oracle}
+
+\subsection{Boolean specification and reversible evaluator}
+
+Let
+\begin{equation}
+g:\{0,1\}^{n}\rightarrow\{0,1\}
+\end{equation}
+be supplied by its exact truth table
+\begin{equation}
+\TT(g)=(g(0),g(1),\ldots,g(2^n-1)).
+\label{eq:truth-table}
+\end{equation}
+The current implementation admits $1\leq n\leq3$.  The physical register contains read-only data wires $X=(x_1,\ldots,x_n)$, one predicate flag $f$, and a fixed clean workspace $A$.  The evaluator target is
+\begin{equation}
+\boxed{
+U_g:\lvert x\rangle_X\lvert y\rangle_f\lvert0^a\rangle_A
+\mapsto
+\lvert x\rangle_X\lvert y\oplus g(x)\rangle_f\lvert0^a\rangle_A.
+}
+\label{eq:oracle-evaluator}
+\end{equation}
+During search it is sufficient to represent the action on the promised columns with $y=0$ and $A=0^a$, because the final phase construction uses exactly that input.  The native replay and final exact isometry certification nevertheless verify the complete declared contract.
+
+For each data basis index $j$, let $\iota(j)$ be its physical-register embedding with flag and workspace zero.  A reversible macro prefix $v$ induces the ordered mapping
+\begin{equation}
+M_v=\bigl(F_v(\iota(0)),\ldots,F_v(\iota(2^n-1))\bigr),
+\label{eq:mapping-key}
+\end{equation}
+where $F_v$ is the exact computational-basis permutation implemented by the prefix.  The target mapping is
+\begin{equation}
+M_\star(j)=\iota(j)\oplus g(j)2^{q_f}.
+\label{eq:target-mapping}
+\end{equation}
+Equality of $M_v$ is exact integer equality; no floating-point hash is involved.
+
+\subsection{Target-independent reversible macro grammar}
+
+The evaluator search uses the universal reversible grammar
+\begin{equation}
+\cG_{\mathrm{rev}}
+=\{X_q,\CNOT_{c\rightarrow t},\operatorname{TOF}_{c_0,c_1\rightarrow t}\}.
+\label{eq:nct-grammar}
+\end{equation}
+Data wires may be complemented by $X$ to expose negative literals, but the target of CNOT or Toffoli is restricted to the flag or workspace.  This prevents the search from irreversibly overwriting an input bit while still permitting temporary data complementation.  The grammar depends only on the register layout; it is independent of the target truth table.
+
+Every macro has an exact, fixed lowering to \eqref{eq:gate-library}.  CNOT is already native.  The implementation uses
+\begin{equation}
+X_q=H_qS_qS_qH_q
+\end{equation}
+and an independently tested exact 15-gate Clifford+$T$ Toffoli decomposition.  Hence the macro-level resource transition is computed from the actual native $T/T^\dagger$ count, CNOT count, total gate count, and per-wire depth, not from an abstract unit-cost model.
+
+\begin{figure*}[t]
+\centering
+\resizebox{0.98\textwidth}{!}{%
+\begin{tikzpicture}[node distance=8mm and 9mm,font=\footnotesize]
+\node[spec] (spec) {Exact predicate specification\\$\TT(g)$ and wire roles};
+\node[learn,right=of spec] (macro) {Hierarchical exact search\\outer SARSA + inner LinUCB\\over $X$/CNOT/Toffoli};
+\node[verify,right=of macro] (mapcert) {Exact evaluator certificate\\$M_v=M_\star$};
+\node[exact,right=of mapcert] (lower) {Native Clifford+$T$ lowering\\persistent DAG + tableau + rotations};
+\node[exact,right=of lower] (phase) {Universal phase wrapper\\$U_g^\dagger Z_fU_g$};
+\node[verify,right=of phase] (cert) {Independent exact isometry\\and leakage certification};
+\draw[flow] (spec)--(macro);
+\draw[flow] (macro)--(mapcert);
+\draw[flow] (mapcert)--(lower);
+\draw[flow] (lower)--(phase);
+\draw[flow] (phase)--(cert);
+\node[below=8mm of macro,align=center] (policy-note) {Learning changes only the order in which exact macro edges are processed.};
+\node[below=8mm of lower,align=center] (math-note) {Canonicalization, Pareto pruning, native semantics, and acceptance remain deterministic.};
+\draw[dashed] (macro)--(policy-note);
+\draw[dashed] (lower)--(math-note);
+\end{tikzpicture}%
+}
+\caption{End-to-end specification-level oracle synthesis.  The target is a Boolean function, not a hidden circuit.  Search discovers a reversible evaluator; the phase wrapper and native lowering are universal deterministic transformations.}
+\label{fig:oracle-pipeline}
+\end{figure*}
+
+\subsection{Contract-relative canonicalization and Pareto pruning}
+
+At the evaluator-search layer, $M_v$ is a complete semantic description of the prefix on the promised input domain.  The archive therefore uses
+\begin{equation}
+\kappa_{\mathrm{map}}(v)=M_v.
+\label{eq:mapping-canonical-key}
+\end{equation}
+This key is stronger for the restricted Boolean task than the full-register Clifford+$T$ key: it merges physical macro prefixes that have the same continuation-relevant action on every allowed input, even if their behavior on invalid workspace inputs differs.
+
+The resource vector is
+\begin{equation}
+\brho_{\mathrm{rev}}(v)=
+\bigl(n_T,n_{\CNOT},n_g,d_0,\ldots,d_{N-1},n_{\mathrm{macro}}\bigr),
+\label{eq:macro-resources}
+\end{equation}
+where the first three and the wire-depth coordinates are computed after exact native lowering of each macro.  For a fixed mapping key, the archive retains the componentwise Pareto antichain.  A record with no worse native resources can simulate every common future macro suffix available from a dominated record.
+
+The second canonicalization layer operates after a macro witness has been found.  Its native gates are applied through the ordinary hybrid state, and the strengthened tableau--rotation canonicalizer in Section~\ref{sec:canonicalization} handles Clifford-valued rotation extraction and projective duplicate identity.  The two semantic layers have different purposes:
+\begin{equation}
+\begin{aligned}
+\kappa_{\mathrm{map}}&:\ \text{exact Boolean evaluator search},\\
+\kappa_{\mathrm{full}}&:\ \text{native Clifford+$T$ execution and pruning}.
+\end{aligned}
+\end{equation}
+
+\subsection{Universal phase-oracle assembly}
+
+After independent evaluator certification, the exact phase oracle is
+\begin{equation}
+\boxed{
+O_g=U_g^\dagger Z_f U_g.
+}
+\label{eq:oracle-phase-wrapper}
+\end{equation}
+For every $x$,
+\begin{equation}
+\begin{aligned}
+\lvert x,0,0^a\rangle
+&\xmapsto{U_g}\lvert x,g(x),0^a\rangle\\
+&\xmapsto{Z_f}(-1)^{g(x)}\lvert x,g(x),0^a\rangle\\
+&\xmapsto{U_g^\dagger}(-1)^{g(x)}\lvert x,0,0^a\rangle.
+\end{aligned}
+\end{equation}
+The flag and workspace therefore return clean.  Exact-phase mode is used because the phase pattern is the intended logical action, not an irrelevant scalar of a subroutine.
+
+\begin{figure*}[t]
+\centering
+\resizebox{0.94\textwidth}{!}{%
+\begin{tikzpicture}[x=1.22cm,y=0.68cm,font=\scriptsize]
+\foreach \y/\lab in {5/$x_1$,4/$x_2$,3/$x_3$,2/$f$,1/$a$}{
+  \draw[wire] (0,\y)--(13.2,\y);
+  \node[left] at (0,\y) {\lab};
+}
+% Macro 1 Toffoli x1 x2 -> a
+\node[ctrl] at (1,5){}; \node[ctrl] at (1,4){}; \draw (1,5)--(1,1); \node[targetx] at (1,1){$\oplus$};
+\node[above] at (1,5.25){1};
+% macro 2 CNOT x1 -> a
+\node[ctrl] at (3,5){}; \draw (3,5)--(3,1); \node[targetx] at (3,1){$\oplus$}; \node[above] at (3,5.25){2};
+% macro 3 CNOT a -> f
+\node[ctrl] at (5,1){}; \draw (5,1)--(5,2); \node[targetx] at (5,2){$\oplus$}; \node[above] at (5,5.25){3};
+% macro 4 Toffoli x3,a -> f
+\node[ctrl] at (7,3){}; \node[ctrl] at (7,1){}; \draw (7,3)--(7,1); \draw (7,3)--(7,2); \node[targetx] at (7,2){$\oplus$}; \node[above] at (7,5.25){4};
+% macro 5 CNOT x1->a
+\node[ctrl] at (9,5){}; \draw (9,5)--(9,1); \node[targetx] at (9,1){$\oplus$}; \node[above] at (9,5.25){5};
+% macro 6 Toffoli x1 x2 -> a
+\node[ctrl] at (11,5){}; \node[ctrl] at (11,4){}; \draw (11,5)--(11,1); \node[targetx] at (11,1){$\oplus$}; \node[above] at (11,5.25){6};
+\node[right,align=left] at (13.2,2) {$f=x_1\bar x_2\bar x_3$};
+\node[right,align=left] at (13.2,1) {$a=0$};
+\draw[decorate,decoration={brace,mirror,amplitude=4pt}] (0.4,0.45)--(11.6,0.45) node[midway,below=5pt]{six-macro evaluator discovered by the frozen hierarchy};
+\end{tikzpicture}%
+}
+\caption{Macro-level evaluator discovered for the BNN violation predicate.  The work qubit first stores $x_1x_2$, is converted to $x_1\bar x_2$, controls the flag update, and is then uncomputed exactly.  All Toffoli macros are subsequently lowered to native Clifford+$T$.}
+\label{fig:found-evaluator}
+\end{figure*}
+
+\subsection{The BNN verification predicate}
+
+The concrete source experiment defines a Hamming-ball verification problem with the unique violating input $100$.  We adopt the exact diagonal extension
+\begin{equation}
+g(x_1,x_2,x_3)=x_1\bar x_2\bar x_3,
+\qquad
+O_g=I-2\lvert100\rangle\!\langle100\rvert.
+\label{eq:bnn-predicate}
+\end{equation}
+The hierarchy is given the eight Boolean values in \eqref{eq:truth-table} and the generic grammar \eqref{eq:nct-grammar}.  It is not given the six operations in Fig.~\ref{fig:found-evaluator}.
+
+The discovered evaluator can be checked symbolically.  With $a=f=0$ initially, the six updates are
+\begin{align}
+a&\leftarrow x_1x_2,\\
+a&\leftarrow x_1x_2\oplus x_1=x_1\bar x_2,\\
+f&\leftarrow x_1\bar x_2,\\
+f&\leftarrow x_1\bar x_2\oplus x_3x_1\bar x_2
+=x_1\bar x_2\bar x_3,\\
+a&\leftarrow x_1x_2,\\
+a&\leftarrow0.
+\end{align}
+Thus the output flag is exactly $g(x)$ and the workspace is restored for every input, before the native circuit is even passed to the independent quantum certifier.

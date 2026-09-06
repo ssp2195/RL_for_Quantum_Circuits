@@ -1,0 +1,59 @@
+\section{Experimental Methodology}
+\label{sec:experiments}
+
+\subsection{Implementation and regression protocol}
+
+The implementation is written in Python and NumPy.  The native semantic engine stores a persistent circuit DAG, forward--inverse Clifford tableau, ordered Pauli rotations, exact phase coordinate, and monotone resource state.  Every macro selected by the oracle search is lowered through this engine with partial-order reduction disabled during final witness replay, ensuring that the certified chronological circuit is exactly the circuit returned by the search.
+
+The complete test suite contains 59 passing tests.  The inherited tests cover native gate matrices, tableau identities, Pauli transport, strengthened canonicalization, duplicate and Pareto pruning, mixed-gate deferred expansion, clean and borrowed ancilla contracts, exact/projective phase modes, and the restricted QFT-3 construction.  Seven oracle tests add truth-table semantics, target-independent macro enumeration, exact workspace restoration, native lowering, exact phase marking, common-suffix mapping invariance, and end-to-end hierarchical generation.
+
+The bounded canonicalization audit enumerates 3906 one-qubit prefixes through depth five and 1885 two-qubit prefixes through depth three.  An independent dense projective fingerprint is used only as a differential-test oracle.  The strengthened key reduces unresolved duplicate excess by approximately $51\%$ and $50\%$, respectively, with no observed false merge in the audited samples.
+
+\subsection{Predicate curriculum and frozen policies}
+
+The outer and inner linear policies are trained on the first four targets of a target-independent curriculum:
+\begin{equation}
+ x_1,\qquad \bar x_1,\qquad x_1\oplus x_2,\qquad x_1x_2.
+\end{equation}
+The held-out BNN predicate is not used during policy updates.  Outer SARSA receives two episodes with at most 32 allocations and batches of two projected-distance-ordered macros.  LinUCB then receives four one-edge episodes while the outer policy is fixed.  The learning rate is $10^{-4}$, the LinUCB confidence coefficient is $0.05$, and the ridge regularization is $1000$.  Frozen evaluation uses no $\varepsilon$ exploration and no UCB optimism.
+
+The BNN run permits at most 1000 outer allocations, 4000 exact macro attempts, seven macros in a witness, a batch size of four, and 12 wall-clock seconds.  The corresponding native budget is fixed by register width rather than by the discovered witness:
+\begin{equation}
+B_T=35,
+\quad B_{\CNOT}=48,
+\quad B_g=96,
+\quad B_D=88
+\end{equation}
+for the evaluator.  The phase wrapper doubles the evaluator budget and adds the two native $S$ gates implementing $Z_f=S_f^2$.
+
+\subsection{BNN verification-oracle target}
+
+The source verification example has reference input $000$, Hamming radius one, and perturbation set
+\begin{equation}
+\{000,100,010,001\}.
+\end{equation}
+Exactly $100$ changes the BNN output.  The synthesis benchmark adopts the exact three-bit phase oracle in \eqref{eq:bnn-marked-oracle}, equivalently
+\begin{equation}
+g(x_1,x_2,x_3)=x_1\bar x_2\bar x_3.
+\end{equation}
+Qubits $q_0,q_1,q_2$ store $x_1,x_2,x_3$; $q_3$ is the predicate flag and $q_4$ is one clean work qubit.  The evaluator and final phase oracle are checked on all eight data inputs, not only on the four elements of the Hamming ball.
+
+\subsection{Control schedulers}
+
+Three frozen search procedures use the same macro grammar, mapping transition, resource budgets, archive, native lowering, and final certifier:
+\begin{enumerate}
+\item \textbf{Hierarchical SARSA--LinUCB}: outer records are ranked by the frozen SARSA score and pending macros by frozen LinUCB posterior means.
+\item \textbf{Deferred fixed order}: the same frozen outer SARSA policy is retained, but pending macros are processed in deterministic token order.
+\item \textbf{Exact target potential}: the outer record and its macros are ordered directly by the exact mapping distance in Section~\ref{sec:boolean-oracle}.
+\end{enumerate}
+All methods are run five times with frozen policies to measure implementation-level timing dispersion.  Because the searches are deterministic after policy freezing, repetitions are timing repetitions rather than independent learner seeds.
+
+The primary feasibility endpoint is independent exact certification of the phase oracle.  Explanatory metrics are wall time, outer allocations, exact macro attempts, peak frontier size, native gate resources, exact-isometry error, and clean-workspace leakage.  The controls are included to determine whether the learning hierarchy adds value beyond deferred expansion and an exact greedy potential; they are not alternative correctness conditions.
+
+\subsection{Restricted QFT-3 qualification}
+
+A separate one-clean-ancilla QFT-3 experiment tests mixed Clifford+$T$ phase handling, compute--phase--uncompute, and exact isometry certification.  It is deliberately not part of the specification-level Boolean oracle search.  A verified analytical macro plan lowers Hadamards, controlled-$S$, a clean-ancilla controlled-$T$, and final bit reversal to 35 native gates with 15 $T/T^\dagger$ gates, 13 CNOTs, and depth 26.  The generator receives the fact that the target is QFT and is therefore labelled \emph{restricted}.  A generic unrestricted native search is also run for 1.5 seconds and 585 exact edges; its negative result is retained.
+
+\subsection{Reproducibility artifacts}
+
+The repository stores raw CSV files, JSON certificates, the complete native witness, frozen linear-policy parameters, test logs, plots, and figure-generation source.  New diagrams in this article are expressed directly in TikZ; quantitative figures are rendered by PGFPlots from the packaged CSV data.  Thus no raster illustration or generative image model is required to reproduce the article's methodological figures.

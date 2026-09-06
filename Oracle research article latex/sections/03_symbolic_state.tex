@@ -1,0 +1,199 @@
+\section{Ancilla-Aware Exact Synthesis State}
+
+\subsection{Physical register and synthesis contract}
+
+Let the physical wires be partitioned into disjoint ordered sets
+\begin{equation}
+Q_L,\qquad Q_A,\qquad Q_B,
+\end{equation}
+representing logical qubits, clean ancillas, and borrowed ancillas. Every physical wire has exactly one role. Write
+\begin{equation}
+n=|Q_L|,\qquad a=|Q_A|,\qquad b=|Q_B|,
+\qquad N=n+a+b.
+\end{equation}
+Output qubits that form part of the requested logical transformation belong to $Q_L$, even if they are initialized in a known basis state. The set $Q_A$ contains only workspace that must be returned to $\lvert0\rangle$, whereas $Q_B$ contains arbitrary borrowed workspace that must be returned unchanged.
+
+A synthesis contract is
+\begin{equation}
+\Xi=(Q_L,Q_A,Q_B,U_\star,\chi,\cG_N,\bB),
+\label{eq:contract}
+\end{equation}
+where $U_\star\in U(2^n)$ is the logical target, $\chi\in\{\mathrm{projective},\mathrm{exact}\}$ is the phase mode, $\cG_N$ is the physical native library in \eqref{eq:gate-library}, and $\bB$ is a finite resource envelope. The free input domain contains the logical and borrowed registers. Clean ancillas are inserted by the isometric embedding
+\begin{equation}
+J:\cH_L\otimes\cH_B\longrightarrow
+\cH_L\otimes\cH_A\otimes\cH_B.
+\label{eq:embedding-domain}
+\end{equation}
+The concrete implementation permits arbitrary physical wire order and constructs $J$ from the declared role tuples rather than assuming that the ancillas are contiguous.
+
+The search is over complete physical-register circuits $C\in\cG_N^\ast$. Their relevant semantics are
+\begin{equation}
+V_C=U(C)J,
+\label{eq:candidate-isometry}
+\end{equation}
+while the target isometry is
+\begin{equation}
+V_\star=J(U_\star\otimes I_B).
+\label{eq:target-isometry}
+\end{equation}
+For projective mode the contract requires $V_C\proj V_\star$; exact mode requires $V_C=V_\star$. A gate-count coordinate in $\bB$ makes the raw search domain finite.
+
+\subsection{Persistent search record}
+
+Each admitted frontier record is
+\begin{equation}
+\boxed{
+v=(D_v,\Theta_v,\cR_v,\phi_v,\brho_v,
+V_v,\kappa_v,\cP_v,\zeta_v).
+}
+\label{eq:ancilla-record}
+\end{equation}
+Here $D_v$ is a persistent circuit DAG; $\Theta_v$ is a complete forward--inverse Clifford tableau on all $N$ physical wires; $\cR_v$ is an ordered signed-Pauli rotation word; $\phi_v$ is the tracked eighth-turn phase; $\brho_v$ is the monotone resource vector; $V_v=U(D_v)J$ is the incrementally propagated contract isometry; $\kappa_v$ is the archive key; $\cP_v$ is the pending native-continuation set; and $\zeta_v$ contains persistent identifiers and search metadata. Policy features, cached contexts, and the pending mask are not circuit semantics.
+
+The state deliberately stores two exact semantic views. The tableau--rotation factorization is compact and supports canonicalization. The isometry $V_v$ makes contract distance and clean-workspace leakage available without rebuilding the complete full unitary after every edge. The final certifier nevertheless reconstructs the witness independently from $D_v$.
+
+\subsection{Persistent dependency DAG}
+
+Let $\omega_q(v)$ be the latest gate node touching physical qubit $q$ and let $d_q(v)$ be the corresponding wire depth. Appending a native gate $g$ creates one node $w_g$ with parents
+\begin{equation}
+\operatorname{par}(w_g)=
+\operatorname{unique}
+\{\omega_q(v):q\in Q(g),\ \omega_q(v)\neq\varnothing\},
+\label{eq:dag-parents}
+\end{equation}
+and level
+\begin{equation}
+\ell(w_g)=1+\max_{q\in Q(g)}d_q(v).
+\label{eq:dag-level}
+\end{equation}
+The child stores only the new persistent event,
+\begin{equation}
+D_{\delta(v,g)}=D_v\oplus w_g.
+\end{equation}
+This sharing is particularly useful for compute--use--uncompute circuits: descendants reuse the complete reversible-computation prefix, while chronological links permit exact replay and wire dependencies expose logical--workspace interactions and critical-path depth.
+
+\subsection{Forward--inverse Clifford tableau}
+
+Let $C=C(\Theta_v)$ denote the current Clifford factor on the entire physical register. The tableau stores
+\begin{equation}
+\Theta_v=
+\left(
+CX_qC^\dagger,
+CZ_qC^\dagger,
+C^\dagger X_qC,
+C^\dagger Z_qC
+\right)_{q=0}^{N-1}.
+\label{eq:tableau}
+\end{equation}
+The forward images identify the projective Clifford action; the inverse images transport Pauli axes directly through the accumulated frame. When a Clifford gate $G$ is appended chronologically,
+\begin{equation}
+C(\Theta_{\delta(v,G)})=GC(\Theta_v),
+\label{eq:clifford-update}
+\end{equation}
+and both maps are updated in the same exact transition.
+
+\subsection{Transported Pauli rotations}
+
+For a signed Hermitian Pauli $P$ on the $N$ physical wires, define
+\begin{equation}
+\RPauli{P}{\theta}
+=\exp\!\left(-\frac{i\theta P}{2}\right)
+=\cos\!\left(\frac{\theta}{2}\right)I
+-i\sin\!\left(\frac{\theta}{2}\right)P.
+\label{eq:pauli-rotation}
+\end{equation}
+The native non-Clifford gates satisfy
+\begin{equation}
+T_q=e^{i\pi/8}\RPauli{Z_q}{\pi/4},
+\qquad
+T_q^\dagger=e^{-i\pi/8}\RPauli{Z_q}{-\pi/4}.
+\label{eq:t-rotation}
+\end{equation}
+Using
+\begin{equation}
+C\RPauli{P}{\theta}C^\dagger
+=\RPauli{CPC^\dagger}{\theta},
+\label{eq:clifford-conjugation}
+\end{equation}
+a newly appended $T_q$ or $T_q^\dagger$ is stored with axis
+\begin{equation}
+P_{\mathrm{new}}=C^\dagger Z_qC,
+\qquad
+\theta_{\mathrm{new}}=\pm\frac{\pi}{4}.
+\label{eq:transported-axis}
+\end{equation}
+The resulting Pauli may have support simultaneously on logical and workspace qubits. Such support is not an implementation artifact; it is the exact algebraic signature of Clifford-mediated phase kickback and entangling computation.
+
+The full physical-register invariant is
+\begin{equation}
+\boxed{
+\Sem(v)=e^{i\pi\phi_v/8}
+C(\Theta_v)
+\prod_{j=1}^{m_v}
+\RPauli{P_{v,j}}{k_{v,j}\pi/4}.
+}
+\label{eq:semantic-invariant}
+\end{equation}
+The product order is significant when axes anticommute.
+
+\subsection{Incremental isometry propagation}
+
+At the root,
+\begin{equation}
+V_\varnothing=J.
+\end{equation}
+For a native gate $g$,
+\begin{equation}
+V_{\delta(v,g)}=U_gV_v.
+\label{eq:isometry-update}
+\end{equation}
+Only the columns in the permitted input domain are propagated. Thus, for $n$ logical, $a$ clean, and $b$ borrowed qubits, the stored matrix has
+\begin{equation}
+2^{n+a+b}\times 2^{n+b}
+\end{equation}
+entries, rather than the $2^{n+a+b}\times2^{n+a+b}$ entries of a full unitary. Single-qubit gates update row pairs and CNOT updates rows by a cached permutation. The matrix remains an exact mathematical isometry, subject only to floating-point arithmetic in the small-width qualification implementation.
+
+\subsection{Incremental rotation normalization}
+
+The execution representation is maintained using the exact identities
+\begin{align}
+\RPauli{-P}{\theta}&=\RPauli{P}{-\theta},
+\label{eq:sign-normalization}\\
+\RPauli{P}{\alpha}\RPauli{P}{\beta}
+&=\RPauli{P}{\alpha+\beta},
+\label{eq:same-axis-fusion}\\
+[P,Q]=0
+&\Longrightarrow
+\RPauli{P}{\alpha}\RPauli{Q}{\beta}
+=\RPauli{Q}{\beta}\RPauli{P}{\alpha}.
+\label{eq:commuting-swap}
+\end{align}
+A new factor passes through commuting rotations according to a fixed Pauli order and stops at the first anticommuting barrier. The stronger archive view is described in Section~\ref{sec:canonicalization}.
+
+\subsection{Monotone resource state}
+
+The base resource vector is augmented by two workspace-use coordinates:
+\begin{equation}
+\boxed{
+\begin{aligned}
+\brho(v)=\bigl(&T(v),N_{\mathrm{CNOT}}(v),G(v),
+ d_0(v),\ldots,d_{N-1}(v),\\
+& A_{\mathrm{touch}}(v),N_{L\leftrightarrow W}(v)\bigr).
+\end{aligned}
+}
+\label{eq:resource-vector}
+\end{equation}
+Here $A_{\mathrm{touch}}$ counts gates touching clean or borrowed workspace, and $N_{L\leftrightarrow W}$ counts CNOTs crossing between logical and workspace roles. All coordinates are monotone under a common suffix. For a gate $g$ acting on $Q(g)$,
+\begin{equation}
+\tau_g(\mathbf d)=1+\max_{q\in Q(g)}d_q,
+\end{equation}
+with
+\begin{equation}
+[T_g(\mathbf d)]_q=
+\begin{cases}
+\tau_g(\mathbf d),&q\in Q(g),\\
+d_q,&q\notin Q(g).
+\end{cases}
+\label{eq:depth-update}
+\end{equation}
+Current ancilla cleanliness and current entanglement are deliberately \emph{not} treated as lower-is-better Pareto coordinates: they can increase and decrease during computation and uncomputation. Contract compliance is semantic and is checked by the isometry, not inferred from a monotone counter.

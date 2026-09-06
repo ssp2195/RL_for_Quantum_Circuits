@@ -1,0 +1,6 @@
+$pdflatex = 'pdflatex %O %S';
+$bibtex = (-x '/usr/bin/bibtex.original')
+  ? '/usr/bin/bibtex.original %O %B'
+  : 'bibtex %O %B';
+$pdf_mode = 1;
+$interaction = 'nonstopmode';
