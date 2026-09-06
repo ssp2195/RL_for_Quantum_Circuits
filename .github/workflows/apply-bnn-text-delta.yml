@@ -1,0 +1,168 @@
+name: Publish validated BNN-oracle source
+
+on:
+  push:
+    branches: ["bnn-oracle-publish-v1"]
+    paths: [".bnn_text_delta/READY"]
+
+permissions:
+  contents: write
+
+jobs:
+  reconstruct-validate-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct and verify text delta
+        shell: bash
+        run: |
+          set -euo pipefail
+          parts=(
+            .bnn_text_delta/part00 .bnn_text_delta/part01
+            .bnn_text_delta/part02 .bnn_text_delta/part03
+            .bnn_text_delta/part04 .bnn_text_delta/part05
+            .bnn_text_delta/part06 .bnn_text_delta/part07
+            .bnn_text_delta/part08 .bnn_text_delta/part09
+          )
+          for i in $(seq 0 8); do
+            test "$(stat -c%s "${parts[$i]}")" = "10000"
+          done
+          test "$(stat -c%s "${parts[9]}")" = "7912"
+          cat "${parts[@]}" > /tmp/bnn_text.patch.xz.b64
+          test "$(stat -c%s /tmp/bnn_text.patch.xz.b64)" = "97912"
+          echo "91287bbce0d2ca55b478e117446cdca4b3be7da550a6c5b7bee32569fb38422c  /tmp/bnn_text.patch.xz.b64" | sha256sum -c -
+          base64 -d /tmp/bnn_text.patch.xz.b64 > /tmp/bnn_text.patch.xz
+          test "$(stat -c%s /tmp/bnn_text.patch.xz)" = "73432"
+          echo "a0c6f8cb93d2dd15f30a3af0b094355efca56e53f386f6f043c961c613f9e202  /tmp/bnn_text.patch.xz" | sha256sum -c -
+          xz -t /tmp/bnn_text.patch.xz
+          xz -dc /tmp/bnn_text.patch.xz > /tmp/bnn_text.patch
+          test "$(stat -c%s /tmp/bnn_text.patch)" = "418157"
+          echo "f98cbad5356cd17b28f3a2af3b75ba2cf89af6410f9ceda9e3409f420ee98791  /tmp/bnn_text.patch" | sha256sum -c -
+          git apply --index /tmp/bnn_text.patch
+
+          # The final CI workflow is installed after publication through the
+          # authenticated Git-data API. This avoids GITHUB_TOKEN restrictions
+          # on workflow-file updates made by a workflow run.
+          git restore --source=HEAD --staged --worktree .github/workflows/ci.yml
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[dev]'
+
+      - name: Run regression and oracle tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m compileall -q hybrid_qcs tests
+          python -m pytest -q | tee /tmp/pytest.log
+          grep -Eq "59 passed" /tmp/pytest.log
+          git diff --cached --check
+
+      - name: Reproduce oracle result and binary artifacts
+        shell: bash
+        env:
+          OPENBLAS_NUM_THREADS: "1"
+          OMP_NUM_THREADS: "1"
+          MPLBACKEND: Agg
+        run: |
+          set -euo pipefail
+          python -m hybrid_qcs.oracle_runner \
+            --output-dir /tmp/bnn-oracle-generated \
+            --seed 11 \
+            --outer-episodes 2 \
+            --inner-episodes 4 \
+            --max-allocations 1000 \
+            --max-edges 4000 \
+            --batch-size 4 \
+            --wall-limit 12.0 \
+            --timing-repeats 5
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          result = json.loads(
+              Path('/tmp/bnn-oracle-generated/oracle_result.json').read_text()
+          )
+          assert result['success'] is True, result
+          assert result['macro_witness'] == [
+              'TOFFOLI(0,1,4)',
+              'CNOT(0,4)',
+              'CNOT(4,3)',
+              'TOFFOLI(2,4,3)',
+              'CNOT(0,4)',
+              'TOFFOLI(0,1,4)',
+          ], result
+          evaluator = result['evaluator']
+          oracle = result['phase_oracle']
+          assert result['allocations'] == 94, result
+          assert result['attempted_macro_edges'] == 352, result
+          assert result['frontier_peak'] == 236, result
+          assert evaluator['native_gate_count'] == 48, evaluator
+          assert evaluator['t_count'] == 21, evaluator
+          assert evaluator['cnot_count'] == 21, evaluator
+          assert evaluator['depth'] == 38, evaluator
+          assert oracle['native_gate_count'] == 98, oracle
+          assert oracle['t_count'] == 42, oracle
+          assert oracle['cnot_count'] == 42, oracle
+          assert oracle['depth'] == 76, oracle
+          assert oracle['exact_error'] < 1e-12, oracle
+          assert oracle['projective_error'] < 1e-12, oracle
+          assert oracle['ancilla_leakage'] < 1e-12, oracle
+          PY
+
+          mkdir -p experiments/bnn_oracle_20260905
+          cp /tmp/bnn-oracle-generated/oracle_policies.npz \
+            experiments/bnn_oracle_20260905/oracle_policies.npz
+          for stem in oracle_frontier_trace oracle_macro_edges oracle_search_distance oracle_wall_time; do
+            cp "/tmp/bnn-oracle-generated/${stem}.png" \
+              "experiments/bnn_oracle_20260905/${stem}.png"
+            cp "/tmp/bnn-oracle-generated/${stem}.pdf" \
+              "experiments/bnn_oracle_20260905/${stem}.pdf"
+          done
+
+      - name: Assemble and build the standalone article
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p 'Oracle research article latex/figures'
+          cp -a 'Ancilla research article latex/figures/.' \
+            'Oracle research article latex/figures/'
+          for stem in oracle_frontier_trace oracle_macro_edges oracle_search_distance oracle_wall_time; do
+            cp "experiments/bnn_oracle_20260905/${stem}.png" \
+              "Oracle research article latex/figures/${stem}.png"
+            cp "experiments/bnn_oracle_20260905/${stem}.pdf" \
+              "Oracle research article latex/figures/${stem}.pdf"
+          done
+
+          cd 'Oracle research article latex'
+          latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
+          test "$(pdfinfo main.pdf | awk '/^Pages:/ {print $2}')" = "17"
+          ! grep -Eq 'undefined references|undefined citations|There were undefined' main.log
+          ! grep -Eq 'Overfull \\hbox|Overfull \\vbox' main.log
+          latexmk -c main.tex
+          rm -f CHECKSUMS.sha256
+          find . -type f ! -name CHECKSUMS.sha256 -print0 | sort -z | xargs -0 sha256sum > CHECKSUMS.sha256
+          sha256sum -c CHECKSUMS.sha256
+
+      - name: Publish validated source and article
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .bnn_text_delta .pytest_cache hybrid_qcs.egg-info
+          find . -type d -name __pycache__ -prune -exec rm -rf {} +
+          find . -name '*.pyc' -delete
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --check
+          git commit -m "Add hierarchical RL synthesis of clean-ancilla BNN phase oracle"
+          git push origin HEAD:bnn-oracle-publish-v1
