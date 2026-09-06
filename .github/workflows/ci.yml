@@ -1,8 +1,8 @@
-name: Validate guided QFT-3 ancilla QCS
+name: Validate hierarchical BNN-oracle QCS
 
 on:
   push:
-    branches: ["qft3-guided-ancilla-v1"]
+    branches: ["bnn-oracle-hierarchical-v1"]
   workflow_dispatch:
 
 permissions:
@@ -13,40 +13,82 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - name: Install
+
+      - name: Install Python dependencies
         run: |
           python -m pip install --upgrade pip
           python -m pip install -e '.[dev]'
-      - name: Regression and ancilla tests
+
+      - name: Regression, ancilla, QFT, and oracle tests
+        shell: bash
         run: |
+          set -euo pipefail
           python -m compileall -q hybrid_qcs tests
-          python -m pytest -q
+          python -m pytest -q | tee /tmp/pytest.log
+          grep -Eq "59 passed" /tmp/pytest.log
           git diff --check
+
       - name: Verify article package integrity
-        working-directory: Ancilla research article latex
+        working-directory: Oracle research article latex
         run: sha256sum -c CHECKSUMS.sha256
-      - name: Bounded ancilla qualification
+
+      - name: Build and preflight the standalone article
+        working-directory: Oracle research article latex
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq latexmk texlive-latex-extra texlive-fonts-recommended texlive-science texlive-publishers poppler-utils >/dev/null
+          latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
+          test "$(pdfinfo main.pdf | awk '/^Pages:/ {print $2}')" = "17"
+          ! grep -Eq 'undefined references|undefined citations|There were undefined' main.log
+          ! grep -Eq 'Overfull \\hbox|Overfull \\vbox' main.log
+
+      - name: Reproduce and certify the BNN phase oracle
         env:
           OPENBLAS_NUM_THREADS: "1"
           OMP_NUM_THREADS: "1"
+          MPLBACKEND: Agg
+        shell: bash
         run: |
-          python -m hybrid_qcs.ancilla_runner \
-            --output-dir outputs/ancilla-ci-qualification \
-            --qft-allocations 64 \
-            --qft-wall-limit 0.5
+          set -euo pipefail
+          python -m hybrid_qcs.oracle_runner \
+            --output-dir outputs/oracle-ci \
+            --timing-repeats 1
           python - <<'PY'
           import json
           from pathlib import Path
-          result = json.loads(Path("outputs/ancilla-ci-qualification/ancilla_summary.json").read_text())
-          assert all(row["success"] for row in result["evaluations"]), result["evaluations"]
-          assert result["qft3"]["witness_certified"] is True, result["qft3"]
-          guided = result["qft3"]["decomposition_guided_generation"]
-          assert guided["certified"] is True, guided
-          assert guided["native_gate_count"] == 35, guided
-          assert guided["t_count"] == 15, guided
-          assert guided["cnot_count"] == 13, guided
-          assert guided["ancilla_leakage"] < 1e-12, guided
+
+          result = json.loads(Path("outputs/oracle-ci/oracle_result.json").read_text())
+          assert result["success"] is True, result
+          assert result["macro_witness"] == [
+              "TOFFOLI(0,1,4)",
+              "CNOT(0,4)",
+              "CNOT(4,3)",
+              "TOFFOLI(2,4,3)",
+              "CNOT(0,4)",
+              "TOFFOLI(0,1,4)",
+          ], result
+          assert result["allocations"] == 94, result
+          assert result["attempted_macro_edges"] == 352, result
+          assert result["frontier_peak"] == 236, result
+
+          evaluator = result["evaluator"]
+          assert evaluator["native_gate_count"] == 48, evaluator
+          assert evaluator["t_count"] == 21, evaluator
+          assert evaluator["cnot_count"] == 21, evaluator
+          assert evaluator["depth"] == 38, evaluator
+
+          oracle = result["phase_oracle"]
+          assert oracle["native_gate_count"] == 98, oracle
+          assert oracle["t_count"] == 42, oracle
+          assert oracle["cnot_count"] == 42, oracle
+          assert oracle["depth"] == 76, oracle
+          assert oracle["exact_error"] < 1e-12, oracle
+          assert oracle["projective_error"] < 1e-12, oracle
+          assert oracle["ancilla_leakage"] < 1e-12, oracle
           PY
