@@ -1,0 +1,119 @@
+name: Validate proof-producing oracle optimality
+
+on:
+  push:
+    branches: ["oracle-optimality-certification-v1"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-prove:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[dev]'
+
+      - name: Complete regression suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m compileall -q hybrid_qcs tests
+          python -m pytest -q | tee /tmp/pytest.log
+          grep -Eq "68 passed" /tmp/pytest.log
+          git diff --check
+
+      - name: Reproduce deterministic lower and upper certificates
+        shell: bash
+        env:
+          OPENBLAS_NUM_THREADS: "1"
+          OMP_NUM_THREADS: "1"
+          MPLBACKEND: Agg
+        run: |
+          set -euo pipefail
+          python -m hybrid_qcs.optimality_runner \
+            --output-dir outputs/oracle-optimality-ci
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          result = json.loads(Path('outputs/oracle-optimality-ci/results.json').read_text())
+          assert result['phase_polynomial_proof']['assignments_examined'] == 8 ** 7
+          assert result['phase_polynomial_proof']['minimum_t_count'] == 7
+          assert result['phase_polynomial_proof']['exact'] is True
+          assert result['parity_network_proof']['minimum_cnot_count'] == 6
+          assert result['parity_network_proof']['minimum_cnot_depth'] == 6
+
+          evaluator = result['bnn_evaluator_optimality']
+          assert evaluator['status'] == 'exact'
+          assert evaluator['incumbent_matches_optimum'] is True
+          assert evaluator['optimum'] == {
+              'macro_count': 6,
+              't_count': 21,
+              'cnot_count': 21,
+              'native_gate_count': 48,
+          }
+
+          direct = result['single_violation_phase_oracles']['100']
+          assert direct['minimum_t_count'] == 7
+          assert direct['minimum_cnot_count'] == 6
+          assert direct['minimum_cnot_depth'] == 6
+          assert direct['native_gate_count_upper_bound'] == 29
+          assert direct['exact_matrix_error'] < 1e-12
+
+          toffoli = result['toffoli_audit']
+          assert toffoli['t_count'] == 7
+          assert toffoli['cnot_count'] == 6
+          assert toffoli['exact_matrix_error'] < 1e-12
+
+          for audit in result['four_qubit_linear_audits']:
+              assert audit['minimum_cnot_count'] == 6
+              assert audit['minimum_cnot_depth'] == 3
+              assert audit['status'] == 'exact'
+
+          qft = result['qft3_audit']
+          assert qft['optimality'] in {'upper bound only', 'no claim'}
+          PY
+
+      - name: Reproduce original learned BNN oracle certificate
+        shell: bash
+        env:
+          OPENBLAS_NUM_THREADS: "1"
+          OMP_NUM_THREADS: "1"
+          MPLBACKEND: Agg
+        run: |
+          set -euo pipefail
+          python -m hybrid_qcs.oracle_runner \
+            --output-dir outputs/original-oracle-ci \
+            --timing-repeats 1
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          result = json.loads(Path('outputs/original-oracle-ci/oracle_result.json').read_text())
+          assert result['success'] is True
+          assert result['macro_witness'] == [
+              'TOFFOLI(0,1,4)', 'CNOT(0,4)', 'CNOT(4,3)',
+              'TOFFOLI(2,4,3)', 'CNOT(0,4)', 'TOFFOLI(0,1,4)'
+          ]
+          assert result['phase_oracle']['t_count'] == 42
+          assert result['phase_oracle']['cnot_count'] == 42
+          assert result['phase_oracle']['native_gate_count'] == 98
+          assert result['phase_oracle']['exact_error'] < 1e-12
+          assert result['phase_oracle']['ancilla_leakage'] < 1e-12
+          PY
+
+      - name: Upload proof artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: oracle-optimality-certificates
+          path: outputs/oracle-optimality-ci
+          retention-days: 30
