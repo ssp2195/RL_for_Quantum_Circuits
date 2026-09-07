@@ -1,0 +1,77 @@
+{
+  "schema": "proof-producing-oracle-optimality-summary-v1",
+  "policy_architecture": {
+    "outer": "linear semi-gradient SARSA, unchanged",
+    "inner": "disjoint linear LinUCB, unchanged",
+    "optimality_authority": "deterministic exhaustive finite-state proof"
+  },
+  "bnn_single_violation_oracle_class": {
+    "logical_qubits": 3,
+    "representatives": ["000", "001", "010", "011", "100", "101", "110", "111"],
+    "phase_polynomial_assignments_exhausted": 2097152,
+    "minimum_t_count": 7,
+    "minimum_cnot_count": 6,
+    "minimum_cnot_depth": 6,
+    "status": "conditional optimum",
+    "scope": "ancilla-free affine-input CNOT+T phase-polynomial normal form"
+  },
+  "bnn_violation_100_evaluator": {
+    "learned_incumbent": [
+      "TOFFOLI(0,1,4)",
+      "CNOT(0,4)",
+      "CNOT(4,3)",
+      "TOFFOLI(2,4,3)",
+      "CNOT(0,4)",
+      "TOFFOLI(0,1,4)"
+    ],
+    "lexicographic_optimum": {
+      "macro_count": 6,
+      "t_count_under_fixed_lowering": 21,
+      "cnot_count_under_fixed_lowering": 21,
+      "native_gate_count_under_fixed_lowering": 48
+    },
+    "status": "exact optimum",
+    "scope": "promised-input five-wire X/CNOT/Toffoli mapping graph with fixed native macro lowerings"
+  },
+  "bnn_violation_100_phase_oracle": {
+    "existing_compute_phase_uncompute": {
+      "t_count": 42,
+      "cnot_count": 42,
+      "native_gate_count": 98,
+      "status": "certified upper bound, not optimal"
+    },
+    "direct_marked_state_phase_synthesis": {
+      "t_count": 7,
+      "cnot_count": 6,
+      "native_gate_count": 29,
+      "status": "conditional optimum in declared phase-polynomial class"
+    }
+  },
+  "three_qubit_toffoli": {
+    "t_count": 7,
+    "cnot_count": 6,
+    "native_gate_count": 15,
+    "status": "conditional H-conjugated phase-polynomial optimum"
+  },
+  "four_qubit_linear_reversible": [
+    {
+      "name": "register-half-swap",
+      "minimum_cnot_count": 6,
+      "minimum_cnot_depth": 3,
+      "status": "exact"
+    },
+    {
+      "name": "wire-reversal",
+      "minimum_cnot_count": 6,
+      "minimum_cnot_depth": 3,
+      "status": "exact"
+    }
+  ],
+  "restricted_qft3_one_clean_ancilla": {
+    "native_gate_count": 35,
+    "t_count": 15,
+    "cnot_count": 13,
+    "depth": 26,
+    "status": "independently certified upper bound only"
+  }
+}
