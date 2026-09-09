@@ -1,3 +1,14 @@
+Implementation branch: resource-ancilla-optimality-v1
+Base branch: oracle-optimality-certification-v1
+Exact base commit: a41cd7fc99f98982fd22a618a47e55815d7baad9
+Source branch is not modified by this extension.
+Local validation: 135 regression tests passed; compileall and git diff --check passed.
+Qualification: 52 frozen evaluations; 44 bounded optima, 4 verified infeasible, 4 upper bounds.
+Remote per-commit validation: resource-optimality-ci.yml and its checkout/validation artifact.
+Scope: fixed-lowering Boolean evaluators and affine phase networks; not unrestricted QCS.
+Correction: original learned evaluator (6,21,21,48) is not the audited (6,21,19,54) lexicographic optimum.
+
+Historical inherited branch provenance (retained, not a current branch claim):
 Remote branch: bnn-oracle-hierarchical-v1
 Base branch: qft3-guided-ancilla-v1
 Base remote commit: 96b9e1e7b7a4dbf1d60383c9b4ffab2134c18d54

@@ -61,16 +61,16 @@ def test_direct_bnn_phase_oracle_strictly_improves_compute_uncompute_resources()
 
 def test_oracle_macro_grammar_is_target_independent_and_finite() -> None:
     grammar = oracle_macro_grammar()
-    assert len(grammar) == 23
+    assert len(grammar) == 20
     assert {macro.kind for macro in grammar} == {"X", "CNOT", "TOFFOLI"}
     assert len({(macro.kind, macro.qubits) for macro in grammar}) == len(grammar)
 
 
-def test_learned_bnn_evaluator_is_exact_lexicographic_macro_optimum() -> None:
+def test_audit_improves_cnot_count_over_original_learned_evaluator() -> None:
     proof = prove_marked_evaluator_lexicographic_optimum("100")
     assert proof.status.value == "exact"
-    assert proof.optimum == AdditiveResources(6, 21, 21, 48)
-    assert proof.incumbent_matches_optimum
+    assert proof.optimum == AdditiveResources(6, 21, 19, 54)
+    assert not proof.incumbent_matches_optimum
     assert len(proof.witness) == 6
     assert proof.states_settled > 0
     assert proof.edges_generated >= proof.states_settled

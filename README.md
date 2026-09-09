@@ -270,3 +270,32 @@ strengthened canonicalization, fixed clean/borrowed ancilla contracts, the
 RL-generated BNN verification phase oracle, and the restricted QFT-3 stress
 test.  The earlier ancilla-contract article remains under
 `Ancilla research article latex/` for provenance.
+
+## Resource-conditioned search and clean-ancilla optimality
+
+The `resource-ancilla-optimality-v1` extension adds bounded physical-resource
+optimization using the linear SARSA/LinUCB hierarchy, deterministic bound
+tightening, and independently checkable infeasibility certificates. Clean
+workspace budgets are swept with separate archives; only cached workspace and
+wire-dependency features are added, not a full-DAG learned encoder.
+
+```bash
+python -m hybrid_qcs.resource_runner qualify --output-dir outputs/resource-optimality
+python -m hybrid_qcs.resource_runner optimize --truth-table 00000001 \
+  --ancillas 0,1,2 --t-cap 21 --cnot-cap 18 --gate-cap 45 --depth-cap 45 \
+  --operation-cap 3 --policy outputs/resource-optimality/policy.json \
+  --output-dir outputs/conjunction-optimality
+python -m hybrid_qcs.resource_runner verify outputs/conjunction-optimality/certificates/*.json
+```
+
+The new domains are fixed-lowering NCT evaluators and exact affine phase
+networks, not unrestricted Clifford+T synthesis. A timeout remains unknown or
+an upper bound. QFT-3 is still upper-bound-only. The detailed contracts,
+certificate rule, training protocol and limits are in
+[`docs/resource_ancilla_optimality.md`](docs/resource_ancilla_optimality.md).
+
+**Correction to the inherited evaluator audit:** the original learned
+six-macro evaluator is correct at `(T,CNOT,gates)=(21,21,48)`, but the aligned
+CNOT-before-gate-count auditor finds `(21,19,54)`. The former is not the latter
+lexicographic optimum. Historical experiment artifacts are retained; current
+reports and tests use the independently validated correction.

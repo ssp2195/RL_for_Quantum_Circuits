@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "hybrid-qcs"
-version = "0.9.0"
+version = "0.10.0"
 description = "Hierarchical exact Clifford+T synthesis of clean-ancilla Boolean phase oracles"
 requires-python = ">=3.11"
 dependencies = ["numpy>=1.24"]
@@ -14,6 +14,7 @@ dev = ["pytest>=7.4", "matplotlib>=3.7"]
 
 [project.scripts]
 hybrid-qcs = "hybrid_qcs.runner:main"
+hybrid-qcs-resource-optimality = "hybrid_qcs.resource_runner:main"
 hybrid-qcs-crossover = "hybrid_qcs.crossover_runner:main"
 hybrid-qcs-mixed-crossover = "hybrid_qcs.mixed_crossover_runner:main"
 hybrid-qcs-canonicalization-audit = "hybrid_qcs.canonicalization_audit:main"

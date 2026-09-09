@@ -94,7 +94,7 @@ def _write_report(output: Path, results: dict[str, Any]) -> None:
         "## Learned reversible evaluator", "",
         f"Exact promised-input NCT search proves lexicographic optimum {evaluator['optimum']}",
         f"after settling {evaluator['states_settled']:,} semantic states.",
-        "The learned six-macro evaluator attains this cost in the declared macro domain.", "",
+        "The audited evaluator uses 19 CNOTs and 54 native gates. The original learned evaluator uses 21 CNOTs and 48 native gates: it is a distinct resource trade-off, not this CNOT-before-gate-count lexicographic optimum.", "",
         "## Direct phase synthesis versus evaluator wrapping", "",
         "| Construction | T count | CNOT count | Native gates | Status |",
         "|---|---:|---:|---:|---|",

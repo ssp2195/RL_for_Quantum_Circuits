@@ -240,6 +240,8 @@ def prove_ccz_phase_polynomial_t_optimum() -> PhasePolynomialProof:
     total = 8 ** len(masks)
     best = len(masks) + 1
     best_coeff: tuple[int, ...] | None = None
+    best_rank: tuple[int, int, tuple[int, ...]] | None = None
+    phase_lengths = np.array([0, 1, 1, 2, 2, 2, 1, 1], dtype=np.int16)
     chunk = 1 << 16
     shifts = np.arange(len(masks), dtype=np.uint64) * 3
     for start in range(0, total, chunk):
@@ -253,10 +255,16 @@ def prove_ccz_phase_polynomial_t_optimum() -> PhasePolynomialProof:
         candidates = coeff[good]
         odd = np.sum(candidates & 1, axis=1)
         local = int(np.min(odd))
-        if local < best:
-            idx = int(np.flatnonzero(odd == local)[0])
-            best = local
-            best_coeff = tuple(int(v) for v in candidates[idx].tolist())
+        # T-optimal coefficients need not be +/-1. Choose a reproducible
+        # minimum-native-phase-cost witness among all T-optimal solutions.
+        if local <= best:
+            for row in candidates[odd == local]:
+                coeff_tuple = tuple(int(v) for v in row.tolist())
+                rank = (local, int(np.sum(phase_lengths[row])), coeff_tuple)
+                if best_rank is None or rank < best_rank:
+                    best_rank = rank
+                    best = local
+                    best_coeff = coeff_tuple
 
     if best_coeff is None:
         raise AssertionError("CCZ phase polynomial was not found")
@@ -465,13 +473,11 @@ def _x_native(q: int) -> list[tuple[str, tuple[int, ...]]]:
     return [("H", (q,)), ("S", (q,)), ("S", (q,)), ("H", (q,))]
 
 
-def _phase_gate_for_coefficient(coeff: int, q: int) -> tuple[str, tuple[int, ...]]:
-    value = coeff % 8
-    if value == 1:
-        return ("T", (q,))
-    if value == 7:
-        return ("TDG", (q,))
-    raise ValueError("minimal CCZ coefficients must be +/-1")
+def _phase_gates_for_coefficient(coeff: int, q: int) -> tuple[tuple[str, tuple[int, ...]], ...]:
+    """Lower every residue in Z8; all odd residues cost exactly one T gate."""
+    names = {0: (), 1: ("T",), 2: ("S",), 3: ("T", "S"),
+             4: ("S", "S"), 5: ("TDG", "SDG"), 6: ("SDG",), 7: ("TDG",)}
+    return tuple((name, (q,)) for name in names[coeff % 8])
 
 
 def synthesize_ccz_from_proofs() -> tuple[tuple[str, tuple[int, ...]], ...]:
@@ -485,7 +491,7 @@ def synthesize_ccz_from_proofs() -> tuple[tuple[str, tuple[int, ...]], ...]:
     def emit_available() -> None:
         for wire, mask in enumerate(rows):
             if mask in coefficient and mask not in used:
-                gates.append(_phase_gate_for_coefficient(coefficient[mask], wire))
+                gates.extend(_phase_gates_for_coefficient(coefficient[mask], wire))
                 used.add(mask)
 
     emit_available()
@@ -575,17 +581,25 @@ def certify_marked_state_oracle(marked_bitstring: str) -> MarkedStateOracleCerti
 
 
 def oracle_macro_grammar() -> tuple[Macro, ...]:
-    data = (0, 1, 2)
-    writable = (3, 4)
-    physical = tuple(range(5))
-    actions: list[Macro] = [Macro("X", (q,)) for q in data]
-    for target in writable:
-        for control in physical:
-            if control != target:
-                actions.append(Macro("CNOT", (control, target)))
-        for c0, c1 in combinations(tuple(q for q in physical if q != target), 2):
-            actions.append(Macro("TOFFOLI", (c0, c1, target)))
-    return tuple(actions)
+    """Exactly the synthesis engine's role-aware five-wire NCT grammar.
+
+    The flag is a target only. Allowing it to control workspace, as the old
+    auditor did, proves an optimum in a different domain from learned search.
+    Construct independently, and regression-test equality with the engine.
+    """
+    data, flag, work = (0, 1, 2), 3, (4,)
+    controls = (*data, *work)
+    writable = (flag, *work)
+    actions = [Macro("X", (q,)) for q in (*data, flag)]
+    for c in controls:
+        for t in writable:
+            if c != t:
+                actions.append(Macro("CNOT", (c, t)))
+    for t in writable:
+        for c0, c1 in combinations(tuple(q for q in controls if q != t), 2):
+            actions.append(Macro("TOFFOLI", (c0, c1, t)))
+    family_order = {"X": 0, "CNOT": 1, "TOFFOLI": 2}
+    return tuple(sorted(actions, key=lambda a: (family_order[a.kind], a.qubits)))
 
 
 def _apply_macro_basis(value: int, macro: Macro) -> int:

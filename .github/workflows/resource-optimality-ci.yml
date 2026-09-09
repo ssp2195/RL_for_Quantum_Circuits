@@ -31,9 +31,71 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/qcs-validation
+          python -m pip freeze > /tmp/qcs-validation/runtime.txt
           python -m compileall -q hybrid_qcs tests
           python -m pytest -q | tee /tmp/qcs-validation/pytest.log
           git diff --check
+      - name: Qualify frozen resource-conditioned policies and ancilla bounds
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m hybrid_qcs.resource_runner qualify \
+            --output-dir /tmp/qcs-validation/resource-qualification
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('/tmp/qcs-validation/resource-qualification')
+          result = json.loads((root / 'results.json').read_text())
+          assert result['policies_frozen_during_evaluation'] is True
+          assert result['outer_feature_dimension'] == 34
+          assert result['inner_feature_dimension'] == 22
+          for evaluation in result['evaluations']:
+              if evaluation['case'] == 'conjunction-three-input-evaluator':
+                  assert evaluation['sweep']['minimum_available_clean_workspace_proved'] == 1
+              for row in evaluation['sweep']['rows']:
+                  item = row['result']
+                  assert item['status'] in {'optimal', 'infeasible', 'upper_bound', 'unknown'}
+                  for certificate in item['certificate_files']:
+                      assert certificate['verification']['valid'] is True
+          PY
+          python -m hybrid_qcs.resource_runner verify \
+            /tmp/qcs-validation/resource-qualification/certificates/*.json \
+            > /tmp/qcs-validation/independent-verification.jsonl
+      - name: Reproduce legacy proof domains with corrected evaluator claim
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m hybrid_qcs.optimality_runner --output-dir /tmp/qcs-validation/legacy-optimality
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('/tmp/qcs-validation/legacy-optimality/results.json').read_text())
+          e = r['bnn_evaluator_optimality']
+          assert e['status'] == 'exact'
+          assert e['incumbent_matches_optimum'] is False
+          assert e['optimum'] == {'macro_count': 6, 't_count': 21, 'cnot_count': 19, 'native_gate_count': 54}
+          assert r['phase_polynomial_proof']['minimum_t_count'] == 7
+          assert r['parity_network_proof']['minimum_cnot_count'] == 6
+          assert r['toffoli_audit']['exact_matrix_error'] < 1e-12
+          assert all(x['minimum_cnot_count'] == 6 for x in r['four_qubit_linear_audits'])
+          assert r['qft3_audit']['optimality'] in {'upper bound only', 'no claim'}
+          PY
+      - name: Reproduce the original learned BNN phase oracle
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m hybrid_qcs.oracle_runner --output-dir /tmp/qcs-validation/original-oracle --timing-repeats 1
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r = json.loads(Path('/tmp/qcs-validation/original-oracle/oracle_result.json').read_text())
+          assert r['success'] is True
+          assert r['phase_oracle']['native_gate_count'] == 98
+          assert r['phase_oracle']['t_count'] == 42
+          assert r['phase_oracle']['cnot_count'] == 42
+          assert r['phase_oracle']['exact_error'] < 1e-12
+          assert r['phase_oracle']['ancilla_leakage'] < 1e-12
+          PY
       - name: Export exact portable checkout
         if: always()
         shell: bash
@@ -41,7 +103,7 @@ jobs:
           set -euo pipefail
           mkdir -p /tmp/qcs-validation
           git rev-parse HEAD > /tmp/qcs-validation/COMMIT.txt
-          git bundle create /tmp/qcs-validation/resource-ancilla-optimality-v1.bundle HEAD
+          git bundle create /tmp/qcs-validation/resource-ancilla-optimality-v1.bundle HEAD refs/heads/resource-ancilla-optimality-v1
       - uses: actions/upload-artifact@v4
         if: always()
         with:

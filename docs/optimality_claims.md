@@ -40,14 +40,19 @@ or arbitrary ancillary implementations.
 
 Lexicographic Dijkstra search is performed over exact promised-input mappings
 of the target-independent five-wire X/CNOT/Toffoli grammar. Costs are the
-fixed native macro costs used by the oracle synthesizer. The six-macro learned
-evaluator for the violation `100` attains the exact lexicographic optimum
+fixed native macro costs used by the oracle synthesizer. The auditor now uses
+exactly the learned engine's role-aware grammar: the flag is a target, never a
+control. The independently replayed exact lexicographic optimum is
 
 ```text
-(macro count, T count, CNOT count, native gate count) = (6, 21, 21, 48)
+(macro count, T count, CNOT count, native gate count) = (6, 21, 19, 54)
 ```
 
-in this declared domain.
+The original learned evaluator has `(6, 21, 21, 48)`. It saves six native gates
+but uses two more CNOTs, so it is NOT the above CNOT-before-gate-count optimum.
+This corrects the earlier claim; historical experiment artifacts are retained
+as provenance rather than silently rewritten. See the correction section in
+`resource_ancilla_optimality.md`.
 
 ### Four-qubit linear reversible gates
 

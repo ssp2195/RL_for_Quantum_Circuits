@@ -138,6 +138,31 @@
     }
   },
   "package_version": "0.9.0",
+  "resource_optimality_extension": {
+    "base_branch": "oracle-optimality-certification-v1",
+    "base_commit": "a41cd7fc99f98982fd22a618a47e55815d7baad9",
+    "baseline_correction": "aligned evaluator grammar and exact cost (macros,T,CNOT,G)=(6,21,19,54); original learned=(6,21,21,48)",
+    "branch": "resource-ancilla-optimality-v1",
+    "dag_policy_input": "cached workspace and wire-depth summaries; no full graph encoder",
+    "domains": [
+      "fixed-lowering role-aware NCT evaluator",
+      "affine X/CNOT and pi/4 direct-phase networks"
+    ],
+    "inner_features": 22,
+    "max_boolean_inputs": 3,
+    "max_clean_workspace": 2,
+    "objective_order": [
+      "t_count",
+      "cnot_count",
+      "depth",
+      "gate_count"
+    ],
+    "outer_features": 34,
+    "proof_authority": "independently verified finite closed resource cover",
+    "qft3": "legacy upper bound only",
+    "qualification": "52 frozen runs: 44 bounded optima, 4 infeasible, 4 upper bounds; no demonstrated learned speedup",
+    "timeouts": "unknown or certified upper bound only"
+  },
   "schema_version": "hybrid-qcs-source-manifest-v8",
   "scientific_scope": {
     "certification": "independent dense DAG replay using either full-unitary or contract-relative isometry equality",
@@ -167,7 +192,9 @@
   "validation": {
     "compileall": "passed",
     "git_diff_check": "passed",
-    "regression_tests_passed": 59,
-    "runtime_boundary": "reported wall times are environment-specific measurements"
+    "regression_tests_passed": 135,
+    "resource_qualification": "completed locally; remote per-commit evidence is in resource-optimality CI artifacts",
+    "runtime_boundary": "reported wall times are environment-specific measurements",
+    "source_branch_baseline": "63 passed, 5 failed before fixes"
   }
 }
