@@ -35,12 +35,15 @@ jobs:
           python -m pytest -q | tee /tmp/qcs-validation/pytest.log
           git diff --check
       - name: Export exact portable checkout
+        if: always()
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p /tmp/qcs-validation
           git rev-parse HEAD > /tmp/qcs-validation/COMMIT.txt
           git bundle create /tmp/qcs-validation/resource-ancilla-optimality-v1.bundle HEAD
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: resource-optimality-checkout-and-validation
           path: /tmp/qcs-validation
