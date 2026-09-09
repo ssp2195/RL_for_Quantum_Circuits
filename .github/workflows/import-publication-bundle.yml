@@ -1,0 +1,131 @@
+name: Import the verified publication bundle
+
+on:
+  push:
+    branches: ["publication-transfer-20260909"]
+    paths:
+      - "publication-linear-certified-qcs-v1.bundle"
+      - "scripts/import_publication_bundle.py"
+      - ".github/workflows/import-publication-bundle.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publication-bundle-import
+  cancel-in-progress: false
+
+jobs:
+  import:
+    name: Check staging and import only the approved archive
+    if: github.repository == 'ssp2195/RL_for_Quantum_Circuits' && github.ref == 'refs/heads/publication-transfer-20260909'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    outputs:
+      published: ${{ steps.archive.outputs.published }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Validate importer and pre-staged publication workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile scripts/import_publication_bundle.py
+          test "$(git rev-parse HEAD:.github/workflows/publication-ci.yml)" = "2048b318a5f90752fbca9747ba0a7b78fae136e2"
+          git fsck --full --strict --no-dangling
+          mkdir -p /tmp/qcs-import
+      - name: Verify bundle, publish exact commit, and read back remote refs
+        id: archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f publication-linear-certified-qcs-v1.bundle ]; then
+            echo 'published=false' >> "$GITHUB_OUTPUT"
+            echo '{"published":false,"reason":"approved bundle not uploaded yet"}' > /tmp/qcs-import/receipt.json
+            echo '## Staging preflight passed; publication has NOT happened' >> "$GITHUB_STEP_SUMMARY"
+            echo 'Upload publication-linear-certified-qcs-v1.bundle to this transfer branch root. No other storage service or credential is needed.' >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          python scripts/import_publication_bundle.py --receipt /tmp/qcs-import/receipt.json
+          echo 'published=true' >> "$GITHUB_OUTPUT"
+          echo '## Exact publication commit imported and verified remotely' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Commit: 12f6cdfcfd2835bd36f3870faaf0db9abbd0c7cf' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Branch: publication-linear-certified-qcs-v1' >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: publication-import-receipt
+          path: /tmp/qcs-import
+          retention-days: 30
+
+  validate:
+    name: Retrain, generate circuits, and verify the imported publication
+    needs: import
+    if: needs.import.outputs.published == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    permissions:
+      contents: read
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+      MPLBACKEND: Agg
+      QCS_PUBLICATION_MODELS: /tmp/qcs-publication-ci/fresh/checkpoints
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: "12f6cdfcfd2835bd36f3870faaf0db9abbd0c7cf"
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install declared numerical and test dependencies
+        run: |
+          python -m pip install -r publication/requirements-reproduction.txt
+          python -m pip install -e '.[dev]'
+      - name: Complete training before the generated-circuit tests
+        run: |
+          python -m hybrid_qcs.publication_runner lock --output-dir /tmp/qcs-publication-ci/fresh
+          python -m hybrid_qcs.publication_runner train --output-dir /tmp/qcs-publication-ci/fresh
+      - name: Run all regression and trained-circuit generation tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m compileall -q hybrid_qcs tests
+          python -m pytest -q | tee /tmp/qcs-publication-ci/pytest.log
+          git diff --check
+      - name: Independently replay archived circuits and certificates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m hybrid_qcs.publication_evidence --capsule-only > /tmp/qcs-publication-ci/capsule-verification.json
+          cp -a experiments/publication_v1 /tmp/qcs-publication-ci/evidence-verification
+          python -m hybrid_qcs.publication_evidence --output-dir /tmp/qcs-publication-ci/evidence-verification
+      - name: Rebuild the manuscript without rerunning the timing campaign
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y texlive-latex-base texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended
+          python -m hybrid_qcs.publication_report --publication-dir /tmp/qcs-publication-ci/manuscript-results
+          cmp publication/results.tex /tmp/qcs-publication-ci/manuscript-results/results.tex
+          make -C publication
+      - name: Save validation provenance
+        if: always()
+        run: |
+          mkdir -p /tmp/qcs-publication-ci
+          git rev-parse HEAD > /tmp/qcs-publication-ci/COMMIT.txt
+          python -m pip freeze > /tmp/qcs-publication-ci/runtime.txt
+          cp publication/main.pdf /tmp/qcs-publication-ci/manuscript.pdf
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: imported-publication-circuit-and-proof-validation
+          path: /tmp/qcs-publication-ci
+          retention-days: 30
