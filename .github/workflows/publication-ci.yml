@@ -1,0 +1,76 @@
+name: Validate frozen-policy circuit generation and independent proofs
+on:
+  push:
+    branches: ["publication-linear-certified-qcs-v1"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reproduce-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+      MPLBACKEND: Agg
+      QCS_PUBLICATION_MODELS: /tmp/qcs-publication-ci/fresh/checkpoints
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install pinned numerical and test dependencies
+        run: |
+          python -m pip install -r publication/requirements-reproduction.txt
+          python -m pip install -e '.[dev]'
+      - name: Finish training before any circuit-generation test
+        run: |
+          python -m hybrid_qcs.publication_runner lock --output-dir /tmp/qcs-publication-ci/fresh
+          python -m hybrid_qcs.publication_runner train --output-dir /tmp/qcs-publication-ci/fresh
+      - name: Full regression including 320 trained-circuit generation cases
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m compileall -q hybrid_qcs tests
+          python -m pytest -q | tee /tmp/qcs-publication-ci/pytest.log
+          git diff --check
+      - name: Replay every archived circuit and independently check every proof
+        run: |
+          python -m hybrid_qcs.publication_evidence --capsule-only > /tmp/qcs-publication-ci/capsule-verification.json
+          python -m hybrid_qcs.publication_runner verify --output-dir experiments/publication_v1
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from hybrid_qcs.phase_audit import verify_phase_cover
+          from hybrid_qcs.phase_baselines import verify_rank_bound
+          rows=json.loads(Path('experiments/publication_v1/ancilla_calibration.json').read_text())
+          for row in rows:
+              assert verify_rank_bound(row['rank_bound'])
+              assert verify_phase_cover(row['cnot_exclusion'])['valid']
+          for row in json.loads(Path('experiments/publication_v1/post_audit.json').read_text()):
+              assert verify_rank_bound(row['rank_bound'])
+          PY
+      - name: Rebuild manuscript
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y texlive-latex-base texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended
+          python -m hybrid_qcs.publication_report --publication-dir /tmp/qcs-publication-ci/manuscript-results
+          cmp publication/results.tex /tmp/qcs-publication-ci/manuscript-results/results.tex
+          make -C publication
+      - name: Export exact portable checkout and test provenance
+        if: always()
+        run: |
+          mkdir -p /tmp/qcs-publication-ci
+          git rev-parse HEAD > /tmp/qcs-publication-ci/COMMIT.txt
+          python -m pip freeze > /tmp/qcs-publication-ci/runtime.txt
+          git bundle create /tmp/qcs-publication-ci/publication-linear-certified-qcs-v1.bundle HEAD
+          cp publication/main.pdf /tmp/qcs-publication-ci/manuscript.pdf
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: publication-circuit-generation-and-proof-validation
+          path: /tmp/qcs-publication-ci
+          retention-days: 30
