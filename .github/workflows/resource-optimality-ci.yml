@@ -1,0 +1,47 @@
+name: Validate resource-conditioned ancilla optimality
+
+on:
+  push:
+    branches: ["resource-ancilla-optimality-v1"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Install development dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Regression and static validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/qcs-validation
+          python -m compileall -q hybrid_qcs tests
+          python -m pytest -q | tee /tmp/qcs-validation/pytest.log
+          git diff --check
+      - name: Export exact portable checkout
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD > /tmp/qcs-validation/COMMIT.txt
+          git bundle create /tmp/qcs-validation/resource-ancilla-optimality-v1.bundle HEAD
+      - uses: actions/upload-artifact@v4
+        with:
+          name: resource-optimality-checkout-and-validation
+          path: /tmp/qcs-validation
+          retention-days: 30
