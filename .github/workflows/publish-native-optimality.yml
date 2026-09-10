@@ -1,0 +1,114 @@
+name: Validate and publish native hybrid optimality
+on:
+  push:
+    branches: [native-optimality-transfer-20260910]
+    paths: [.github/workflows/publish-native-optimality.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: native-hybrid-optimality-publication
+  cancel-in-progress: false
+jobs:
+  validate-publish:
+    if: github.repository == 'ssp2195/RL_for_Quantum_Circuits' && github.ref == 'refs/heads/native-optimality-transfer-20260910'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Reconstruct hash-verified source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/native-optimality-evidence
+          for sha in fddadf9a9de0e988523cf4c823c76a52129414b7 47577d8151c62eef5746d9775547c681fe6238fe 0222bb593f02a2e76a8c92390ce0bed34525b25c ddcb2c26a5bd6f12e1b883b7fd7b9d94e705f418 0daa4c5b8dd0189bac0f3ad99e1d2fb6953c5162 51230eb40ce6de60cf4d08c6be65a58edf018e41 a3bd8d39b7f4b39907fc5ac6a09ae1b54f4d6b85 1195073b3d0f0b15ebf2a781bba0137398c5276c ea604d5fba95a8c298fe13b22e4b2710680868fb; do
+            gh api "repos/${GITHUB_REPOSITORY}/git/blobs/${sha}" --jq .content | base64 --decode >> /tmp/native-optimality-evidence/changes.patch.xz
+          done
+          echo '09f70fea682870b10c858ba6b543653f74e697ff19a6d45046e58b43ad0b10f5  /tmp/native-optimality-evidence/changes.patch.xz' | sha256sum -c -
+          xz -dc /tmp/native-optimality-evidence/changes.patch.xz > /tmp/native-optimality-evidence/changes.patch
+          echo '3d9646d59bfaaf831b1201e4ce6ade97a84fff97ba46b9a5e07ae405707e80f5  /tmp/native-optimality-evidence/changes.patch' | sha256sum -c -
+          git worktree add --detach /tmp/native-optimality-build c1aa37999834f21b4abea13b3fc32d039fa4ffc2
+          cd /tmp/native-optimality-build
+          git apply --check /tmp/native-optimality-evidence/changes.patch
+          git apply /tmp/native-optimality-evidence/changes.patch
+          git add -A
+          test "$(git write-tree)" = 'ccc0dd44f52e95b3c05fb7b6ab4d89e4c31698c4'
+          git diff --cached --check
+          git diff --cached --stat > /tmp/native-optimality-evidence/diff-stat.txt
+      - name: Full regression and post-training optimization tests
+        working-directory: /tmp/native-optimality-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install -e '.[dev]'
+          python -m compileall -q hybrid_qcs tests
+          python -m pytest -q | tee /tmp/native-optimality-evidence/pytest.log
+          grep -Eq '752 passed' /tmp/native-optimality-evidence/pytest.log
+          python -m pip freeze > /tmp/native-optimality-evidence/runtime.txt
+      - name: Generate and independently verify nonzero bounded optima
+        working-directory: /tmp/native-optimality-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m hybrid_qcs.native_optimality_runner --targets calibration --seeds 0 1 2 --stages 16 24 8 --seconds 15 --output-dir /tmp/native-optimality-evidence/calibration | tee /tmp/native-optimality-evidence/calibration.log
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          rows=json.loads(Path('/tmp/native-optimality-evidence/calibration/outcomes.json').read_text())
+          assert len(rows)==30
+          assert all(r['standalone_verification']['optimality_verified'] for r in rows)
+          assert all(r['result']['discovery_incumbent'] is not None for r in rows)
+          assert not any(r['result']['audit_witness_used'] for r in rows)
+          PY
+      - name: Retain and exercise all 43 benchmark contracts
+        working-directory: /tmp/native-optimality-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m hybrid_qcs.native_optimality_runner --targets all --seeds 0 --stages 16 24 8 --seconds 0.5 --output-dir /tmp/native-optimality-evidence/retained-43 | tee /tmp/native-optimality-evidence/retained-43.log
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('/tmp/native-optimality-evidence/retained-43')
+          s=json.loads((p/'summary.json').read_text())
+          assert s['target_count']==43 and s['outcomes']==86
+          # Unknown hard instances are retained, not relabelled as successes.
+          PY
+      - name: Publish exact validated tree to the requested branch
+        working-directory: /tmp/native-optimality-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A
+          git diff --cached --check
+          tree=$(git write-tree)
+          test "$tree" = 'ccc0dd44f52e95b3c05fb7b6ab4d89e4c31698c4'
+          base=c1aa37999834f21b4abea13b3fc32d039fa4ffc2
+          branch=hybrid-frontier-restored-v1
+          remote=$(git ls-remote --heads origin "refs/heads/$branch" | awk '{print $1}')
+          test "$remote" = "$base"
+          commit=$(printf '%s\n' 'Integrate native hybrid resource minimization with independently checked optimality proofs' '' 'Preserve v=(G,Theta,R,phi,rho); add lexicographic tightening, native exclusions, provenance-separated audits, cumulative work limits and clean-width sweeps. Validated with 752 tests and post-training certificate replay. Historical experiment data and benchmark contracts remain unchanged.' | git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit-tree "$tree" -p "$base")
+          git push --porcelain origin "$commit:refs/heads/$branch"
+          test "$(git ls-remote --heads origin "refs/heads/$branch" | awk '{print $1}')" = "$commit"
+          printf '%s\n' "$commit" > /tmp/native-optimality-evidence/PUBLISHED_COMMIT.txt
+          printf '%s\n' "$tree" > /tmp/native-optimality-evidence/PUBLISHED_TREE.txt
+          git update-ref "refs/heads/$branch" "$commit"
+          git bundle create /tmp/native-optimality-evidence/hybrid-frontier-restored-v1.bundle "refs/heads/$branch"
+          echo "Published $branch at $commit (tree $tree)" >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-hybrid-optimality-validation
+          path: /tmp/native-optimality-evidence
+          retention-days: 30
