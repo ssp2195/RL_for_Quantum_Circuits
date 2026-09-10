@@ -38,27 +38,36 @@ jobs:
           rm -rf /tmp/qcs-transfer /tmp/qcs-publication
           mkdir -p /tmp/qcs-transfer
           for sha in \
-            2338526bb70595382c21f9df882ce9490bf01a73 \
-            dbe23590bbd5718232831ee0dc204fe879705813 \
-            5428a698f9a8725f5f21e8e9cac112fd3edf4e99 \
-            bc0e956f3cadcdbdc1bcaed94b8b94e5d67376ae \
-            e910fae8f4293eedd5b1c0bd563e281fa89f2ad6 \
-            3bca659009618ebc0b9e9cf5d3e2788065e1d065 \
-            4a13548a6e42c4805ee29dbe8b381b157df49289 \
-            b5b216744155b3afe313fc8bbc7343e2cfe2492b \
-            b9c8304a6cf7a82c5885fbb46f9b54df494fca52 \
-            e27100d1e3d4ba06a36db43976e6eceeeb60ec6d \
-            016b6b86eb15e1441aef4adf879e37e4105a085b \
-            726c4c7ceace607b60c49c95e839b439697250c2 \
-            ecdcaa41931a15ff7614d14af41e97197207f578 \
-            2e25b42d22ea4f0c0f93c2dda021665187af5bc6 \
-            c205f2b8a8a7e7da7bd81e65b9b930aa8777f975 \
-            78ee880ce4feabee37a9c506077b718f4a147141 \
-            0d5f767a8bf3df27b39ac5c22867dce5a159f951; do
-            gh api "repos/${GITHUB_REPOSITORY}/git/blobs/${sha}" --jq .content | base64 --decode >> /tmp/qcs-transfer/source.patch.xz
+            10d775e5ccb3eec22aae0af7185290d6633c7008 \
+            3c3f447a145a813b4d238e94739754b2b608d10f \
+            fa1b9b171b425e62c8f50c03afd50b341e95c1cb \
+            94314d383ba9a0ddd4de6ffe3ca25914573ecf5f \
+            1e8e495d7865a1e84e32e0707bf2448829e4ec11 \
+            a7fb7a3a1530c6e894b3d1b9fd6040fa05e8f427 \
+            b48232724dfd6344592087a13cc8603eda68917f \
+            daca81940b8769dd4b7e07fe80070acddcb76152 \
+            bead2ff6ed482b719ff71d08eac44cbd0a5770bf \
+            ba1253401447151bfa4b0f013dfed2fe431c573c \
+            7278a276b6b3c6e3fef8b490a11d9efcbc43f709 \
+            a088d3ca64edac5ea6af7129e9c37eafcbe450b1 \
+            a1c005af208de5d80ed14af59dea1e58fcc30563 \
+            1fe15303b5c8cb5deb384d2baf3a0fc9cb79e669 \
+            7aa0f4babdc3c819c562c3d57f485a3c5e4a7df8 \
+            064cdedfb5bdf255387e5c4e310f391e54ecb1c9 \
+            f1dc40231d55fd670999db33bfe65f23e52557de \
+            e82b87a6c53b8da6e9c94a68953aa91bbdfa460b \
+            c1744122b3949cf5148b85ded3bb346042d24f64 \
+            d0ec9b7b84a5a52aca84b5b1c6cec9beb8d4cf9c \
+            0810b38db26a707c77a143df9893c11ba45550d1 \
+            62308bf7bbec8766ef674e0eb7769e0f0ad89310 \
+            3e2a19f42126eb293d6af5a185654fa78c54610d \
+            63a8705281d38a64119a6b6962ce59ebf5cd43fa \
+            3ba4214e119f98adaef5e963b96e27f8585ed102 \
+            5abba349664059344813454cb2f8dbbbead2b629; do
+            gh api "repos/${GITHUB_REPOSITORY}/git/blobs/${sha}" --jq .content | base64 --decode >> /tmp/qcs-transfer/source.patch.zst
           done
-          echo 'bd5fa237e875141712f9eed408bcd6ae5ba73add010fa0916e0d31881331f05d  /tmp/qcs-transfer/source.patch.xz' | sha256sum -c -
-          xz -dc /tmp/qcs-transfer/source.patch.xz > /tmp/qcs-transfer/source.patch
+          echo 'e26d0edba5ca88c812306575f30f0487fe10eff2cf16ba10a7338004f8830090  /tmp/qcs-transfer/source.patch.zst' | sha256sum -c -
+          zstd -q -d /tmp/qcs-transfer/source.patch.zst -o /tmp/qcs-transfer/source.patch
           echo '8f743fdd5a688bf24ae50e02d04ba616a64bac32e7af4a7a761268164c354606  /tmp/qcs-transfer/source.patch' | sha256sum -c -
           git worktree add --detach /tmp/qcs-publication dfa7f9081a289a0b645eea70d8192c89cc17c1eb
           cd /tmp/qcs-publication
