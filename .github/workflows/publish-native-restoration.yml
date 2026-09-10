@@ -57,6 +57,14 @@ jobs:
           git apply /tmp/native-transfer/patch.diff
           git add -A
           test "$(git write-tree)" = 'ff4b89382b42449050a3dcbf7de11f7b64cfceea'
+          gh api "repos/${GITHUB_REPOSITORY}/git/blobs/7b3c9fdf304c0cc3acc1e59a65081fbe2c2633cd" --jq .content | base64 --decode > /tmp/native-transfer/context-fix.xz
+          echo 'f439ad7278b21fa1aa16fe9a6b9ec0250e45b93d9cf2c094ae290cb3b4e10251  /tmp/native-transfer/context-fix.xz' | sha256sum -c -
+          xz -dc /tmp/native-transfer/context-fix.xz > /tmp/native-transfer/context-fix.diff
+          echo 'f835a2d4be2a083315cbeed9abc234d8f181d9897dba2c8ef4dd37ae4f4f9667  /tmp/native-transfer/context-fix.diff' | sha256sum -c -
+          git apply --check /tmp/native-transfer/context-fix.diff
+          git apply /tmp/native-transfer/context-fix.diff
+          git add -A
+          test "$(git write-tree)" = 'e7de1ab09a7abbce414bff79b1ec80c505599d01'
           git diff --cached --check
           git diff --cached --stat > /tmp/native-transfer/diff-stat.txt
       - name: Install and run all regression and post-training generation tests
@@ -67,7 +75,7 @@ jobs:
           python -m pip install -e '.[dev]'
           python -m compileall -q hybrid_qcs tests
           python -m pytest -q | tee /tmp/native-transfer/pytest.log
-          grep -Eq '661 passed' /tmp/native-transfer/pytest.log
+          grep -Eq '662 passed' /tmp/native-transfer/pytest.log
           python -m pip freeze > /tmp/native-transfer/runtime.txt
       - name: Qualify five trained seeds on all retained benchmark contracts
         working-directory: /tmp/native-build
@@ -84,12 +92,16 @@ jobs:
           git add -A
           git diff --cached --check
           tree=$(git write-tree)
-          test "$tree" = 'ff4b89382b42449050a3dcbf7de11f7b64cfceea'
-          base=4eb224bc239a86bcad069162d4c65199a8cde28e
+          test "$tree" = 'e7de1ab09a7abbce414bff79b1ec80c505599d01'
           branch=hybrid-frontier-restored-v1
-          remote=$(git ls-remote --heads origin "refs/heads/$branch" | awk '{print $1}')
-          test "$remote" = "$base"
-          commit=$(printf '%s\n' 'Restore native hybrid frontier, exact scalar lift and trained circuit synthesis' 'Source tree matches locally tested snapshot; 661 tests and five-seed native qualification passed. Historical phase-study data remain unchanged.' | git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit-tree "$tree" -p "$base")
+          git fetch origin "$branch"
+          parent=$(git rev-parse FETCH_HEAD)
+          parent_tree=$(git rev-parse "$parent^{tree}")
+          if [ "$parent" != '4eb224bc239a86bcad069162d4c65199a8cde28e' ] && [ "$parent_tree" != 'ff4b89382b42449050a3dcbf7de11f7b64cfceea' ]; then
+            echo 'Unexpected target update; refusing to replace concurrent changes.' >&2
+            exit 1
+          fi
+          commit=$(printf '%s\n' 'Finalize native hybrid frontier and consistent SARSA decision contexts' 'Source tree matches locally tested snapshot; 662 tests and five-seed native qualification passed. Historical phase-study data remain unchanged.' | git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit-tree "$tree" -p "$parent")
           git push --porcelain origin "$commit:refs/heads/$branch"
           remote=$(git ls-remote --heads origin "refs/heads/$branch" | awk '{print $1}')
           test "$remote" = "$commit"
