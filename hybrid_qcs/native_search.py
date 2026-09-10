@@ -216,28 +216,13 @@ class NativeSearch:
                 'training_transitions':training,'audit_witness_used':False}
 
 
-def optimize_native(problem,model,*,objective='cnot',limits=WorkLimits(),scheduler='hierarchy',cancel=None):
-    """Deterministic bound tightening, with cumulative discovery work limits.
+def optimize_native(problem,model,*,objective='cnot',limits=WorkLimits(),scheduler='hierarchy',cancel=None,**kwargs):
+    """Compatibility entry point for proof-carrying native resource minimization.
 
-    No fixed-polynomial exclusion may close a native-grammar optimality gap.
-    Exhaustion remains unproved unless a separate native-domain proof is checked.
+    Pass objectives=(...) for lexicographic optimization. Proofs are native
+    closed covers; historical phase-polynomial certificates are not accepted.
     """
-    clock=WorkMeter(limits,cancel);attempts=[];incumbent=None;current=problem;used_records=0
-    while not clock.reason():
-        available=WorkLimits(limits.max_edges-clock.edges,max(1,limits.max_records-used_records),
-                             max(0.,limits.wall_seconds-clock.wall),max(0.,limits.cpu_seconds-clock.cpu))
-        if used_records>=limits.max_records:
-            break
-        result=NativeSearch(current,available,cancel=cancel).run(model,scheduler=scheduler)
-        attempts.append(result);clock.edges+=result['edges'];used_records+=result['records']
-        if not result['witness']:
-            break
-        incumbent=result['witness'];cost=incumbent['resources'][objective]
-        if cost==0:
-            return {'schema':SCHEMA,'status':'optimal_nonnegative_resource_bound',
-                    'objective':objective,'witness':incumbent,'attempts':attempts,
-                    'proof':'zero cost and nonnegative native resource increments'}
-        current=current.cap(objective,cost-1)
-    return {'schema':SCHEMA,'status':'upper_bound' if incumbent else 'unknown',
-            'objective':objective,'witness':incumbent,'attempts':attempts,'proof':None,
-            'reason':'independent native optimality proof not established'}
+    from .native_optimize import optimize_native_resources
+    order=kwargs.pop('objectives',(objective,))
+    return optimize_native_resources(problem,model,objectives=order,limits=limits,
+                                     scheduler=scheduler,cancel=cancel,**kwargs)

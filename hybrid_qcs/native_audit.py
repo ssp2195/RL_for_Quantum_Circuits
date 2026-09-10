@@ -17,9 +17,10 @@ from .resource_search import WorkLimits, WorkMeter
 COVER_SCHEMA='native-hybrid-closed-cover-v1'
 
 
-def verify_native_cover(problem,certificate,*,limits=WorkLimits(1000000,100000,60.,60.)):
-    meter=WorkMeter(limits)
-    def failure(reason):return {'valid':False,'reason':reason,'checked_edges':meter.edges}
+def verify_native_cover(problem,certificate,*,limits=WorkLimits(1000000,100000,60.,60.), cancel=None):
+    meter=WorkMeter(limits,cancel)
+    checked_records=0
+    def failure(reason):return {'valid':False,'reason':reason,'checked_edges':meter.edges,'checked_records':checked_records}
     try:
         if certificate.get('schema')!=COVER_SCHEMA or certificate.get('problem_digest')!=problem.digest:
             return failure('domain/schema mismatch: phase-polynomial proofs cannot certify native search')
@@ -43,6 +44,7 @@ def verify_native_cover(problem,certificate,*,limits=WorkLimits(1000000,100000,6
             # Fail closed near the numerical decision boundary as well as at targets.
             if not np.isfinite(error) or error<=10*problem.tolerance:
                 return failure('target or numerically unresolved label in exclusion cover')
+            checked_records+=1
             states.append((s,td));group.setdefault(archive_key(problem,s),[]).append(resources(s,td))
         def covered(s,td):
             r=resources(s,td)
@@ -56,16 +58,17 @@ def verify_native_cover(problem,certificate,*,limits=WorkLimits(1000000,100000,6
                 if not legal(problem,s,td,g):continue
                 child=s.apply(g,partial_order_reduction=False)
                 if not covered(child,next_t_depths(td,g)):return failure('feasible continuation not covered')
-        return {'valid':True,'schema':COVER_SCHEMA,'checked_edges':meter.edges,'labels':len(states),
+        if meter.reason():return failure(meter.reason())
+        return {'valid':True,'schema':COVER_SCHEMA,'checked_edges':meter.edges,'checked_records':checked_records,'labels':len(states),
                 'scope':'declared native grammar, resource caps, phase/ancilla contract and numerical terminal predicate',
                 'formal_algebraic_proof':False}
     except (KeyError,TypeError,ValueError,IndexError,AssertionError):
         return failure('malformed certificate')
 
 
-def audit_native(problem,*,limits=WorkLimits(100000,50000,30.,30.)):
+def audit_native(problem,*,limits=WorkLimits(100000,50000,30.,30.), cancel=None, verify=True, verification_limits=WorkLimits(1000000,100000,60.,60.)):
     from .native_search import NativeSearch
-    engine=NativeSearch(problem,limits)
+    engine=NativeSearch(problem,limits,cancel=cancel)
     result=engine.run(scheduler='cost')
     if result['witness']:
         witness=dict(result['witness'],source='deterministic_native_audit')
@@ -76,6 +79,8 @@ def audit_native(problem,*,limits=WorkLimits(100000,50000,30.,30.)):
     labels=[[[g.name,list(g.qubits)] for g in engine.records[rid].state.reconstruct_gates()] for rid in ids]
     cert={'schema':COVER_SCHEMA,'problem_digest':problem.digest,'labels':labels,
           'digest':digest({'problem_digest':problem.digest,'labels':labels})}
-    verified=verify_native_cover(problem,cert)
+    if not verify:
+        return {'status':'unverified_cover','certificate':cert,'discovery':result}
+    verified=verify_native_cover(problem,cert,limits=verification_limits,cancel=cancel)
     return {'status':'infeasible_under_numerical_contract' if verified['valid'] else 'unknown',
             'certificate':cert,'verification':verified,'discovery':result}

@@ -79,15 +79,25 @@ def qualify(output, *, seeds=(0,1,2,3,4), edge_limit=512, seconds=3., stages=(64
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--mode',choices=('optimize','discover'),default='optimize',
+                        help='default: proof-carrying resource optimization; discover: historical first-feasible qualification')
+    parser.add_argument('--objectives',nargs='+',default=['t_count','cnot','depth','gates'])
     parser.add_argument('--output-dir',default='outputs/native-hybrid-restoration')
     parser.add_argument('--seeds',type=int,nargs='+',default=[0,1,2,3,4])
-    parser.add_argument('--edge-limit',type=int,default=512)
+    parser.add_argument('--edge-limit',type=int,default=None)
     parser.add_argument('--seconds',type=float,default=3.)
     parser.add_argument('--stages',type=int,nargs=3,default=[64,96,24])
     parser.add_argument('--named-only',action='store_true')
     args=parser.parse_args()
     if min(args.stages)<1:parser.error('each training stage must have at least one episode')
-    print(json.dumps(qualify(args.output_dir,seeds=args.seeds,edge_limit=args.edge_limit,
+    edge_limit=args.edge_limit if args.edge_limit is not None else (20000 if args.mode=='optimize' else 512)
+    if args.mode=='optimize':
+        from .native_optimality_runner import run_study
+        print(json.dumps(run_study(args.output_dir,seeds=args.seeds,stages=args.stages,
+            targets='named' if args.named_only else 'all',objectives=args.objectives,
+            limits=WorkLimits(edge_limit,20000,args.seconds,args.seconds)),indent=2))
+        return
+    print(json.dumps(qualify(args.output_dir,seeds=args.seeds,edge_limit=edge_limit,
                             seconds=args.seconds,stages=args.stages,named_only=args.named_only),indent=2))
 
 

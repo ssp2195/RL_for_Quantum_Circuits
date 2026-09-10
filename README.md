@@ -17,7 +17,8 @@ python -m pytest -q
 native engine. `hybrid-qcs-legacy` preserves the original general runner;
 `hybrid-qcs-phase-study` explicitly selects the historical restricted study.
 
-See [restoration contracts and limitations](docs/native_hybrid_restoration.md).
+See [restoration contracts and limitations](docs/native_hybrid_restoration.md)
+and [native resource optimization and certificates](docs/native_optimality.md).
 The frozen 25 phase-oracle specifications are retained as matrix targets with
 their original resource caps. QFT-2, QFT-3, 3-logical-qubit Toffoli (CCX),
 4-logical-qubit Toffoli (C^3X), SWAP and clean-ancilla mixed-axis benchmarks all
@@ -29,6 +30,31 @@ historical evidence. Its results and restricted optimality certificates do NOT
 establish results for this restored search domain. Native models are retrained
 under a distinct schema. Global phase now includes an exact canonical lift of
 the projective Clifford frame. No neural graph encoder has been added.
+
+## Native optimality-driven search
+
+The default native command now performs lexicographic **T-count, CNOT count,
+native depth, and gate-count minimization**, not only first-feasible discovery.
+Each incumbent is independently certified; nonzero minima require checked native
+closed-cover exclusions at the next tighter bound. `t_depth` can be included as
+an objective. Unfinished proofs remain upper bounds or unknown. All frontier
+records retain the full hybrid representation, including noncommuting rotations.
+
+```bash
+python -m hybrid_qcs.native_optimality_runner --targets calibration --seeds 0 1 2 \
+  --seconds 15 --output-dir outputs/native-optimality-calibration
+python -m hybrid_qcs.native_optimality_runner --output-dir outputs/native-optimality
+# Historical first-feasible qualification, explicitly selected:
+python -m hybrid_qcs.native_runner --mode discover --output-dir outputs/native-discovery
+```
+
+Discovery, deterministic auditing and verification share a cumulative work
+ledger, with separate provenance and timing. Audit-found witnesses are never
+labelled RL discoveries. The independent `verify_native_optimization` replays the
+witness and checks every resource proof. A clean-ancilla budget sweep keeps
+separate archives and only proves a minimum after excluding all smaller widths.
+All optimality claims concern the declared finite **native tolerance domain**;
+old phase-polynomial certificates are not reused for this enlarged grammar.
 
 ---
 

@@ -109,8 +109,9 @@ inapplicable. The CLI exposes stage, seed and work budgets for larger campaigns.
 
 The API also provides `optimize_native` for deterministic T-count/CNOT/depth/
 T-depth/gate-count tightening. Each incumbent must be found by native discovery.
-Its current default records only upper bounds, except the universal zero-cost
-nonnegativity bound. Ancilla budgets remain separate problems/archives.
+It now connects tighter-bound trials to native auditing and independent cover
+checking, including nonzero optima and ordered lexicographic objectives.
+Unfinished proofs still return upper bounds. See `native_optimality.md`. Ancilla budgets remain separate problems/archives.
 
 ## Independent verification and proof boundary
 
