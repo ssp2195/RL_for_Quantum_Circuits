@@ -1,12 +1,12 @@
 [
   {
     "audit": {
-      "cpu_seconds": 0.0015741900000421083,
+      "cpu_seconds": 0.0013579399999343877,
       "edges": 153,
       "reason": "closure_candidate",
       "records": 17,
       "status": "infeasible",
-      "wall_seconds": 0.0015779319999182917,
+      "wall_seconds": 0.0013592480000852447,
       "witness": null,
       "witness_source": null
     },
@@ -140,21 +140,21 @@
     "target_index": 0,
     "upper_cnot": 4,
     "verification": {
-      "cpu_seconds": 0.001654308999945897,
+      "cpu_seconds": 0.001441592999981367,
       "edges": 153,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.001654296999959115
+      "wall_seconds": 0.001441511000052742
     }
   },
   {
     "audit": {
-      "cpu_seconds": 0.3422058300000117,
+      "cpu_seconds": 0.30306703999997353,
       "edges": 32575,
       "reason": "closure_candidate",
       "records": 1426,
       "status": "infeasible",
-      "wall_seconds": 0.34224959999983184,
+      "wall_seconds": 0.30306915799997114,
       "witness": null,
       "witness_source": null
     },
@@ -288,21 +288,21 @@
     "target_index": 1,
     "upper_cnot": 6,
     "verification": {
-      "cpu_seconds": 0.34354011399989304,
+      "cpu_seconds": 0.3067617929999642,
       "edges": 32575,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.34356036799999856
+      "wall_seconds": 0.3067944230000421
     }
   },
   {
     "audit": {
-      "cpu_seconds": 0.9998965419999877,
-      "edges": 56630,
+      "cpu_seconds": 0.9999999829999524,
+      "edges": 69976,
       "reason": "wall_limit",
-      "records": 23533,
+      "records": 28819,
       "status": "unknown",
-      "wall_seconds": 1.000012077999827,
+      "wall_seconds": 1.000015445000031,
       "witness": null,
       "witness_source": null
     },
@@ -437,12 +437,12 @@
   },
   {
     "audit": {
-      "cpu_seconds": 0.0027162860000089495,
+      "cpu_seconds": 0.002441968999960409,
       "edges": 270,
       "reason": "closure_candidate",
       "records": 32,
       "status": "infeasible",
-      "wall_seconds": 0.0027177919998848665,
+      "wall_seconds": 0.002442629999904966,
       "witness": null,
       "witness_source": null
     },
@@ -584,21 +584,21 @@
     "target_index": 3,
     "upper_cnot": 4,
     "verification": {
-      "cpu_seconds": 0.0028637460000027204,
+      "cpu_seconds": 0.0025645599999961632,
       "edges": 270,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.0028636619999815593
+      "wall_seconds": 0.002564410999980282
     }
   },
   {
     "audit": {
-      "cpu_seconds": 0.008902260000013484,
+      "cpu_seconds": 0.008175850000043283,
       "edges": 850,
       "reason": "closure_candidate",
       "records": 34,
       "status": "infeasible",
-      "wall_seconds": 0.008903267000050619,
+      "wall_seconds": 0.008176428999945529,
       "witness": null,
       "witness_source": null
     },
@@ -740,21 +740,21 @@
     "target_index": 4,
     "upper_cnot": 4,
     "verification": {
-      "cpu_seconds": 0.009317176999957155,
+      "cpu_seconds": 0.008295949999933327,
       "edges": 850,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.009317281999983607
+      "wall_seconds": 0.008295644999975593
     }
   },
   {
     "audit": {
-      "cpu_seconds": 0.9998851529999229,
-      "edges": 66890,
+      "cpu_seconds": 0.9999503459999914,
+      "edges": 67997,
       "reason": "wall_limit",
-      "records": 27803,
+      "records": 28196,
       "status": "unknown",
-      "wall_seconds": 1.0000170050000179,
+      "wall_seconds": 1.0000276639999583,
       "witness": null,
       "witness_source": null
     },
@@ -897,12 +897,12 @@
   },
   {
     "audit": {
-      "cpu_seconds": 0.004990346999989015,
+      "cpu_seconds": 0.004429053999956523,
       "edges": 486,
       "reason": "closure_candidate",
       "records": 54,
       "status": "infeasible",
-      "wall_seconds": 0.00500440299992988,
+      "wall_seconds": 0.004430028000001585,
       "witness": null,
       "witness_source": null
     },
@@ -1052,21 +1052,21 @@
     "target_index": 6,
     "upper_cnot": 4,
     "verification": {
-      "cpu_seconds": 0.005213328000081674,
+      "cpu_seconds": 0.004650647000062236,
       "edges": 486,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.005213398000023517
+      "wall_seconds": 0.004650464000064858
     }
   },
   {
     "audit": {
-      "cpu_seconds": 0.9999460840000438,
-      "edges": 83343,
+      "cpu_seconds": 0.9999798449999844,
+      "edges": 92368,
       "reason": "wall_limit",
-      "records": 16276,
+      "records": 17740,
       "status": "unknown",
-      "wall_seconds": 1.0000040560000798,
+      "wall_seconds": 1.000007602000096,
       "witness": null,
       "witness_source": null
     },
@@ -1217,12 +1217,12 @@
   },
   {
     "audit": {
-      "cpu_seconds": 0.9999070660001053,
-      "edges": 59775,
+      "cpu_seconds": 0.999950345000002,
+      "edges": 83478,
       "reason": "wall_limit",
-      "records": 12185,
+      "records": 13797,
       "status": "unknown",
-      "wall_seconds": 1.000010095000107,
+      "wall_seconds": 1.0000073310000062,
       "witness": null,
       "witness_source": null
     },
@@ -1373,12 +1373,12 @@
   },
   {
     "audit": {
-      "cpu_seconds": 0.20584931300004428,
+      "cpu_seconds": 0.183801227999993,
       "edges": 19089,
       "reason": "closure_candidate",
       "records": 2466,
       "status": "infeasible",
-      "wall_seconds": 0.20587052400014727,
+      "wall_seconds": 0.18380476100003307,
       "witness": null,
       "witness_source": null
     },
@@ -1538,21 +1538,21 @@
     "target_index": 9,
     "upper_cnot": 6,
     "verification": {
-      "cpu_seconds": 0.21057185199993,
+      "cpu_seconds": 0.1863010540000687,
       "edges": 19089,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.21059189000015976
+      "wall_seconds": 0.18633113999999296
     }
   },
   {
     "audit": {
-      "cpu_seconds": 0.9999054839998962,
-      "edges": 88925,
+      "cpu_seconds": 0.9999928189999991,
+      "edges": 99172,
       "reason": "wall_limit",
-      "records": 7821,
+      "records": 8362,
       "status": "unknown",
-      "wall_seconds": 1.0000070579999374,
+      "wall_seconds": 1.000009197000054,
       "witness": null,
       "witness_source": null
     },
@@ -1711,12 +1711,12 @@
   },
   {
     "audit": {
-      "cpu_seconds": 0.9998671970000714,
-      "edges": 63352,
+      "cpu_seconds": 0.9999423619999561,
+      "edges": 65212,
       "reason": "wall_limit",
-      "records": 26707,
+      "records": 27386,
       "status": "unknown",
-      "wall_seconds": 1.000005796999858,
+      "wall_seconds": 1.0000124980000464,
       "witness": null,
       "witness_source": null
     },
@@ -1875,12 +1875,12 @@
   },
   {
     "audit": {
-      "cpu_seconds": 0.002863475000026483,
+      "cpu_seconds": 0.002511948999995184,
       "edges": 288,
       "reason": "closure_candidate",
       "records": 32,
       "status": "infeasible",
-      "wall_seconds": 0.0028646430000662804,
+      "wall_seconds": 0.0025124960000084684,
       "witness": null,
       "witness_source": null
     },
@@ -2014,21 +2014,21 @@
     "target_index": 12,
     "upper_cnot": 4,
     "verification": {
-      "cpu_seconds": 0.0030727870000646362,
+      "cpu_seconds": 0.0026832329999706417,
       "edges": 288,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.0030728080000699265
+      "wall_seconds": 0.002683109000031436
     }
   },
   {
     "audit": {
-      "cpu_seconds": 1.0004798590000519,
-      "edges": 94239,
-      "reason": "wall_limit",
-      "records": 6956,
+      "cpu_seconds": 0.9504193540000188,
+      "edges": 100000,
+      "reason": "edge_limit",
+      "records": 7282,
       "status": "unknown",
-      "wall_seconds": 1.0006146059999992,
+      "wall_seconds": 0.9504639670000188,
       "witness": null,
       "witness_source": null
     },
@@ -2163,12 +2163,12 @@
   },
   {
     "audit": {
-      "cpu_seconds": 0.9999185030000035,
-      "edges": 56806,
+      "cpu_seconds": 0.9999232640000173,
+      "edges": 74732,
       "reason": "wall_limit",
-      "records": 23532,
+      "records": 30883,
       "status": "unknown",
-      "wall_seconds": 1.0000046550001116,
+      "wall_seconds": 1.0000037660000771,
       "witness": null,
       "witness_source": null
     },
@@ -2303,12 +2303,12 @@
   },
   {
     "audit": {
-      "cpu_seconds": 0.01628154699994866,
+      "cpu_seconds": 0.014552652000020316,
       "edges": 1602,
       "reason": "closure_candidate",
       "records": 184,
       "status": "infeasible",
-      "wall_seconds": 0.016282400999898528,
+      "wall_seconds": 0.014552850999962175,
       "witness": null,
       "witness_source": null
     },
@@ -2458,21 +2458,21 @@
     "target_index": 15,
     "upper_cnot": 4,
     "verification": {
-      "cpu_seconds": 0.017302062999988266,
+      "cpu_seconds": 0.015106845999980578,
       "edges": 1602,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.017302480000125797
+      "wall_seconds": 0.015106386000070415
     }
   },
   {
     "audit": {
-      "cpu_seconds": 0.9998891900000899,
-      "edges": 75029,
+      "cpu_seconds": 0.9999790619999658,
+      "edges": 75395,
       "reason": "wall_limit",
-      "records": 26635,
+      "records": 26678,
       "status": "unknown",
-      "wall_seconds": 1.0000041240000428,
+      "wall_seconds": 1.000002198000061,
       "witness": null,
       "witness_source": null
     },
@@ -2615,12 +2615,12 @@
   },
   {
     "audit": {
-      "cpu_seconds": 0.999887737999984,
-      "edges": 56892,
+      "cpu_seconds": 0.9999460049999698,
+      "edges": 78527,
       "reason": "wall_limit",
-      "records": 18990,
+      "records": 21431,
       "status": "unknown",
-      "wall_seconds": 1.0000038040000163,
+      "wall_seconds": 1.0000075839999454,
       "witness": null,
       "witness_source": null
     },
@@ -2763,12 +2763,12 @@
   },
   {
     "audit": {
-      "cpu_seconds": 0.004459848000010425,
+      "cpu_seconds": 0.003987702000017634,
       "edges": 432,
       "reason": "closure_candidate",
       "records": 52,
       "status": "infeasible",
-      "wall_seconds": 0.00447498300013649,
+      "wall_seconds": 0.003988254000091729,
       "witness": null,
       "witness_source": null
     },
@@ -2920,21 +2920,21 @@
     "target_index": 18,
     "upper_cnot": 4,
     "verification": {
-      "cpu_seconds": 0.004674767999972573,
+      "cpu_seconds": 0.004106064999973569,
       "edges": 432,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.00467485400008627
+      "wall_seconds": 0.00410588399995504
     }
   },
   {
     "audit": {
-      "cpu_seconds": 0.9998805459999858,
-      "edges": 89474,
+      "cpu_seconds": 0.999978327000008,
+      "edges": 99325,
       "reason": "wall_limit",
-      "records": 8324,
+      "records": 8847,
       "status": "unknown",
-      "wall_seconds": 1.000015570999949,
+      "wall_seconds": 1.0000076360000776,
       "witness": null,
       "witness_source": null
     },
@@ -3085,12 +3085,12 @@
   },
   {
     "audit": {
-      "cpu_seconds": 0.9999112819999709,
-      "edges": 77792,
+      "cpu_seconds": 0.9999377739999318,
+      "edges": 87794,
       "reason": "wall_limit",
-      "records": 7638,
+      "records": 8221,
       "status": "unknown",
-      "wall_seconds": 1.0000104139999166,
+      "wall_seconds": 1.000013125999999,
       "witness": null,
       "witness_source": null
     },
@@ -3241,12 +3241,12 @@
   },
   {
     "audit": {
-      "cpu_seconds": 0.2026969690000442,
+      "cpu_seconds": 0.17949488200008545,
       "edges": 18657,
       "reason": "closure_candidate",
       "records": 2512,
       "status": "infeasible",
-      "wall_seconds": 0.202701597999976,
+      "wall_seconds": 0.17949699099995087,
       "witness": null,
       "witness_source": null
     },
@@ -3406,21 +3406,21 @@
     "target_index": 21,
     "upper_cnot": 6,
     "verification": {
-      "cpu_seconds": 0.20502900500002852,
+      "cpu_seconds": 0.184173486000077,
       "edges": 18657,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.20505144499998096
+      "wall_seconds": 0.1841687119999733
     }
   },
   {
     "audit": {
-      "cpu_seconds": 0.9998637810000446,
-      "edges": 73296,
+      "cpu_seconds": 0.9999628699999903,
+      "edges": 73903,
       "reason": "wall_limit",
-      "records": 24787,
+      "records": 24948,
       "status": "unknown",
-      "wall_seconds": 1.0000025879999157,
+      "wall_seconds": 1.000008464000075,
       "witness": null,
       "witness_source": null
     },
@@ -3579,12 +3579,12 @@
   },
   {
     "audit": {
-      "cpu_seconds": 0.999945614000012,
-      "edges": 55249,
+      "cpu_seconds": 0.9999620679999452,
+      "edges": 74368,
       "reason": "wall_limit",
-      "records": 19015,
+      "records": 23759,
       "status": "unknown",
-      "wall_seconds": 1.000016333999838,
+      "wall_seconds": 1.0000103699999272,
       "witness": null,
       "witness_source": null
     },
@@ -3743,12 +3743,12 @@
   },
   {
     "audit": {
-      "cpu_seconds": 0.30808870800001387,
+      "cpu_seconds": 0.2768484279999939,
       "edges": 27990,
       "reason": "closure_candidate",
       "records": 3980,
       "status": "infeasible",
-      "wall_seconds": 0.3081250950001504,
+      "wall_seconds": 0.2768411819999983,
       "witness": null,
       "witness_source": null
     },
@@ -3920,11 +3920,11 @@
     "target_index": 24,
     "upper_cnot": 6,
     "verification": {
-      "cpu_seconds": 0.3170613109999749,
+      "cpu_seconds": 0.2824180750000096,
       "edges": 27990,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.3171025080000618
+      "wall_seconds": 0.28244650100009494
     }
   }
 ]

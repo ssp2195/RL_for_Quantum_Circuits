@@ -1,6 +1,6 @@
 {
   "amendment_digest": "309d940f53b85f1791f6e615fbac43fd463766d0eef4a5e648b3ffb38bad2764",
-  "frozen_utc": "2026-09-10T10:55:39.733957+00:00",
+  "frozen_utc": "2026-09-10T11:16:43.507093+00:00",
   "model_digests": {
     "0": "f421b29a9ea491f4cec40f19afb0b2bc4b5877259497ae36da0bbec79efe1c96",
     "1": "3a6ed13dceafdff4788f0dea3949f9c45c974c811ed8de9f61df33c10c0d218e",
@@ -35,7 +35,7 @@
       "successes": 80
     },
     "1.0": {
-      "mean_savings": 0.18541666666666667,
+      "mean_savings": 0.1926041666666667,
       "successes": 80
     }
   },

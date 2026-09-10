@@ -10,12 +10,12 @@
   },
   "hierarchy_minus_untrained": {
     "clusters": 12,
-    "lower_95": -0.06376543209876542,
-    "mean": -0.022383156966490302,
+    "lower_95": -0.05002711640211641,
+    "mean": -0.013375220458553787,
     "resamples": 10000,
     "scope": "exploratory target-population interval; training-seed uncertainty also reported separately",
     "unit": "target; seeds and timings averaged within target first",
-    "upper_95": 0.017824900793650785
+    "upper_95": 0.022299382716049383
   },
   "logical_target_clusters": 12,
   "methods": {
@@ -26,10 +26,10 @@
       "successes": 540
     },
     "hierarchy": {
-      "mean_savings": 0.2549757495590829,
+      "mean_savings": 0.26398368606701944,
       "runs": 540,
-      "strict_improvement_runs": 181,
-      "successes": 498
+      "strict_improvement_runs": 192,
+      "successes": 508
     },
     "untrained": {
       "mean_savings": 0.2773589065255732,

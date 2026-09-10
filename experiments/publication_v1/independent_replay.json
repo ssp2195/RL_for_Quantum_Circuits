@@ -4,122 +4,122 @@
   "cover_checks": [
     {
       "check": {
-        "cpu_seconds": 0.001661640000065745,
+        "cpu_seconds": 0.0015151220000007015,
         "edges": 153,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.0016645910000079311
+        "wall_seconds": 0.001517239999884623
       },
       "path": "proofs/target-00.json"
     },
     {
       "check": {
-        "cpu_seconds": 0.34759149399997114,
+        "cpu_seconds": 0.30731817800005956,
         "edges": 32575,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.34761661600009575
+        "wall_seconds": 0.3073137090000273
       },
       "path": "proofs/target-01.json"
     },
     {
       "check": {
-        "cpu_seconds": 0.002969913999777418,
+        "cpu_seconds": 0.002780172000029779,
         "edges": 270,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.002970180000147593
+        "wall_seconds": 0.002780371999961062
       },
       "path": "proofs/target-03.json"
     },
     {
       "check": {
-        "cpu_seconds": 0.009147794999989856,
+        "cpu_seconds": 0.008427750000009837,
         "edges": 850,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.009147897999810084
+        "wall_seconds": 0.008427608999909353
       },
       "path": "proofs/target-04.json"
     },
     {
       "check": {
-        "cpu_seconds": 0.005342390000123487,
+        "cpu_seconds": 0.004806298999938008,
         "edges": 486,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.005342708999933166
+        "wall_seconds": 0.00480623800012836
       },
       "path": "proofs/target-06.json"
     },
     {
       "check": {
-        "cpu_seconds": 0.21457016299996212,
+        "cpu_seconds": 0.1881653840000581,
         "edges": 19089,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.2145968830000129
+        "wall_seconds": 0.18816280300006838
       },
       "path": "proofs/target-09.json"
     },
     {
       "check": {
-        "cpu_seconds": 0.0030668379999951867,
+        "cpu_seconds": 0.002680547000181832,
         "edges": 288,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.0030670159999317548
+        "wall_seconds": 0.0026807369999914954
       },
       "path": "proofs/target-12.json"
     },
     {
       "check": {
-        "cpu_seconds": 0.01716811400001461,
+        "cpu_seconds": 0.015496366999968814,
         "edges": 1602,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.017168546999982937
+        "wall_seconds": 0.015496038000037515
       },
       "path": "proofs/target-15.json"
     },
     {
       "check": {
-        "cpu_seconds": 0.004693074999977398,
+        "cpu_seconds": 0.004088756000101057,
         "edges": 432,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.004693268999972133
+        "wall_seconds": 0.004088667999894824
       },
       "path": "proofs/target-18.json"
     },
     {
       "check": {
-        "cpu_seconds": 0.20893942700013213,
+        "cpu_seconds": 0.1854115510000156,
         "edges": 18657,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.20898685099996328
+        "wall_seconds": 0.1854255989999274
       },
       "path": "proofs/target-21.json"
     },
     {
       "check": {
-        "cpu_seconds": 0.31537718799995673,
+        "cpu_seconds": 0.2836000839999997,
         "edges": 27990,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.3154292459998942
+        "wall_seconds": 0.28363398200008305
       },
       "path": "proofs/target-24.json"
     },
     {
       "ancillas": 0,
       "check": {
-        "cpu_seconds": 0.00032660600004419393,
+        "cpu_seconds": 0.00025623999999879743,
         "edges": 16,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.00032802400005493837
+        "wall_seconds": 0.00025694900000416965
       },
       "path": "ancilla_calibration.json",
       "seed": 0
@@ -127,11 +127,11 @@
     {
       "ancillas": 1,
       "check": {
-        "cpu_seconds": 0.004198860000087734,
+        "cpu_seconds": 0.003878373000134161,
         "edges": 414,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.0041997349999292055
+        "wall_seconds": 0.0038784150001447415
       },
       "path": "ancilla_calibration.json",
       "seed": 0
@@ -139,11 +139,11 @@
     {
       "ancillas": 2,
       "check": {
-        "cpu_seconds": 0.014690162000078999,
+        "cpu_seconds": 0.012873887000068862,
         "edges": 1424,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.01469158999998399
+        "wall_seconds": 0.012873800999841478
       },
       "path": "ancilla_calibration.json",
       "seed": 0
@@ -151,11 +151,11 @@
     {
       "ancillas": 0,
       "check": {
-        "cpu_seconds": 0.00024311100014529075,
+        "cpu_seconds": 0.00022059399998397566,
         "edges": 16,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.00024357699999200122
+        "wall_seconds": 0.00022065199982534978
       },
       "path": "ancilla_calibration.json",
       "seed": 1
@@ -163,11 +163,11 @@
     {
       "ancillas": 1,
       "check": {
-        "cpu_seconds": 0.004220291999899928,
+        "cpu_seconds": 0.0036670129998128687,
         "edges": 414,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.004220877000079781
+        "wall_seconds": 0.003666960999908042
       },
       "path": "ancilla_calibration.json",
       "seed": 1
@@ -175,11 +175,11 @@
     {
       "ancillas": 2,
       "check": {
-        "cpu_seconds": 0.014619497000012416,
+        "cpu_seconds": 0.012959982999973363,
         "edges": 1424,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.014620293000007223
+        "wall_seconds": 0.012966908999942461
       },
       "path": "ancilla_calibration.json",
       "seed": 1
@@ -187,11 +187,11 @@
     {
       "ancillas": 0,
       "check": {
-        "cpu_seconds": 0.0002414279999811697,
+        "cpu_seconds": 0.00022391499987861607,
         "edges": 16,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.00024201499991249875
+        "wall_seconds": 0.00022415200010073022
       },
       "path": "ancilla_calibration.json",
       "seed": 2
@@ -199,11 +199,11 @@
     {
       "ancillas": 1,
       "check": {
-        "cpu_seconds": 0.004242856000018946,
+        "cpu_seconds": 0.0037830119999853196,
         "edges": 414,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.004243760999997903
+        "wall_seconds": 0.003782965000027616
       },
       "path": "ancilla_calibration.json",
       "seed": 2
@@ -211,11 +211,11 @@
     {
       "ancillas": 2,
       "check": {
-        "cpu_seconds": 0.014639056000078199,
+        "cpu_seconds": 0.013206100000161314,
         "edges": 1424,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.014639981999835072
+        "wall_seconds": 0.013206053999965661
       },
       "path": "ancilla_calibration.json",
       "seed": 2
@@ -223,11 +223,11 @@
     {
       "ancillas": 0,
       "check": {
-        "cpu_seconds": 0.00024404200007666077,
+        "cpu_seconds": 0.00023079299990058644,
         "edges": 16,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.00024450899991279584
+        "wall_seconds": 0.00023096799986888072
       },
       "path": "ancilla_calibration.json",
       "seed": 3
@@ -235,11 +235,11 @@
     {
       "ancillas": 1,
       "check": {
-        "cpu_seconds": 0.004209806000062599,
+        "cpu_seconds": 0.0038534450000042852,
         "edges": 414,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.0042103299999780575
+        "wall_seconds": 0.0038533849999566883
       },
       "path": "ancilla_calibration.json",
       "seed": 3
@@ -247,11 +247,11 @@
     {
       "ancillas": 2,
       "check": {
-        "cpu_seconds": 0.014669291000018347,
+        "cpu_seconds": 0.013123944999961168,
         "edges": 1424,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.014670038000076602
+        "wall_seconds": 0.013123858999961158
       },
       "path": "ancilla_calibration.json",
       "seed": 3
@@ -259,11 +259,11 @@
     {
       "ancillas": 0,
       "check": {
-        "cpu_seconds": 0.00024265999991257559,
+        "cpu_seconds": 0.0002302629998212069,
         "edges": 16,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.00024311699985446467
+        "wall_seconds": 0.00023041099984766333
       },
       "path": "ancilla_calibration.json",
       "seed": 4
@@ -271,11 +271,11 @@
     {
       "ancillas": 1,
       "check": {
-        "cpu_seconds": 0.004218820000005508,
+        "cpu_seconds": 0.0037220639999304694,
         "edges": 414,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.00421933400002672
+        "wall_seconds": 0.003721985000083805
       },
       "path": "ancilla_calibration.json",
       "seed": 4
@@ -283,11 +283,11 @@
     {
       "ancillas": 2,
       "check": {
-        "cpu_seconds": 0.014798552999991443,
+        "cpu_seconds": 0.012936368999817205,
         "edges": 1424,
         "reason": "closed_cover_verified",
         "valid": true,
-        "wall_seconds": 0.014799292999896352
+        "wall_seconds": 0.012936246999970535
       },
       "path": "ancilla_calibration.json",
       "seed": 4
@@ -296,6 +296,6 @@
   "native_witnesses_valid": true,
   "protocol_digest": "1d89f27d811f779e7b79b1cb4f95155700ea2578b3095c04a1b2f4a88d35e115",
   "rank_bounds_verified": 40,
-  "successful_primary_secondary_runs": 1961,
-  "unique_native_witnesses_replayed": 232
+  "successful_primary_secondary_runs": 1994,
+  "unique_native_witnesses_replayed": 238
 }

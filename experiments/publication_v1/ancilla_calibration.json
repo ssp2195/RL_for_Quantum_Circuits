@@ -135,18 +135,18 @@
       "schema": "phase-inductive-cover-v1"
     },
     "cnot_exclusion_verified": {
-      "cpu_seconds": 0.0002953289999823028,
+      "cpu_seconds": 0.00028346800002054806,
       "edges": 16,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.0002947049999875162
+      "wall_seconds": 0.0002830649999623347
     },
     "discovery": {
       "audit_calls": 0,
       "audit_witness_used": false,
       "best": {
         "contract_digest": "de8ef14c89ad200e7ec668ec88388b29b3edc676dccb23c007f37be60a36728d",
-        "cpu_seconds": 0.005285555000000386,
+        "cpu_seconds": 0.005456580999975813,
         "edges": 40,
         "resources": {
           "available_ancillas": 0,
@@ -166,7 +166,7 @@
           ]
         },
         "source": "frozen_policy_discovery",
-        "wall_seconds": 0.005286429999841857,
+        "wall_seconds": 0.0054574289999891334,
         "witness": {
           "dag_validated": true,
           "exact_basis_phase_match": true,
@@ -235,14 +235,14 @@
           "workspace_leakage": 0.0
         }
       },
-      "cpu_seconds": 0.00804508699991402,
+      "cpu_seconds": 0.008216943999968862,
       "edges": 52,
-      "first_correct_seconds": 0.005286429999841857,
+      "first_correct_seconds": 0.0054574289999891334,
       "improvements": 0,
       "incumbents": [
         {
           "contract_digest": "de8ef14c89ad200e7ec668ec88388b29b3edc676dccb23c007f37be60a36728d",
-          "cpu_seconds": 0.005285555000000386,
+          "cpu_seconds": 0.005456580999975813,
           "edges": 40,
           "resources": {
             "available_ancillas": 0,
@@ -262,7 +262,7 @@
             ]
           },
           "source": "frozen_policy_discovery",
-          "wall_seconds": 0.005286429999841857,
+          "wall_seconds": 0.0054574289999891334,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -395,7 +395,7 @@
       "rounds": [
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.004654547999962233,
+          "cpu_seconds": 0.004788463000068077,
           "edges": 40,
           "policy_digest": "9d253f3c1ba4964b7813ccefa55f1ed306b29c83ee20bbd392da6a2938d9818b",
           "problem": {
@@ -458,11 +458,11 @@
           "profile": {
             "audit_calls": 0,
             "cap_checks": 128,
-            "certification_seconds": 0.0006459349999659025,
+            "certification_seconds": 0.0006602479999173738,
             "cleanup_edges": 20,
             "dominance_comparisons": 10,
             "fairness_steps": 1,
-            "feature_seconds": 0.0025277629988522676,
+            "feature_seconds": 0.002636241000004702,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 41,
             "max_scored_panel": 14,
@@ -471,7 +471,7 @@
             "peak_frontier": 14,
             "phase_emitting_edges": 16,
             "policy_choices": 39,
-            "transition_seconds": 0.0005658350003159285,
+            "transition_seconds": 0.000567484999919543,
             "workspace_edges": 0
           },
           "reason": "certified",
@@ -479,7 +479,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "feasible",
-          "wall_seconds": 0.004654244999983348,
+          "wall_seconds": 0.0047880129999384735,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -551,7 +551,7 @@
         },
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.0015702040000178386,
+          "cpu_seconds": 0.0015834539999559638,
           "edges": 12,
           "policy_digest": "9d253f3c1ba4964b7813ccefa55f1ed306b29c83ee20bbd392da6a2938d9818b",
           "problem": {
@@ -618,7 +618,7 @@
             "cleanup_edges": 4,
             "dominance_comparisons": 1,
             "fairness_steps": 0,
-            "feature_seconds": 0.0007001169997238321,
+            "feature_seconds": 0.0007164819999161409,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 12,
             "max_scored_panel": 3,
@@ -627,7 +627,7 @@
             "peak_frontier": 3,
             "phase_emitting_edges": 4,
             "policy_choices": 12,
-            "transition_seconds": 0.00012090199993508577,
+            "transition_seconds": 0.00012204000017845829,
             "workspace_edges": 0
           },
           "reason": "exhausted_without_proof",
@@ -635,7 +635,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "unknown",
-          "wall_seconds": 0.0015702000000601402,
+          "wall_seconds": 0.0015832430000273234,
           "witness": null,
           "witness_source": null
         }
@@ -643,7 +643,7 @@
       "scheduler": "hierarchy",
       "schema": "attributable-anytime-discovery-v1",
       "status": "feasible",
-      "wall_seconds": 0.008045954999943206
+      "wall_seconds": 0.008217577000095844
     },
     "rank_bound": {
       "digest": "c51a111b71322977988a693612c2b36286c3df050e58170aff8e34e2b9d39114",
@@ -1704,18 +1704,18 @@
       "schema": "phase-inductive-cover-v1"
     },
     "cnot_exclusion_verified": {
-      "cpu_seconds": 0.004218799999989642,
+      "cpu_seconds": 0.003825430000006236,
       "edges": 414,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.0042185969998627115
+      "wall_seconds": 0.0038250500000458487
     },
     "discovery": {
       "audit_calls": 0,
       "audit_witness_used": false,
       "best": {
         "contract_digest": "a9358a5098fbef35d9903d2b8dd204d11f32d8dbe92cacb1216ba0f7625a58fc",
-        "cpu_seconds": 0.028459283999950458,
+        "cpu_seconds": 0.028602181999985987,
         "edges": 238,
         "resources": {
           "available_ancillas": 1,
@@ -1737,7 +1737,7 @@
           ]
         },
         "source": "frozen_policy_discovery",
-        "wall_seconds": 0.028467316999922332,
+        "wall_seconds": 0.028601081000033446,
         "witness": {
           "dag_validated": true,
           "exact_basis_phase_match": true,
@@ -1824,14 +1824,14 @@
           "workspace_leakage": 0.0
         }
       },
-      "cpu_seconds": 0.05831188899992412,
+      "cpu_seconds": 0.05909645599990654,
       "edges": 570,
-      "first_correct_seconds": 0.028467316999922332,
+      "first_correct_seconds": 0.028601081000033446,
       "improvements": 0,
       "incumbents": [
         {
           "contract_digest": "a9358a5098fbef35d9903d2b8dd204d11f32d8dbe92cacb1216ba0f7625a58fc",
-          "cpu_seconds": 0.028459283999950458,
+          "cpu_seconds": 0.028602181999985987,
           "edges": 238,
           "resources": {
             "available_ancillas": 1,
@@ -1853,7 +1853,7 @@
             ]
           },
           "source": "frozen_policy_discovery",
-          "wall_seconds": 0.028467316999922332,
+          "wall_seconds": 0.028601081000033446,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -2004,7 +2004,7 @@
       "rounds": [
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.027794165000045723,
+          "cpu_seconds": 0.027935393000007025,
           "edges": 238,
           "policy_digest": "9d253f3c1ba4964b7813ccefa55f1ed306b29c83ee20bbd392da6a2938d9818b",
           "problem": {
@@ -2067,11 +2067,11 @@
           "profile": {
             "audit_calls": 0,
             "cap_checks": 1281,
-            "certification_seconds": 0.0009387469999637688,
+            "certification_seconds": 0.000889030000053026,
             "cleanup_edges": 62,
             "dominance_comparisons": 100,
             "fairness_steps": 7,
-            "feature_seconds": 0.021960209995995683,
+            "feature_seconds": 0.021966677000364143,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 248,
             "max_scored_panel": 32,
@@ -2080,7 +2080,7 @@
             "peak_frontier": 62,
             "phase_emitting_edges": 57,
             "policy_choices": 231,
-            "transition_seconds": 0.0028390469985879463,
+            "transition_seconds": 0.003079886000705301,
             "workspace_edges": 136
           },
           "reason": "certified",
@@ -2088,7 +2088,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "feasible",
-          "wall_seconds": 0.027801503000091543,
+          "wall_seconds": 0.02793401199994605,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -2178,7 +2178,7 @@
         },
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.028522699000063767,
+          "cpu_seconds": 0.02921555700004319,
           "edges": 332,
           "policy_digest": "9d253f3c1ba4964b7813ccefa55f1ed306b29c83ee20bbd392da6a2938d9818b",
           "problem": {
@@ -2245,7 +2245,7 @@
             "cleanup_edges": 80,
             "dominance_comparisons": 83,
             "fairness_steps": 10,
-            "feature_seconds": 0.023475805998486976,
+            "feature_seconds": 0.02421652299926791,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 332,
             "max_scored_panel": 20,
@@ -2254,7 +2254,7 @@
             "peak_frontier": 20,
             "phase_emitting_edges": 56,
             "policy_choices": 322,
-            "transition_seconds": 0.0024965370007521415,
+            "transition_seconds": 0.0025882329995283726,
             "workspace_edges": 198
           },
           "reason": "exhausted_without_proof",
@@ -2262,7 +2262,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "unknown",
-          "wall_seconds": 0.0285381740000048,
+          "wall_seconds": 0.02922662200001014,
           "witness": null,
           "witness_source": null
         }
@@ -2270,7 +2270,7 @@
       "scheduler": "hierarchy",
       "schema": "attributable-anytime-discovery-v1",
       "status": "feasible",
-      "wall_seconds": 0.058335357999794724
+      "wall_seconds": 0.05910645200003728
     },
     "rank_bound": {
       "digest": "5914e7747d4e94544e560b74ae0e2632eaf97f7e99702156f8b1c2fbccd5161b",
@@ -4456,18 +4456,18 @@
       "schema": "phase-inductive-cover-v1"
     },
     "cnot_exclusion_verified": {
-      "cpu_seconds": 0.0151358949999576,
+      "cpu_seconds": 0.013271152000015718,
       "edges": 1424,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.015136215999973501
+      "wall_seconds": 0.01327055800004473
     },
     "discovery": {
       "audit_calls": 0,
       "audit_witness_used": false,
       "best": {
         "contract_digest": "c188ba0451912d358f91a5be81c56470e7d3ecca35549197368013a9d31a8a98",
-        "cpu_seconds": 0.09172971500004223,
+        "cpu_seconds": 0.09010137699999632,
         "edges": 642,
         "resources": {
           "available_ancillas": 2,
@@ -4491,7 +4491,7 @@
           ]
         },
         "source": "frozen_policy_discovery",
-        "wall_seconds": 0.09174382400010472,
+        "wall_seconds": 0.09010484700002053,
         "witness": {
           "dag_validated": true,
           "exact_basis_phase_match": true,
@@ -4580,14 +4580,14 @@
           "workspace_leakage": 0.0
         }
       },
-      "cpu_seconds": 0.22293712900000173,
+      "cpu_seconds": 0.21960786399995413,
       "edges": 1830,
-      "first_correct_seconds": 0.09174382400010472,
+      "first_correct_seconds": 0.09010484700002053,
       "improvements": 0,
       "incumbents": [
         {
           "contract_digest": "c188ba0451912d358f91a5be81c56470e7d3ecca35549197368013a9d31a8a98",
-          "cpu_seconds": 0.09172971500004223,
+          "cpu_seconds": 0.09010137699999632,
           "edges": 642,
           "resources": {
             "available_ancillas": 2,
@@ -4611,7 +4611,7 @@
             ]
           },
           "source": "frozen_policy_discovery",
-          "wall_seconds": 0.09174382400010472,
+          "wall_seconds": 0.09010484700002053,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -4764,7 +4764,7 @@
       "rounds": [
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.09080795499994565,
+          "cpu_seconds": 0.0892263149999053,
           "edges": 642,
           "policy_digest": "9d253f3c1ba4964b7813ccefa55f1ed306b29c83ee20bbd392da6a2938d9818b",
           "problem": {
@@ -4827,11 +4827,11 @@
           "profile": {
             "audit_calls": 0,
             "cap_checks": 5293,
-            "certification_seconds": 0.0012230160000399337,
+            "certification_seconds": 0.0010536569999430867,
             "cleanup_edges": 197,
             "dominance_comparisons": 527,
             "fairness_steps": 20,
-            "feature_seconds": 0.07506936000208952,
+            "feature_seconds": 0.0735208849995388,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 694,
             "max_scored_panel": 32,
@@ -4840,7 +4840,7 @@
             "peak_frontier": 260,
             "phase_emitting_edges": 86,
             "policy_choices": 622,
-            "transition_seconds": 0.009941068999069103,
+            "transition_seconds": 0.010334107000744552,
             "workspace_edges": 487
           },
           "reason": "certified",
@@ -4848,7 +4848,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "feasible",
-          "wall_seconds": 0.09082152199994198,
+          "wall_seconds": 0.08922962500002996,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -4940,7 +4940,7 @@
         },
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.12956920999999966,
+          "cpu_seconds": 0.1280429019999474,
           "edges": 1188,
           "policy_digest": "9d253f3c1ba4964b7813ccefa55f1ed306b29c83ee20bbd392da6a2938d9818b",
           "problem": {
@@ -5007,7 +5007,7 @@
             "cleanup_edges": 340,
             "dominance_comparisons": 446,
             "fairness_steps": 37,
-            "feature_seconds": 0.11384071399993445,
+            "feature_seconds": 0.11252139000157513,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 1188,
             "max_scored_panel": 32,
@@ -5016,7 +5016,7 @@
             "peak_frontier": 34,
             "phase_emitting_edges": 120,
             "policy_choices": 1151,
-            "transition_seconds": 0.008322795000594851,
+            "transition_seconds": 0.008668265003166198,
             "workspace_edges": 928
           },
           "reason": "exhausted_without_proof",
@@ -5024,7 +5024,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "unknown",
-          "wall_seconds": 0.12957222099998944,
+          "wall_seconds": 0.1280635320000556,
           "witness": null,
           "witness_source": null
         }
@@ -5032,7 +5032,7 @@
       "scheduler": "hierarchy",
       "schema": "attributable-anytime-discovery-v1",
       "status": "feasible",
-      "wall_seconds": 0.2229540979999456
+      "wall_seconds": 0.2196320250000099
     },
     "rank_bound": {
       "digest": "8a91d9971f082618ef8ad8d09cbea1ed2ad2b854ab3ed6502a0ca46b440ee2e7",
@@ -5239,18 +5239,18 @@
       "schema": "phase-inductive-cover-v1"
     },
     "cnot_exclusion_verified": {
-      "cpu_seconds": 0.0002728860000615896,
+      "cpu_seconds": 0.00026545100001840183,
       "edges": 16,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.0002728409999690484
+      "wall_seconds": 0.0002653379999628669
     },
     "discovery": {
       "audit_calls": 0,
       "audit_witness_used": false,
       "best": {
         "contract_digest": "de8ef14c89ad200e7ec668ec88388b29b3edc676dccb23c007f37be60a36728d",
-        "cpu_seconds": 0.0052745089999461925,
+        "cpu_seconds": 0.005182654999998704,
         "edges": 40,
         "resources": {
           "available_ancillas": 0,
@@ -5270,7 +5270,7 @@
           ]
         },
         "source": "frozen_policy_discovery",
-        "wall_seconds": 0.00527542200006792,
+        "wall_seconds": 0.00518306300000404,
         "witness": {
           "dag_validated": true,
           "exact_basis_phase_match": true,
@@ -5339,14 +5339,14 @@
           "workspace_leakage": 0.0
         }
       },
-      "cpu_seconds": 0.008056623000015861,
+      "cpu_seconds": 0.008092288000057124,
       "edges": 52,
-      "first_correct_seconds": 0.00527542200006792,
+      "first_correct_seconds": 0.00518306300000404,
       "improvements": 0,
       "incumbents": [
         {
           "contract_digest": "de8ef14c89ad200e7ec668ec88388b29b3edc676dccb23c007f37be60a36728d",
-          "cpu_seconds": 0.0052745089999461925,
+          "cpu_seconds": 0.005182654999998704,
           "edges": 40,
           "resources": {
             "available_ancillas": 0,
@@ -5366,7 +5366,7 @@
             ]
           },
           "source": "frozen_policy_discovery",
-          "wall_seconds": 0.00527542200006792,
+          "wall_seconds": 0.00518306300000404,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -5499,7 +5499,7 @@
       "rounds": [
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.004634336999970401,
+          "cpu_seconds": 0.004558373999998366,
           "edges": 40,
           "policy_digest": "9c8c486eff94c5b256245ecf2fd7b047991735fd25f4862e7630ac6205ef47c6",
           "problem": {
@@ -5562,11 +5562,11 @@
           "profile": {
             "audit_calls": 0,
             "cap_checks": 128,
-            "certification_seconds": 0.0006695700001273508,
+            "certification_seconds": 0.0005873410000276635,
             "cleanup_edges": 20,
             "dominance_comparisons": 10,
             "fairness_steps": 1,
-            "feature_seconds": 0.0025239639999199426,
+            "feature_seconds": 0.0025307619998784503,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 41,
             "max_scored_panel": 14,
@@ -5575,7 +5575,7 @@
             "peak_frontier": 14,
             "phase_emitting_edges": 16,
             "policy_choices": 39,
-            "transition_seconds": 0.0005217779998929473,
+            "transition_seconds": 0.0005515590003142279,
             "workspace_edges": 0
           },
           "reason": "certified",
@@ -5583,7 +5583,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "feasible",
-          "wall_seconds": 0.0046340349999809405,
+          "wall_seconds": 0.004558031000101437,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -5655,7 +5655,7 @@
         },
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.0015974849999338403,
+          "cpu_seconds": 0.0016882570000689157,
           "edges": 12,
           "policy_digest": "9c8c486eff94c5b256245ecf2fd7b047991735fd25f4862e7630ac6205ef47c6",
           "problem": {
@@ -5722,7 +5722,7 @@
             "cleanup_edges": 4,
             "dominance_comparisons": 1,
             "fairness_steps": 0,
-            "feature_seconds": 0.000704924999809009,
+            "feature_seconds": 0.0007713170001579783,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 12,
             "max_scored_panel": 3,
@@ -5731,7 +5731,7 @@
             "peak_frontier": 3,
             "phase_emitting_edges": 4,
             "policy_choices": 12,
-            "transition_seconds": 0.00012296699992475624,
+            "transition_seconds": 0.00012725800002044707,
             "workspace_edges": 0
           },
           "reason": "exhausted_without_proof",
@@ -5739,7 +5739,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "unknown",
-          "wall_seconds": 0.0015973210001902771,
+          "wall_seconds": 0.0016880740000715377,
           "witness": null,
           "witness_source": null
         }
@@ -5747,7 +5747,7 @@
       "scheduler": "hierarchy",
       "schema": "attributable-anytime-discovery-v1",
       "status": "feasible",
-      "wall_seconds": 0.00805730100000801
+      "wall_seconds": 0.008092437999948743
     },
     "rank_bound": {
       "digest": "c51a111b71322977988a693612c2b36286c3df050e58170aff8e34e2b9d39114",
@@ -6808,18 +6808,18 @@
       "schema": "phase-inductive-cover-v1"
     },
     "cnot_exclusion_verified": {
-      "cpu_seconds": 0.004219401000000289,
+      "cpu_seconds": 0.0038544279999541686,
       "edges": 414,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.004219447999957993
+      "wall_seconds": 0.0038542089999964446
     },
     "discovery": {
       "audit_calls": 0,
       "audit_witness_used": false,
       "best": {
         "contract_digest": "a9358a5098fbef35d9903d2b8dd204d11f32d8dbe92cacb1216ba0f7625a58fc",
-        "cpu_seconds": 0.024483616999987134,
+        "cpu_seconds": 0.0246343579999575,
         "edges": 202,
         "resources": {
           "available_ancillas": 1,
@@ -6841,7 +6841,7 @@
           ]
         },
         "source": "frozen_policy_discovery",
-        "wall_seconds": 0.02448402499999247,
+        "wall_seconds": 0.024633375999997043,
         "witness": {
           "dag_validated": true,
           "exact_basis_phase_match": true,
@@ -6928,14 +6928,14 @@
           "workspace_leakage": 0.0
         }
       },
-      "cpu_seconds": 0.05402853399994001,
+      "cpu_seconds": 0.055002579999950285,
       "edges": 534,
-      "first_correct_seconds": 0.02448402499999247,
+      "first_correct_seconds": 0.024633375999997043,
       "improvements": 0,
       "incumbents": [
         {
           "contract_digest": "a9358a5098fbef35d9903d2b8dd204d11f32d8dbe92cacb1216ba0f7625a58fc",
-          "cpu_seconds": 0.024483616999987134,
+          "cpu_seconds": 0.0246343579999575,
           "edges": 202,
           "resources": {
             "available_ancillas": 1,
@@ -6957,7 +6957,7 @@
             ]
           },
           "source": "frozen_policy_discovery",
-          "wall_seconds": 0.02448402499999247,
+          "wall_seconds": 0.024633375999997043,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -7108,7 +7108,7 @@
       "rounds": [
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.023805368000012095,
+          "cpu_seconds": 0.023995045999981812,
           "edges": 202,
           "policy_digest": "9c8c486eff94c5b256245ecf2fd7b047991735fd25f4862e7630ac6205ef47c6",
           "problem": {
@@ -7171,11 +7171,11 @@
           "profile": {
             "audit_calls": 0,
             "cap_checks": 1106,
-            "certification_seconds": 0.0009319870000581432,
+            "certification_seconds": 0.0008894070000451393,
             "cleanup_edges": 53,
             "dominance_comparisons": 96,
             "fairness_steps": 6,
-            "feature_seconds": 0.018509917999153913,
+            "feature_seconds": 0.018620313999917926,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 213,
             "max_scored_panel": 32,
@@ -7184,7 +7184,7 @@
             "peak_frontier": 61,
             "phase_emitting_edges": 52,
             "policy_choices": 196,
-            "transition_seconds": 0.002508957998998085,
+            "transition_seconds": 0.002700815998764483,
             "workspace_edges": 114
           },
           "reason": "certified",
@@ -7192,7 +7192,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "feasible",
-          "wall_seconds": 0.02380527099990104,
+          "wall_seconds": 0.023993770000060977,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -7282,7 +7282,7 @@
         },
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.028247920000012527,
+          "cpu_seconds": 0.029034891000037533,
           "edges": 332,
           "policy_digest": "9c8c486eff94c5b256245ecf2fd7b047991735fd25f4862e7630ac6205ef47c6",
           "problem": {
@@ -7349,7 +7349,7 @@
             "cleanup_edges": 80,
             "dominance_comparisons": 83,
             "fairness_steps": 10,
-            "feature_seconds": 0.02326622699933978,
+            "feature_seconds": 0.02401981500099737,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 332,
             "max_scored_panel": 21,
@@ -7358,7 +7358,7 @@
             "peak_frontier": 21,
             "phase_emitting_edges": 56,
             "policy_choices": 322,
-            "transition_seconds": 0.0024493199994140014,
+            "transition_seconds": 0.0025954170017712386,
             "workspace_edges": 198
           },
           "reason": "exhausted_without_proof",
@@ -7366,7 +7366,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "unknown",
-          "wall_seconds": 0.028261396000061723,
+          "wall_seconds": 0.029033638999976574,
           "witness": null,
           "witness_source": null
         }
@@ -7374,7 +7374,7 @@
       "scheduler": "hierarchy",
       "schema": "attributable-anytime-discovery-v1",
       "status": "feasible",
-      "wall_seconds": 0.05404255000007652
+      "wall_seconds": 0.05500034799990772
     },
     "rank_bound": {
       "digest": "5914e7747d4e94544e560b74ae0e2632eaf97f7e99702156f8b1c2fbccd5161b",
@@ -9560,18 +9560,18 @@
       "schema": "phase-inductive-cover-v1"
     },
     "cnot_exclusion_verified": {
-      "cpu_seconds": 0.015307378999978027,
+      "cpu_seconds": 0.013349861000051533,
       "edges": 1424,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.015307704999941052
+      "wall_seconds": 0.01334927899995364
     },
     "discovery": {
       "audit_calls": 0,
       "audit_witness_used": false,
       "best": {
         "contract_digest": "c188ba0451912d358f91a5be81c56470e7d3ecca35549197368013a9d31a8a98",
-        "cpu_seconds": 0.04165519600007883,
+        "cpu_seconds": 0.040555906999998115,
         "edges": 289,
         "resources": {
           "available_ancillas": 2,
@@ -9595,7 +9595,7 @@
           ]
         },
         "source": "frozen_policy_discovery",
-        "wall_seconds": 0.041667620999987776,
+        "wall_seconds": 0.0405543410000746,
         "witness": {
           "dag_validated": true,
           "exact_basis_phase_match": true,
@@ -9684,14 +9684,14 @@
           "workspace_leakage": 0.0
         }
       },
-      "cpu_seconds": 0.17514738600004875,
+      "cpu_seconds": 0.17119872300008865,
       "edges": 1477,
-      "first_correct_seconds": 0.041667620999987776,
+      "first_correct_seconds": 0.0405543410000746,
       "improvements": 0,
       "incumbents": [
         {
           "contract_digest": "c188ba0451912d358f91a5be81c56470e7d3ecca35549197368013a9d31a8a98",
-          "cpu_seconds": 0.04165519600007883,
+          "cpu_seconds": 0.040555906999998115,
           "edges": 289,
           "resources": {
             "available_ancillas": 2,
@@ -9715,7 +9715,7 @@
             ]
           },
           "source": "frozen_policy_discovery",
-          "wall_seconds": 0.041667620999987776,
+          "wall_seconds": 0.0405543410000746,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -9868,7 +9868,7 @@
       "rounds": [
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.04090086500002599,
+          "cpu_seconds": 0.03984162300002936,
           "edges": 289,
           "policy_digest": "9c8c486eff94c5b256245ecf2fd7b047991735fd25f4862e7630ac6205ef47c6",
           "problem": {
@@ -9931,11 +9931,11 @@
           "profile": {
             "audit_calls": 0,
             "cap_checks": 2398,
-            "certification_seconds": 0.0011364660001618176,
+            "certification_seconds": 0.001048561999937192,
             "cleanup_edges": 99,
             "dominance_comparisons": 143,
             "fairness_steps": 9,
-            "feature_seconds": 0.03316709799673845,
+            "feature_seconds": 0.03204892199948972,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 305,
             "max_scored_panel": 32,
@@ -9944,7 +9944,7 @@
             "peak_frontier": 119,
             "phase_emitting_edges": 38,
             "policy_choices": 280,
-            "transition_seconds": 0.004187249996675746,
+            "transition_seconds": 0.004435099999682279,
             "workspace_edges": 219
           },
           "reason": "certified",
@@ -9952,7 +9952,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "feasible",
-          "wall_seconds": 0.040912621999950716,
+          "wall_seconds": 0.039839837999920746,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -10044,7 +10044,7 @@
         },
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.13181011000006038,
+          "cpu_seconds": 0.12914542999999412,
           "edges": 1188,
           "policy_digest": "9c8c486eff94c5b256245ecf2fd7b047991735fd25f4862e7630ac6205ef47c6",
           "problem": {
@@ -10111,7 +10111,7 @@
             "cleanup_edges": 340,
             "dominance_comparisons": 442,
             "fairness_steps": 37,
-            "feature_seconds": 0.1159858620005707,
+            "feature_seconds": 0.113586322998799,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 1188,
             "max_scored_panel": 32,
@@ -10120,7 +10120,7 @@
             "peak_frontier": 35,
             "phase_emitting_edges": 120,
             "policy_choices": 1151,
-            "transition_seconds": 0.008365517999891381,
+            "transition_seconds": 0.008657182000888497,
             "workspace_edges": 928
           },
           "reason": "exhausted_without_proof",
@@ -10128,7 +10128,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "unknown",
-          "wall_seconds": 0.13181318299984923,
+          "wall_seconds": 0.12916716300003372,
           "witness": null,
           "witness_source": null
         }
@@ -10136,7 +10136,7 @@
       "scheduler": "hierarchy",
       "schema": "attributable-anytime-discovery-v1",
       "status": "feasible",
-      "wall_seconds": 0.17516295299992635
+      "wall_seconds": 0.17121874300005402
     },
     "rank_bound": {
       "digest": "8a91d9971f082618ef8ad8d09cbea1ed2ad2b854ab3ed6502a0ca46b440ee2e7",
@@ -10343,18 +10343,18 @@
       "schema": "phase-inductive-cover-v1"
     },
     "cnot_exclusion_verified": {
-      "cpu_seconds": 0.00027893499998299376,
+      "cpu_seconds": 0.00025410299997474795,
       "edges": 16,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.00027890100000149687
+      "wall_seconds": 0.0002540189999535869
     },
     "discovery": {
       "audit_calls": 0,
       "audit_witness_used": false,
       "best": {
         "contract_digest": "de8ef14c89ad200e7ec668ec88388b29b3edc676dccb23c007f37be60a36728d",
-        "cpu_seconds": 0.005188680999935968,
+        "cpu_seconds": 0.005323212000007516,
         "edges": 40,
         "resources": {
           "available_ancillas": 0,
@@ -10374,7 +10374,7 @@
           ]
         },
         "source": "frozen_policy_discovery",
-        "wall_seconds": 0.005189642999994248,
+        "wall_seconds": 0.005323389000068346,
         "witness": {
           "dag_validated": true,
           "exact_basis_phase_match": true,
@@ -10443,14 +10443,14 @@
           "workspace_leakage": 0.0
         }
       },
-      "cpu_seconds": 0.007953960999998344,
+      "cpu_seconds": 0.008106971999950474,
       "edges": 52,
-      "first_correct_seconds": 0.005189642999994248,
+      "first_correct_seconds": 0.005323389000068346,
       "improvements": 0,
       "incumbents": [
         {
           "contract_digest": "de8ef14c89ad200e7ec668ec88388b29b3edc676dccb23c007f37be60a36728d",
-          "cpu_seconds": 0.005188680999935968,
+          "cpu_seconds": 0.005323212000007516,
           "edges": 40,
           "resources": {
             "available_ancillas": 0,
@@ -10470,7 +10470,7 @@
             ]
           },
           "source": "frozen_policy_discovery",
-          "wall_seconds": 0.005189642999994248,
+          "wall_seconds": 0.005323389000068346,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -10603,7 +10603,7 @@
       "rounds": [
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.004552686000010908,
+          "cpu_seconds": 0.004689932000019326,
           "edges": 40,
           "policy_digest": "6a9a83a3c4f61b9d82faa529afab5491ebb8edb6400e898c8d61974f4d290fbd",
           "problem": {
@@ -10666,11 +10666,11 @@
           "profile": {
             "audit_calls": 0,
             "cap_checks": 128,
-            "certification_seconds": 0.000653957000167793,
+            "certification_seconds": 0.0006030060000057347,
             "cleanup_edges": 20,
             "dominance_comparisons": 10,
             "fairness_steps": 1,
-            "feature_seconds": 0.0024764719994436746,
+            "feature_seconds": 0.002608058000305391,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 41,
             "max_scored_panel": 14,
@@ -10679,7 +10679,7 @@
             "peak_frontier": 14,
             "phase_emitting_edges": 16,
             "policy_choices": 39,
-            "transition_seconds": 0.0005328779996034427,
+            "transition_seconds": 0.0005829559996755052,
             "workspace_edges": 0
           },
           "reason": "certified",
@@ -10687,7 +10687,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "feasible",
-          "wall_seconds": 0.004552351000029375,
+          "wall_seconds": 0.004689526999982263,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -10759,7 +10759,7 @@
         },
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.0015651659999775802,
+          "cpu_seconds": 0.0015686750000440952,
           "edges": 12,
           "policy_digest": "6a9a83a3c4f61b9d82faa529afab5491ebb8edb6400e898c8d61974f4d290fbd",
           "problem": {
@@ -10826,7 +10826,7 @@
             "cleanup_edges": 4,
             "dominance_comparisons": 1,
             "fairness_steps": 0,
-            "feature_seconds": 0.0007135289999951056,
+            "feature_seconds": 0.0007012070000200765,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 12,
             "max_scored_panel": 3,
@@ -10835,7 +10835,7 @@
             "peak_frontier": 3,
             "phase_emitting_edges": 4,
             "policy_choices": 12,
-            "transition_seconds": 0.00010947400005534291,
+            "transition_seconds": 0.0001067309997324628,
             "workspace_edges": 0
           },
           "reason": "exhausted_without_proof",
@@ -10843,7 +10843,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "unknown",
-          "wall_seconds": 0.0015653929999643879,
+          "wall_seconds": 0.0015684840000176337,
           "witness": null,
           "witness_source": null
         }
@@ -10851,7 +10851,7 @@
       "scheduler": "hierarchy",
       "schema": "attributable-anytime-discovery-v1",
       "status": "feasible",
-      "wall_seconds": 0.007954735999874174
+      "wall_seconds": 0.008106966000013927
     },
     "rank_bound": {
       "digest": "c51a111b71322977988a693612c2b36286c3df050e58170aff8e34e2b9d39114",
@@ -11912,18 +11912,18 @@
       "schema": "phase-inductive-cover-v1"
     },
     "cnot_exclusion_verified": {
-      "cpu_seconds": 0.004222705999950449,
+      "cpu_seconds": 0.0037971120000293013,
       "edges": 414,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.004222733000005974
+      "wall_seconds": 0.0037968920000821527
     },
     "discovery": {
       "audit_calls": 0,
       "audit_witness_used": false,
       "best": {
         "contract_digest": "a9358a5098fbef35d9903d2b8dd204d11f32d8dbe92cacb1216ba0f7625a58fc",
-        "cpu_seconds": 0.02447362099997008,
+        "cpu_seconds": 0.02510486400001355,
         "edges": 203,
         "resources": {
           "available_ancillas": 1,
@@ -11945,7 +11945,7 @@
           ]
         },
         "source": "frozen_policy_discovery",
-        "wall_seconds": 0.02447404000008646,
+        "wall_seconds": 0.02510384899994733,
         "witness": {
           "dag_validated": true,
           "exact_basis_phase_match": true,
@@ -12032,14 +12032,14 @@
           "workspace_leakage": 0.0
         }
       },
-      "cpu_seconds": 0.05420215200001621,
+      "cpu_seconds": 0.05512782100004188,
       "edges": 535,
-      "first_correct_seconds": 0.02447404000008646,
+      "first_correct_seconds": 0.02510384899994733,
       "improvements": 0,
       "incumbents": [
         {
           "contract_digest": "a9358a5098fbef35d9903d2b8dd204d11f32d8dbe92cacb1216ba0f7625a58fc",
-          "cpu_seconds": 0.02447362099997008,
+          "cpu_seconds": 0.02510486400001355,
           "edges": 203,
           "resources": {
             "available_ancillas": 1,
@@ -12061,7 +12061,7 @@
             ]
           },
           "source": "frozen_policy_discovery",
-          "wall_seconds": 0.02447404000008646,
+          "wall_seconds": 0.02510384899994733,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -12212,7 +12212,7 @@
       "rounds": [
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.023821131999966383,
+          "cpu_seconds": 0.024467068000035397,
           "edges": 203,
           "policy_digest": "6a9a83a3c4f61b9d82faa529afab5491ebb8edb6400e898c8d61974f4d290fbd",
           "problem": {
@@ -12275,11 +12275,11 @@
           "profile": {
             "audit_calls": 0,
             "cap_checks": 1113,
-            "certification_seconds": 0.0009282010000788432,
+            "certification_seconds": 0.0009054930000047534,
             "cleanup_edges": 53,
             "dominance_comparisons": 94,
             "fairness_steps": 6,
-            "feature_seconds": 0.018547647001696532,
+            "feature_seconds": 0.01900081999986014,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 213,
             "max_scored_panel": 32,
@@ -12288,7 +12288,7 @@
             "peak_frontier": 62,
             "phase_emitting_edges": 53,
             "policy_choices": 197,
-            "transition_seconds": 0.0024875820008674054,
+            "transition_seconds": 0.0027486369999678573,
             "workspace_edges": 115
           },
           "reason": "certified",
@@ -12296,7 +12296,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "feasible",
-          "wall_seconds": 0.023821284999939962,
+          "wall_seconds": 0.024465671000029943,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -12386,7 +12386,7 @@
         },
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.028398664999940593,
+          "cpu_seconds": 0.02869934000000285,
           "edges": 332,
           "policy_digest": "6a9a83a3c4f61b9d82faa529afab5491ebb8edb6400e898c8d61974f4d290fbd",
           "problem": {
@@ -12453,7 +12453,7 @@
             "cleanup_edges": 80,
             "dominance_comparisons": 83,
             "fairness_steps": 10,
-            "feature_seconds": 0.023322707000716036,
+            "feature_seconds": 0.023695812000141814,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 332,
             "max_scored_panel": 21,
@@ -12462,7 +12462,7 @@
             "peak_frontier": 21,
             "phase_emitting_edges": 56,
             "policy_choices": 322,
-            "transition_seconds": 0.0024899000004552363,
+            "transition_seconds": 0.002575675999651139,
             "workspace_edges": 198
           },
           "reason": "exhausted_without_proof",
@@ -12470,7 +12470,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "unknown",
-          "wall_seconds": 0.028399243999956525,
+          "wall_seconds": 0.028708368000025075,
           "witness": null,
           "witness_source": null
         }
@@ -12478,7 +12478,7 @@
       "scheduler": "hierarchy",
       "schema": "attributable-anytime-discovery-v1",
       "status": "feasible",
-      "wall_seconds": 0.05420307200006391
+      "wall_seconds": 0.05513594900003227
     },
     "rank_bound": {
       "digest": "5914e7747d4e94544e560b74ae0e2632eaf97f7e99702156f8b1c2fbccd5161b",
@@ -14664,18 +14664,18 @@
       "schema": "phase-inductive-cover-v1"
     },
     "cnot_exclusion_verified": {
-      "cpu_seconds": 0.015068874999997206,
+      "cpu_seconds": 0.013129409000043779,
       "edges": 1424,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.015069224999933795
+      "wall_seconds": 0.0131288789999644
     },
     "discovery": {
       "audit_calls": 0,
       "audit_witness_used": false,
       "best": {
         "contract_digest": "c188ba0451912d358f91a5be81c56470e7d3ecca35549197368013a9d31a8a98",
-        "cpu_seconds": 0.08093585400001757,
+        "cpu_seconds": 0.07857953600000656,
         "edges": 564,
         "resources": {
           "available_ancillas": 2,
@@ -14699,7 +14699,7 @@
           ]
         },
         "source": "frozen_policy_discovery",
-        "wall_seconds": 0.08097390800003268,
+        "wall_seconds": 0.07858320100001492,
         "witness": {
           "dag_validated": true,
           "exact_basis_phase_match": true,
@@ -14788,14 +14788,14 @@
           "workspace_leakage": 0.0
         }
       },
-      "cpu_seconds": 0.21390511599997808,
+      "cpu_seconds": 0.209314844000005,
       "edges": 1752,
-      "first_correct_seconds": 0.08097390800003268,
+      "first_correct_seconds": 0.07858320100001492,
       "improvements": 0,
       "incumbents": [
         {
           "contract_digest": "c188ba0451912d358f91a5be81c56470e7d3ecca35549197368013a9d31a8a98",
-          "cpu_seconds": 0.08093585400001757,
+          "cpu_seconds": 0.07857953600000656,
           "edges": 564,
           "resources": {
             "available_ancillas": 2,
@@ -14819,7 +14819,7 @@
             ]
           },
           "source": "frozen_policy_discovery",
-          "wall_seconds": 0.08097390800003268,
+          "wall_seconds": 0.07858320100001492,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -14972,7 +14972,7 @@
       "rounds": [
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.08000661200003378,
+          "cpu_seconds": 0.07779776799998217,
           "edges": 564,
           "policy_digest": "6a9a83a3c4f61b9d82faa529afab5491ebb8edb6400e898c8d61974f4d290fbd",
           "problem": {
@@ -15035,11 +15035,11 @@
           "profile": {
             "audit_calls": 0,
             "cap_checks": 4691,
-            "certification_seconds": 0.0011443569999300962,
+            "certification_seconds": 0.0009772760000714698,
             "cleanup_edges": 177,
             "dominance_comparisons": 344,
             "fairness_steps": 17,
-            "feature_seconds": 0.06664705700018203,
+            "feature_seconds": 0.06427105799855326,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 601,
             "max_scored_panel": 32,
@@ -15048,7 +15048,7 @@
             "peak_frontier": 226,
             "phase_emitting_edges": 79,
             "policy_choices": 547,
-            "transition_seconds": 0.00813177499981066,
+            "transition_seconds": 0.00867043200162243,
             "workspace_edges": 427
           },
           "reason": "certified",
@@ -15056,7 +15056,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "feasible",
-          "wall_seconds": 0.0800445459999537,
+          "wall_seconds": 0.07780134300003283,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -15148,7 +15148,7 @@
         },
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.1312972580000178,
+          "cpu_seconds": 0.12924424599998474,
           "edges": 1188,
           "policy_digest": "6a9a83a3c4f61b9d82faa529afab5491ebb8edb6400e898c8d61974f4d290fbd",
           "problem": {
@@ -15215,7 +15215,7 @@
             "cleanup_edges": 340,
             "dominance_comparisons": 442,
             "fairness_steps": 37,
-            "feature_seconds": 0.11558478099527747,
+            "feature_seconds": 0.11371546100031082,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 1188,
             "max_scored_panel": 32,
@@ -15224,7 +15224,7 @@
             "peak_frontier": 35,
             "phase_emitting_edges": 120,
             "policy_choices": 1151,
-            "transition_seconds": 0.008343596998884095,
+            "transition_seconds": 0.008670290001418834,
             "workspace_edges": 928
           },
           "reason": "exhausted_without_proof",
@@ -15232,7 +15232,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "unknown",
-          "wall_seconds": 0.13133219700011978,
+          "wall_seconds": 0.12927063400002226,
           "witness": null,
           "witness_source": null
         }
@@ -15240,7 +15240,7 @@
       "scheduler": "hierarchy",
       "schema": "attributable-anytime-discovery-v1",
       "status": "feasible",
-      "wall_seconds": 0.21397811899987573
+      "wall_seconds": 0.2093448809999927
     },
     "rank_bound": {
       "digest": "8a91d9971f082618ef8ad8d09cbea1ed2ad2b854ab3ed6502a0ca46b440ee2e7",
@@ -15447,18 +15447,18 @@
       "schema": "phase-inductive-cover-v1"
     },
     "cnot_exclusion_verified": {
-      "cpu_seconds": 0.0002745479999930467,
+      "cpu_seconds": 0.00027341199995589704,
       "edges": 16,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.00027450399988993013
+      "wall_seconds": 0.00027330199998232274
     },
     "discovery": {
       "audit_calls": 0,
       "audit_witness_used": false,
       "best": {
         "contract_digest": "de8ef14c89ad200e7ec668ec88388b29b3edc676dccb23c007f37be60a36728d",
-        "cpu_seconds": 0.005305874999976368,
+        "cpu_seconds": 0.005352926999989904,
         "edges": 40,
         "resources": {
           "available_ancillas": 0,
@@ -15478,7 +15478,7 @@
           ]
         },
         "source": "frozen_policy_discovery",
-        "wall_seconds": 0.005306790000076944,
+        "wall_seconds": 0.005353019999915887,
         "witness": {
           "dag_validated": true,
           "exact_basis_phase_match": true,
@@ -15547,14 +15547,14 @@
           "workspace_leakage": 0.0
         }
       },
-      "cpu_seconds": 0.008076553000023523,
+      "cpu_seconds": 0.00823878500000319,
       "edges": 52,
-      "first_correct_seconds": 0.005306790000076944,
+      "first_correct_seconds": 0.005353019999915887,
       "improvements": 0,
       "incumbents": [
         {
           "contract_digest": "de8ef14c89ad200e7ec668ec88388b29b3edc676dccb23c007f37be60a36728d",
-          "cpu_seconds": 0.005305874999976368,
+          "cpu_seconds": 0.005352926999989904,
           "edges": 40,
           "resources": {
             "available_ancillas": 0,
@@ -15574,7 +15574,7 @@
             ]
           },
           "source": "frozen_policy_discovery",
-          "wall_seconds": 0.005306790000076944,
+          "wall_seconds": 0.005353019999915887,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -15707,7 +15707,7 @@
       "rounds": [
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.0046655940000164264,
+          "cpu_seconds": 0.004725302000110787,
           "edges": 40,
           "policy_digest": "bd7cf624e524bb2dd7ae8b41d6b857d26ec73961e43ca93f59ca598be9d5e685",
           "problem": {
@@ -15770,11 +15770,11 @@
           "profile": {
             "audit_calls": 0,
             "cap_checks": 128,
-            "certification_seconds": 0.0006710129998737102,
+            "certification_seconds": 0.0005692830000043614,
             "cleanup_edges": 20,
             "dominance_comparisons": 10,
             "fairness_steps": 1,
-            "feature_seconds": 0.0025303979998625437,
+            "feature_seconds": 0.002638910999962718,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 41,
             "max_scored_panel": 14,
@@ -15783,7 +15783,7 @@
             "peak_frontier": 14,
             "phase_emitting_edges": 16,
             "policy_choices": 39,
-            "transition_seconds": 0.0005564649993630155,
+            "transition_seconds": 0.0005950170000232902,
             "workspace_edges": 0
           },
           "reason": "certified",
@@ -15791,7 +15791,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "feasible",
-          "wall_seconds": 0.004665452000153891,
+          "wall_seconds": 0.004724783000028765,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -15863,7 +15863,7 @@
         },
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.0015829630000325778,
+          "cpu_seconds": 0.0016343989999541009,
           "edges": 12,
           "policy_digest": "bd7cf624e524bb2dd7ae8b41d6b857d26ec73961e43ca93f59ca598be9d5e685",
           "problem": {
@@ -15930,7 +15930,7 @@
             "cleanup_edges": 4,
             "dominance_comparisons": 1,
             "fairness_steps": 0,
-            "feature_seconds": 0.0007012880000729638,
+            "feature_seconds": 0.0007670160000543547,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 12,
             "max_scored_panel": 3,
@@ -15939,7 +15939,7 @@
             "peak_frontier": 3,
             "phase_emitting_edges": 4,
             "policy_choices": 12,
-            "transition_seconds": 0.00012360600021565915,
+            "transition_seconds": 0.00011660400014079642,
             "workspace_edges": 0
           },
           "reason": "exhausted_without_proof",
@@ -15947,7 +15947,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "unknown",
-          "wall_seconds": 0.0015827879999505967,
+          "wall_seconds": 0.0016342720000466215,
           "witness": null,
           "witness_source": null
         }
@@ -15955,7 +15955,7 @@
       "scheduler": "hierarchy",
       "schema": "attributable-anytime-discovery-v1",
       "status": "feasible",
-      "wall_seconds": 0.008077471999968111
+      "wall_seconds": 0.008238688000005823
     },
     "rank_bound": {
       "digest": "c51a111b71322977988a693612c2b36286c3df050e58170aff8e34e2b9d39114",
@@ -17016,18 +17016,18 @@
       "schema": "phase-inductive-cover-v1"
     },
     "cnot_exclusion_verified": {
-      "cpu_seconds": 0.004264537000040036,
+      "cpu_seconds": 0.003820883999992475,
       "edges": 414,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.004264596999973946
+      "wall_seconds": 0.0038206899999977395
     },
     "discovery": {
       "audit_calls": 0,
       "audit_witness_used": false,
       "best": {
         "contract_digest": "a9358a5098fbef35d9903d2b8dd204d11f32d8dbe92cacb1216ba0f7625a58fc",
-        "cpu_seconds": 0.02804328699994585,
+        "cpu_seconds": 0.02784523800005445,
         "edges": 238,
         "resources": {
           "available_ancillas": 1,
@@ -17049,7 +17049,7 @@
           ]
         },
         "source": "frozen_policy_discovery",
-        "wall_seconds": 0.028043777999982922,
+        "wall_seconds": 0.027844135000009373,
         "witness": {
           "dag_validated": true,
           "exact_basis_phase_match": true,
@@ -17136,14 +17136,14 @@
           "workspace_leakage": 0.0
         }
       },
-      "cpu_seconds": 0.057829483999967124,
+      "cpu_seconds": 0.05790011700003106,
       "edges": 570,
-      "first_correct_seconds": 0.028043777999982922,
+      "first_correct_seconds": 0.027844135000009373,
       "improvements": 0,
       "incumbents": [
         {
           "contract_digest": "a9358a5098fbef35d9903d2b8dd204d11f32d8dbe92cacb1216ba0f7625a58fc",
-          "cpu_seconds": 0.02804328699994585,
+          "cpu_seconds": 0.02784523800005445,
           "edges": 238,
           "resources": {
             "available_ancillas": 1,
@@ -17165,7 +17165,7 @@
             ]
           },
           "source": "frozen_policy_discovery",
-          "wall_seconds": 0.028043777999982922,
+          "wall_seconds": 0.027844135000009373,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -17316,7 +17316,7 @@
       "rounds": [
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.02737078699999529,
+          "cpu_seconds": 0.027164885000047434,
           "edges": 238,
           "policy_digest": "bd7cf624e524bb2dd7ae8b41d6b857d26ec73961e43ca93f59ca598be9d5e685",
           "problem": {
@@ -17379,11 +17379,11 @@
           "profile": {
             "audit_calls": 0,
             "cap_checks": 1281,
-            "certification_seconds": 0.0009054570000444073,
+            "certification_seconds": 0.0008656600000449544,
             "cleanup_edges": 62,
             "dominance_comparisons": 103,
             "fairness_steps": 7,
-            "feature_seconds": 0.021637604997749804,
+            "feature_seconds": 0.021391219999259192,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 248,
             "max_scored_panel": 32,
@@ -17392,7 +17392,7 @@
             "peak_frontier": 62,
             "phase_emitting_edges": 57,
             "policy_choices": 231,
-            "transition_seconds": 0.002763229998663519,
+            "transition_seconds": 0.002944400000387759,
             "workspace_edges": 136
           },
           "reason": "certified",
@@ -17400,7 +17400,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "feasible",
-          "wall_seconds": 0.027370582000003196,
+          "wall_seconds": 0.02716361400007372,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -17490,7 +17490,7 @@
         },
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.028429770999991888,
+          "cpu_seconds": 0.02876162400002613,
           "edges": 332,
           "policy_digest": "bd7cf624e524bb2dd7ae8b41d6b857d26ec73961e43ca93f59ca598be9d5e685",
           "problem": {
@@ -17557,7 +17557,7 @@
             "cleanup_edges": 80,
             "dominance_comparisons": 83,
             "fairness_steps": 10,
-            "feature_seconds": 0.02332442100168919,
+            "feature_seconds": 0.023731427999564403,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 332,
             "max_scored_panel": 21,
@@ -17566,7 +17566,7 @@
             "peak_frontier": 21,
             "phase_emitting_edges": 56,
             "policy_choices": 322,
-            "transition_seconds": 0.0024951739990228816,
+            "transition_seconds": 0.0026175580006793098,
             "workspace_edges": 198
           },
           "reason": "exhausted_without_proof",
@@ -17574,7 +17574,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "unknown",
-          "wall_seconds": 0.028430311999954938,
+          "wall_seconds": 0.02876033699999425,
           "witness": null,
           "witness_source": null
         }
@@ -17582,7 +17582,7 @@
       "scheduler": "hierarchy",
       "schema": "attributable-anytime-discovery-v1",
       "status": "feasible",
-      "wall_seconds": 0.057830617000036
+      "wall_seconds": 0.057897822999962045
     },
     "rank_bound": {
       "digest": "5914e7747d4e94544e560b74ae0e2632eaf97f7e99702156f8b1c2fbccd5161b",
@@ -19768,18 +19768,18 @@
       "schema": "phase-inductive-cover-v1"
     },
     "cnot_exclusion_verified": {
-      "cpu_seconds": 0.014795669000022826,
+      "cpu_seconds": 0.013326280999990558,
       "edges": 1424,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.014795962999869516
+      "wall_seconds": 0.013325697000027503
     },
     "discovery": {
       "audit_calls": 0,
       "audit_witness_used": false,
       "best": {
         "contract_digest": "c188ba0451912d358f91a5be81c56470e7d3ecca35549197368013a9d31a8a98",
-        "cpu_seconds": 0.04895918099998653,
+        "cpu_seconds": 0.048187709999979234,
         "edges": 351,
         "resources": {
           "available_ancillas": 2,
@@ -19803,7 +19803,7 @@
           ]
         },
         "source": "frozen_policy_discovery",
-        "wall_seconds": 0.04896005799992054,
+        "wall_seconds": 0.04818568899997899,
         "witness": {
           "dag_validated": true,
           "exact_basis_phase_match": true,
@@ -19892,14 +19892,14 @@
           "workspace_leakage": 0.0
         }
       },
-      "cpu_seconds": 0.18070195099994635,
+      "cpu_seconds": 0.1774657500000103,
       "edges": 1539,
-      "first_correct_seconds": 0.04896005799992054,
+      "first_correct_seconds": 0.04818568899997899,
       "improvements": 0,
       "incumbents": [
         {
           "contract_digest": "c188ba0451912d358f91a5be81c56470e7d3ecca35549197368013a9d31a8a98",
-          "cpu_seconds": 0.04895918099998653,
+          "cpu_seconds": 0.048187709999979234,
           "edges": 351,
           "resources": {
             "available_ancillas": 2,
@@ -19923,7 +19923,7 @@
             ]
           },
           "source": "frozen_policy_discovery",
-          "wall_seconds": 0.04896005799992054,
+          "wall_seconds": 0.04818568899997899,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -20076,7 +20076,7 @@
       "rounds": [
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.048201834999986204,
+          "cpu_seconds": 0.047488541999996414,
           "edges": 351,
           "policy_digest": "bd7cf624e524bb2dd7ae8b41d6b857d26ec73961e43ca93f59ca598be9d5e685",
           "problem": {
@@ -20139,11 +20139,11 @@
           "profile": {
             "audit_calls": 0,
             "cap_checks": 2904,
-            "certification_seconds": 0.0011428049999722134,
+            "certification_seconds": 0.0010012369999685689,
             "cleanup_edges": 126,
             "dominance_comparisons": 147,
             "fairness_steps": 10,
-            "feature_seconds": 0.03983692199994948,
+            "feature_seconds": 0.03901679699868055,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 371,
             "max_scored_panel": 32,
@@ -20152,7 +20152,7 @@
             "peak_frontier": 121,
             "phase_emitting_edges": 43,
             "policy_choices": 341,
-            "transition_seconds": 0.004489261001253908,
+            "transition_seconds": 0.004844778000119732,
             "workspace_edges": 266
           },
           "reason": "certified",
@@ -20160,7 +20160,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "feasible",
-          "wall_seconds": 0.0482023649999519,
+          "wall_seconds": 0.047486450999940644,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -20252,7 +20252,7 @@
         },
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.13005581300001268,
+          "cpu_seconds": 0.1277944189999971,
           "edges": 1188,
           "policy_digest": "bd7cf624e524bb2dd7ae8b41d6b857d26ec73961e43ca93f59ca598be9d5e685",
           "problem": {
@@ -20319,7 +20319,7 @@
             "cleanup_edges": 340,
             "dominance_comparisons": 446,
             "fairness_steps": 37,
-            "feature_seconds": 0.11438344199859785,
+            "feature_seconds": 0.11228774199958025,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 1188,
             "max_scored_panel": 32,
@@ -20328,7 +20328,7 @@
             "peak_frontier": 34,
             "phase_emitting_edges": 120,
             "policy_choices": 1151,
-            "transition_seconds": 0.008309185005373365,
+            "transition_seconds": 0.008659024998564746,
             "workspace_edges": 928
           },
           "reason": "exhausted_without_proof",
@@ -20336,7 +20336,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "unknown",
-          "wall_seconds": 0.13005866399998922,
+          "wall_seconds": 0.12778940199996214,
           "witness": null,
           "witness_source": null
         }
@@ -20344,7 +20344,7 @@
       "scheduler": "hierarchy",
       "schema": "attributable-anytime-discovery-v1",
       "status": "feasible",
-      "wall_seconds": 0.18070574900002612
+      "wall_seconds": 0.17745866799998566
     },
     "rank_bound": {
       "digest": "8a91d9971f082618ef8ad8d09cbea1ed2ad2b854ab3ed6502a0ca46b440ee2e7",
@@ -20551,18 +20551,18 @@
       "schema": "phase-inductive-cover-v1"
     },
     "cnot_exclusion_verified": {
-      "cpu_seconds": 0.0002699420000453756,
+      "cpu_seconds": 0.0002707200000031662,
       "edges": 16,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.0002698779999263934
+      "wall_seconds": 0.0002706149999767149
     },
     "discovery": {
       "audit_calls": 0,
       "audit_witness_used": false,
       "best": {
         "contract_digest": "de8ef14c89ad200e7ec668ec88388b29b3edc676dccb23c007f37be60a36728d",
-        "cpu_seconds": 0.005136954000022342,
+        "cpu_seconds": 0.005349492000050304,
         "edges": 39,
         "resources": {
           "available_ancillas": 0,
@@ -20582,7 +20582,7 @@
           ]
         },
         "source": "frozen_policy_discovery",
-        "wall_seconds": 0.005137434000062058,
+        "wall_seconds": 0.005349634000026526,
         "witness": {
           "dag_validated": true,
           "exact_basis_phase_match": true,
@@ -20651,14 +20651,14 @@
           "workspace_leakage": 0.0
         }
       },
-      "cpu_seconds": 0.00788633000001937,
+      "cpu_seconds": 0.008220340999969267,
       "edges": 51,
-      "first_correct_seconds": 0.005137434000062058,
+      "first_correct_seconds": 0.005349634000026526,
       "improvements": 0,
       "incumbents": [
         {
           "contract_digest": "de8ef14c89ad200e7ec668ec88388b29b3edc676dccb23c007f37be60a36728d",
-          "cpu_seconds": 0.005136954000022342,
+          "cpu_seconds": 0.005349492000050304,
           "edges": 39,
           "resources": {
             "available_ancillas": 0,
@@ -20678,7 +20678,7 @@
             ]
           },
           "source": "frozen_policy_discovery",
-          "wall_seconds": 0.005137434000062058,
+          "wall_seconds": 0.005349634000026526,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -20811,7 +20811,7 @@
       "rounds": [
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.0045203180000044085,
+          "cpu_seconds": 0.004690090999929453,
           "edges": 39,
           "policy_digest": "a29067a1fa781ec5dcfb1e9c3921586fb5a11a6c6b408c4e91eb0159ffd1d2de",
           "problem": {
@@ -20874,11 +20874,11 @@
           "profile": {
             "audit_calls": 0,
             "cap_checks": 126,
-            "certification_seconds": 0.0006617480000841169,
+            "certification_seconds": 0.0006242089999659584,
             "cleanup_edges": 19,
             "dominance_comparisons": 9,
             "fairness_steps": 1,
-            "feature_seconds": 0.002445108999609147,
+            "feature_seconds": 0.0026061339997340838,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 40,
             "max_scored_panel": 13,
@@ -20887,7 +20887,7 @@
             "peak_frontier": 13,
             "phase_emitting_edges": 16,
             "policy_choices": 38,
-            "transition_seconds": 0.0005154289997335582,
+            "transition_seconds": 0.0005886770002234698,
             "workspace_edges": 0
           },
           "reason": "certified",
@@ -20895,7 +20895,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "feasible",
-          "wall_seconds": 0.004519832000141832,
+          "wall_seconds": 0.004689714999926764,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -20967,7 +20967,7 @@
         },
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.0015769629999340395,
+          "cpu_seconds": 0.0016632249999020132,
           "edges": 12,
           "policy_digest": "a29067a1fa781ec5dcfb1e9c3921586fb5a11a6c6b408c4e91eb0159ffd1d2de",
           "problem": {
@@ -21034,7 +21034,7 @@
             "cleanup_edges": 4,
             "dominance_comparisons": 1,
             "fairness_steps": 0,
-            "feature_seconds": 0.0006999569998242805,
+            "feature_seconds": 0.000759660000085205,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 12,
             "max_scored_panel": 3,
@@ -21043,7 +21043,7 @@
             "peak_frontier": 3,
             "phase_emitting_edges": 4,
             "policy_choices": 12,
-            "transition_seconds": 0.00011945000028390496,
+            "transition_seconds": 0.00011896299986347003,
             "workspace_edges": 0
           },
           "reason": "exhausted_without_proof",
@@ -21051,7 +21051,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "unknown",
-          "wall_seconds": 0.001577041000018653,
+          "wall_seconds": 0.0016631500000130472,
           "witness": null,
           "witness_source": null
         }
@@ -21059,7 +21059,7 @@
       "scheduler": "hierarchy",
       "schema": "attributable-anytime-discovery-v1",
       "status": "feasible",
-      "wall_seconds": 0.007886564000045837
+      "wall_seconds": 0.008220298999958686
     },
     "rank_bound": {
       "digest": "c51a111b71322977988a693612c2b36286c3df050e58170aff8e34e2b9d39114",
@@ -22120,18 +22120,18 @@
       "schema": "phase-inductive-cover-v1"
     },
     "cnot_exclusion_verified": {
-      "cpu_seconds": 0.004350295000108417,
+      "cpu_seconds": 0.00372619899997062,
       "edges": 414,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.004350376000047618
+      "wall_seconds": 0.003725948999999673
     },
     "discovery": {
       "audit_calls": 0,
       "audit_witness_used": false,
       "best": {
         "contract_digest": "a9358a5098fbef35d9903d2b8dd204d11f32d8dbe92cacb1216ba0f7625a58fc",
-        "cpu_seconds": 0.024630064999996648,
+        "cpu_seconds": 0.024435049999965486,
         "edges": 200,
         "resources": {
           "available_ancillas": 1,
@@ -22153,7 +22153,7 @@
           ]
         },
         "source": "frozen_policy_discovery",
-        "wall_seconds": 0.024630576000163273,
+        "wall_seconds": 0.024434085999928357,
         "witness": {
           "dag_validated": true,
           "exact_basis_phase_match": true,
@@ -22240,14 +22240,14 @@
           "workspace_leakage": 0.0
         }
       },
-      "cpu_seconds": 0.05480792299999848,
+      "cpu_seconds": 0.05458760900000925,
       "edges": 532,
-      "first_correct_seconds": 0.024630576000163273,
+      "first_correct_seconds": 0.024434085999928357,
       "improvements": 0,
       "incumbents": [
         {
           "contract_digest": "a9358a5098fbef35d9903d2b8dd204d11f32d8dbe92cacb1216ba0f7625a58fc",
-          "cpu_seconds": 0.024630064999996648,
+          "cpu_seconds": 0.024435049999965486,
           "edges": 200,
           "resources": {
             "available_ancillas": 1,
@@ -22269,7 +22269,7 @@
             ]
           },
           "source": "frozen_policy_discovery",
-          "wall_seconds": 0.024630576000163273,
+          "wall_seconds": 0.024434085999928357,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -22420,7 +22420,7 @@
       "rounds": [
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.02391739500001222,
+          "cpu_seconds": 0.023779409999974632,
           "edges": 200,
           "policy_digest": "a29067a1fa781ec5dcfb1e9c3921586fb5a11a6c6b408c4e91eb0159ffd1d2de",
           "problem": {
@@ -22483,11 +22483,11 @@
           "profile": {
             "audit_calls": 0,
             "cap_checks": 1077,
-            "certification_seconds": 0.0010047870000562398,
+            "certification_seconds": 0.0009002389999750449,
             "cleanup_edges": 50,
             "dominance_comparisons": 94,
             "fairness_steps": 6,
-            "feature_seconds": 0.01853300900074828,
+            "feature_seconds": 0.018364661999612508,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 221,
             "max_scored_panel": 32,
@@ -22496,7 +22496,7 @@
             "peak_frontier": 60,
             "phase_emitting_edges": 50,
             "policy_choices": 194,
-            "transition_seconds": 0.002505516997871382,
+            "transition_seconds": 0.002743947999192642,
             "workspace_edges": 115
           },
           "reason": "certified",
@@ -22504,7 +22504,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "feasible",
-          "wall_seconds": 0.023917250000067725,
+          "wall_seconds": 0.023778145000051154,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -22594,7 +22594,7 @@
         },
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.02882936499997868,
+          "cpu_seconds": 0.02891469999997298,
           "edges": 332,
           "policy_digest": "a29067a1fa781ec5dcfb1e9c3921586fb5a11a6c6b408c4e91eb0159ffd1d2de",
           "problem": {
@@ -22661,7 +22661,7 @@
             "cleanup_edges": 80,
             "dominance_comparisons": 83,
             "fairness_steps": 10,
-            "feature_seconds": 0.023743432999935976,
+            "feature_seconds": 0.023908151999762595,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 332,
             "max_scored_panel": 20,
@@ -22670,7 +22670,7 @@
             "peak_frontier": 20,
             "phase_emitting_edges": 56,
             "policy_choices": 322,
-            "transition_seconds": 0.0024633729988181585,
+            "transition_seconds": 0.002594429000055243,
             "workspace_edges": 198
           },
           "reason": "exhausted_without_proof",
@@ -22678,7 +22678,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "unknown",
-          "wall_seconds": 0.028829704999907335,
+          "wall_seconds": 0.028913498999941112,
           "witness": null,
           "witness_source": null
         }
@@ -22686,7 +22686,7 @@
       "scheduler": "hierarchy",
       "schema": "attributable-anytime-discovery-v1",
       "status": "feasible",
-      "wall_seconds": 0.054808766000178366
+      "wall_seconds": 0.05458544299995083
     },
     "rank_bound": {
       "digest": "5914e7747d4e94544e560b74ae0e2632eaf97f7e99702156f8b1c2fbccd5161b",
@@ -24872,18 +24872,18 @@
       "schema": "phase-inductive-cover-v1"
     },
     "cnot_exclusion_verified": {
-      "cpu_seconds": 0.015014403000009224,
+      "cpu_seconds": 0.013329153999961818,
       "edges": 1424,
       "reason": "closed_cover_verified",
       "valid": true,
-      "wall_seconds": 0.01501472199993259
+      "wall_seconds": 0.01332862499998555
     },
     "discovery": {
       "audit_calls": 0,
       "audit_witness_used": false,
       "best": {
         "contract_digest": "c188ba0451912d358f91a5be81c56470e7d3ecca35549197368013a9d31a8a98",
-        "cpu_seconds": 0.022049979000030362,
+        "cpu_seconds": 0.022402903999932278,
         "edges": 145,
         "resources": {
           "available_ancillas": 2,
@@ -24907,7 +24907,7 @@
           ]
         },
         "source": "frozen_policy_discovery",
-        "wall_seconds": 0.022050302000025113,
+        "wall_seconds": 0.02240201300003264,
         "witness": {
           "dag_validated": true,
           "exact_basis_phase_match": true,
@@ -24996,14 +24996,14 @@
           "workspace_leakage": 0.0
         }
       },
-      "cpu_seconds": 0.1501499099999819,
+      "cpu_seconds": 0.1488960000000361,
       "edges": 1333,
-      "first_correct_seconds": 0.022050302000025113,
+      "first_correct_seconds": 0.02240201300003264,
       "improvements": 0,
       "incumbents": [
         {
           "contract_digest": "c188ba0451912d358f91a5be81c56470e7d3ecca35549197368013a9d31a8a98",
-          "cpu_seconds": 0.022049979000030362,
+          "cpu_seconds": 0.022402903999932278,
           "edges": 145,
           "resources": {
             "available_ancillas": 2,
@@ -25027,7 +25027,7 @@
             ]
           },
           "source": "frozen_policy_discovery",
-          "wall_seconds": 0.022050302000025113,
+          "wall_seconds": 0.02240201300003264,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -25180,7 +25180,7 @@
       "rounds": [
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.02137247199993908,
+          "cpu_seconds": 0.02172590999998647,
           "edges": 145,
           "policy_digest": "a29067a1fa781ec5dcfb1e9c3921586fb5a11a6c6b408c4e91eb0159ffd1d2de",
           "problem": {
@@ -25243,11 +25243,11 @@
           "profile": {
             "audit_calls": 0,
             "cap_checks": 1212,
-            "certification_seconds": 0.0011103459999048937,
+            "certification_seconds": 0.0009882260000040333,
             "cleanup_edges": 45,
             "dominance_comparisons": 53,
             "fairness_steps": 4,
-            "feature_seconds": 0.016432192001730073,
+            "feature_seconds": 0.016578477999360075,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 179,
             "max_scored_panel": 32,
@@ -25256,7 +25256,7 @@
             "peak_frontier": 85,
             "phase_emitting_edges": 19,
             "policy_choices": 141,
-            "transition_seconds": 0.0023156949985150277,
+            "transition_seconds": 0.002618987999426281,
             "workspace_edges": 108
           },
           "reason": "certified",
@@ -25264,7 +25264,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "feasible",
-          "wall_seconds": 0.021372498999880918,
+          "wall_seconds": 0.02172479699993346,
           "witness": {
             "dag_validated": true,
             "exact_basis_phase_match": true,
@@ -25356,7 +25356,7 @@
         },
         {
           "audit_witness_used": false,
-          "cpu_seconds": 0.12639232300000458,
+          "cpu_seconds": 0.12496875199997248,
           "edges": 1188,
           "policy_digest": "a29067a1fa781ec5dcfb1e9c3921586fb5a11a6c6b408c4e91eb0159ffd1d2de",
           "problem": {
@@ -25423,7 +25423,7 @@
             "cleanup_edges": 340,
             "dominance_comparisons": 446,
             "fairness_steps": 37,
-            "feature_seconds": 0.11109158400131491,
+            "feature_seconds": 0.1096452970024302,
             "full_dag_policy_reconstructions": 0,
             "lookahead_transitions": 1188,
             "max_scored_panel": 26,
@@ -25432,7 +25432,7 @@
             "peak_frontier": 26,
             "phase_emitting_edges": 120,
             "policy_choices": 1151,
-            "transition_seconds": 0.008357711002645374,
+            "transition_seconds": 0.008543677000034222,
             "workspace_edges": 928
           },
           "reason": "exhausted_without_proof",
@@ -25440,7 +25440,7 @@
           "scheduler": "hierarchy",
           "schema": "phase-discovery-v1",
           "status": "unknown",
-          "wall_seconds": 0.12684077800008708,
+          "wall_seconds": 0.12496386200007237,
           "witness": null,
           "witness_source": null
         }
@@ -25448,7 +25448,7 @@
       "scheduler": "hierarchy",
       "schema": "attributable-anytime-discovery-v1",
       "status": "feasible",
-      "wall_seconds": 0.15059886699987146
+      "wall_seconds": 0.14889009399996667
     },
     "rank_bound": {
       "digest": "8a91d9971f082618ef8ad8d09cbea1ed2ad2b854ab3ed6502a0ca46b440ee2e7",

@@ -8,7 +8,7 @@
     "audit_witness_used": false,
     "best": {
       "contract_digest": "d3d720ee8f09a5a4fb5f1a2352c285ecb3a27f1991b8d4d6adc1105e65e1a664",
-      "cpu_seconds": 0.1772807270000385,
+      "cpu_seconds": 0.17337563399996725,
       "edges": 1225,
       "resources": {
         "available_ancillas": 0,
@@ -30,7 +30,7 @@
         ]
       },
       "source": "frozen_policy_discovery",
-      "wall_seconds": 0.17730978700001288,
+      "wall_seconds": 0.17338562899999488,
       "witness": {
         "dag_validated": true,
         "exact_basis_phase_match": true,
@@ -179,14 +179,14 @@
         "workspace_leakage": 0.0
       }
     },
-    "cpu_seconds": 2.445758248000061,
+    "cpu_seconds": 2.346048257999996,
     "edges": 20000,
-    "first_correct_seconds": 0.05462691299999278,
+    "first_correct_seconds": 0.052913169999897036,
     "improvements": 2,
     "incumbents": [
       {
         "contract_digest": "bacf77ebee0d56bf555d1723aebd416cb5b6f3e999ce5cb4a314a7eb992cf17c",
-        "cpu_seconds": 0.05461101100001997,
+        "cpu_seconds": 0.05289999399997214,
         "edges": 360,
         "resources": {
           "available_ancillas": 0,
@@ -208,7 +208,7 @@
           ]
         },
         "source": "frozen_policy_discovery",
-        "wall_seconds": 0.05462691299999278,
+        "wall_seconds": 0.052913169999897036,
         "witness": {
           "dag_validated": true,
           "exact_basis_phase_match": true,
@@ -375,7 +375,7 @@
       },
       {
         "contract_digest": "ef543d0005b144810a4f759ea57a26c08a9f5f8afca89aabb1086852dd057248",
-        "cpu_seconds": 0.10303115100009563,
+        "cpu_seconds": 0.10113431800004946,
         "edges": 687,
         "resources": {
           "available_ancillas": 0,
@@ -397,7 +397,7 @@
           ]
         },
         "source": "frozen_policy_discovery",
-        "wall_seconds": 0.10305849999986094,
+        "wall_seconds": 0.10114635200000066,
         "witness": {
           "dag_validated": true,
           "exact_basis_phase_match": true,
@@ -556,7 +556,7 @@
       },
       {
         "contract_digest": "d3d720ee8f09a5a4fb5f1a2352c285ecb3a27f1991b8d4d6adc1105e65e1a664",
-        "cpu_seconds": 0.1772807270000385,
+        "cpu_seconds": 0.17337563399996725,
         "edges": 1225,
         "resources": {
           "available_ancillas": 0,
@@ -578,7 +578,7 @@
           ]
         },
         "source": "frozen_policy_discovery",
-        "wall_seconds": 0.17730978700001288,
+        "wall_seconds": 0.17338562899999488,
         "witness": {
           "dag_validated": true,
           "exact_basis_phase_match": true,
@@ -807,7 +807,7 @@
     "rounds": [
       {
         "audit_witness_used": false,
-        "cpu_seconds": 0.053822189000015896,
+        "cpu_seconds": 0.05214404299999842,
         "edges": 360,
         "policy_digest": "9d253f3c1ba4964b7813ccefa55f1ed306b29c83ee20bbd392da6a2938d9818b",
         "problem": {
@@ -886,11 +886,11 @@
         "profile": {
           "audit_calls": 0,
           "cap_checks": 2041,
-          "certification_seconds": 0.002080087999956959,
+          "certification_seconds": 0.001943446000041149,
           "cleanup_edges": 110,
           "dominance_comparisons": 130,
           "fairness_steps": 11,
-          "feature_seconds": 0.04161575500052095,
+          "feature_seconds": 0.03987680300099328,
           "full_dag_policy_reconstructions": 0,
           "lookahead_transitions": 429,
           "max_scored_panel": 32,
@@ -899,7 +899,7 @@
           "peak_frontier": 237,
           "phase_emitting_edges": 102,
           "policy_choices": 349,
-          "transition_seconds": 0.007251282001107029,
+          "transition_seconds": 0.007582332000083625,
           "workspace_edges": 0
         },
         "reason": "certified",
@@ -907,7 +907,7 @@
         "scheduler": "hierarchy",
         "schema": "phase-discovery-v1",
         "status": "feasible",
-        "wall_seconds": 0.0538364310000361,
+        "wall_seconds": 0.052155728000002455,
         "witness": {
           "dag_validated": true,
           "exact_basis_phase_match": true,
@@ -1075,7 +1075,7 @@
       },
       {
         "audit_witness_used": false,
-        "cpu_seconds": 0.04748671300001206,
+        "cpu_seconds": 0.04746361800005161,
         "edges": 327,
         "policy_digest": "9d253f3c1ba4964b7813ccefa55f1ed306b29c83ee20bbd392da6a2938d9818b",
         "problem": {
@@ -1154,11 +1154,11 @@
         "profile": {
           "audit_calls": 0,
           "cap_checks": 1809,
-          "certification_seconds": 0.0018010969999977533,
+          "certification_seconds": 0.0019187379999721088,
           "cleanup_edges": 86,
           "dominance_comparisons": 108,
           "fairness_steps": 10,
-          "feature_seconds": 0.03645005000043966,
+          "feature_seconds": 0.035713703000624264,
           "full_dag_policy_reconstructions": 0,
           "lookahead_transitions": 379,
           "max_scored_panel": 32,
@@ -1167,7 +1167,7 @@
           "peak_frontier": 223,
           "phase_emitting_edges": 86,
           "policy_choices": 317,
-          "transition_seconds": 0.006626305001191213,
+          "transition_seconds": 0.007192982000788106,
           "workspace_edges": 0
         },
         "reason": "certified",
@@ -1175,7 +1175,7 @@
         "scheduler": "hierarchy",
         "schema": "phase-discovery-v1",
         "status": "feasible",
-        "wall_seconds": 0.047497578000047724,
+        "wall_seconds": 0.04746160600006988,
         "witness": {
           "dag_validated": true,
           "exact_basis_phase_match": true,
@@ -1335,7 +1335,7 @@
       },
       {
         "audit_witness_used": false,
-        "cpu_seconds": 0.07336922799993317,
+        "cpu_seconds": 0.07141878200002338,
         "edges": 538,
         "policy_digest": "9d253f3c1ba4964b7813ccefa55f1ed306b29c83ee20bbd392da6a2938d9818b",
         "problem": {
@@ -1414,11 +1414,11 @@
         "profile": {
           "audit_calls": 0,
           "cap_checks": 2822,
-          "certification_seconds": 0.002359599999863349,
+          "certification_seconds": 0.0019366550000086136,
           "cleanup_edges": 116,
           "dominance_comparisons": 177,
           "fairness_steps": 16,
-          "feature_seconds": 0.057484406997218684,
+          "feature_seconds": 0.05540427600078601,
           "full_dag_policy_reconstructions": 0,
           "lookahead_transitions": 562,
           "max_scored_panel": 32,
@@ -1427,7 +1427,7 @@
           "peak_frontier": 276,
           "phase_emitting_edges": 114,
           "policy_choices": 522,
-          "transition_seconds": 0.0096353319966056,
+          "transition_seconds": 0.010329974001592745,
           "workspace_edges": 0
         },
         "reason": "certified",
@@ -1435,7 +1435,7 @@
         "scheduler": "hierarchy",
         "schema": "phase-discovery-v1",
         "status": "feasible",
-        "wall_seconds": 0.07337032800000998,
+        "wall_seconds": 0.07141615800003365,
         "witness": {
           "dag_validated": true,
           "exact_basis_phase_match": true,
@@ -1587,7 +1587,7 @@
       },
       {
         "audit_witness_used": false,
-        "cpu_seconds": 2.256959843000004,
+        "cpu_seconds": 2.1649140720001014,
         "edges": 18775,
         "policy_digest": "9d253f3c1ba4964b7813ccefa55f1ed306b29c83ee20bbd392da6a2938d9818b",
         "problem": {
@@ -1670,7 +1670,7 @@
           "cleanup_edges": 3927,
           "dominance_comparisons": 7328,
           "fairness_steps": 586,
-          "feature_seconds": 1.9624998010078798,
+          "feature_seconds": 1.875809466994383,
           "full_dag_policy_reconstructions": 0,
           "lookahead_transitions": 18799,
           "max_scored_panel": 32,
@@ -1679,7 +1679,7 @@
           "peak_frontier": 333,
           "phase_emitting_edges": 3007,
           "policy_choices": 18189,
-          "transition_seconds": 0.18564864000336456,
+          "transition_seconds": 0.18768574000011995,
           "workspace_edges": 0
         },
         "reason": "edge_limit",
@@ -1687,7 +1687,7 @@
         "scheduler": "hierarchy",
         "schema": "phase-discovery-v1",
         "status": "unknown",
-        "wall_seconds": 2.257189735000111,
+        "wall_seconds": 2.165023055000006,
         "witness": null,
         "witness_source": null
       }
@@ -1695,7 +1695,7 @@
     "scheduler": "hierarchy",
     "schema": "attributable-anytime-discovery-v1",
     "status": "feasible",
-    "wall_seconds": 2.446016892999978
+    "wall_seconds": 2.3461669099999654
   },
   "expected_probability": 0.8437499999999999,
   "initial_marked_probability": 0.375,
@@ -1734,7 +1734,7 @@
     "algebraic_function": "x0 XOR x1 XOR x2 XOR (x0 AND x1 AND x2)",
     "claim": "fixed native lowering reference; not a learned or optimal evaluator",
     "comparison_scope": "direct-phase versus evaluator representation, not an RL ablation",
-    "cpu_seconds": 0.031880318999924384,
+    "cpu_seconds": 0.030194950000009158,
     "dag_validated": true,
     "evaluator_both_flag_values_error": 8.158439733063109e-16,
     "macro_witness": [
@@ -2439,7 +2439,7 @@
       0,
       0
     ],
-    "wall_seconds": 0.03187926200007496,
+    "wall_seconds": 0.03019359400002486,
     "workspace_leakage": 2.989023673664561e-32
   },
   "one_iteration_marked_probability": 0.8437499999999996,
