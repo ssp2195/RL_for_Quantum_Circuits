@@ -1,0 +1,107 @@
+name: Publish verified native hybrid frontier restoration
+on:
+  push:
+    branches: [hybrid-restoration-transfer-20260910]
+    paths: [.github/workflows/publish-native-restoration.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: native-hybrid-restoration-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    if: github.repository == 'ssp2195/RL_for_Quantum_Circuits' && github.ref == 'refs/heads/hybrid-restoration-transfer-20260910'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Reconstruct exact tested source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/native-transfer
+          for sha in \
+            a6174aaf86f946c16c9851e05d90db5dbfa9f645 \
+            07b539e7471045e7e8c26bde781fddd869ecf98a \
+            9c796416bb79233a8f8ff75c7b9fbfef2b9cc1b8 \
+            a85e4a2dac5747c622d8a0d88d44e1ac4d43c2a8 \
+            0d92702cd1b2bb7e68e67f153c9eeefb67586f9b \
+            08ec3525393124b687bd8feb3a95e16c84bdc440 \
+            c7ccaaf98423d7dc16c9f68daf26de580df88ada \
+            acf39830dc57affd14fed08e737e98895257661a \
+            5eae8ebd67f8d9168add8ba63e7235243d048dc6 \
+            0682e1139729c709c2fc7926a73db8044869f3c5 \
+            2fdb1099cb7c1db1225bfc7c1c74b0032215a4d4 \
+            d33400c74d430205ca488a5887820dc4875e0bd7 \
+            fb317d61d745f421dc204c545de6d8f81615eddd; do
+            gh api "repos/${GITHUB_REPOSITORY}/git/blobs/${sha}" --jq .content | base64 --decode >> /tmp/native-transfer/patch.xz
+          done
+          echo '60a788332bf065ea6940afbf7f82496e2eb74a3b46150d498c53e657cfd1f88f  /tmp/native-transfer/patch.xz' | sha256sum -c -
+          xz -dc /tmp/native-transfer/patch.xz > /tmp/native-transfer/patch.diff
+          echo '9947dda81347fd21a5680e0344d8c1494b9126af8ba147b285875bb559554476  /tmp/native-transfer/patch.diff' | sha256sum -c -
+          git worktree add --detach /tmp/native-build 4eb224bc239a86bcad069162d4c65199a8cde28e
+          cd /tmp/native-build
+          git apply --check /tmp/native-transfer/patch.diff
+          git apply /tmp/native-transfer/patch.diff
+          git add -A
+          test "$(git write-tree)" = 'ff4b89382b42449050a3dcbf7de11f7b64cfceea'
+          git diff --cached --check
+          git diff --cached --stat > /tmp/native-transfer/diff-stat.txt
+      - name: Install and run all regression and post-training generation tests
+        working-directory: /tmp/native-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install -e '.[dev]'
+          python -m compileall -q hybrid_qcs tests
+          python -m pytest -q | tee /tmp/native-transfer/pytest.log
+          grep -Eq '661 passed' /tmp/native-transfer/pytest.log
+          python -m pip freeze > /tmp/native-transfer/runtime.txt
+      - name: Qualify five trained seeds on all retained benchmark contracts
+        working-directory: /tmp/native-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m hybrid_qcs.native_runner --output-dir /tmp/native-transfer/qualification | tee /tmp/native-transfer/qualification.log
+          test -s /tmp/native-transfer/qualification/summary.json
+      - name: Publish the exact validated source tree by fast-forward only
+        working-directory: /tmp/native-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A
+          git diff --cached --check
+          tree=$(git write-tree)
+          test "$tree" = 'ff4b89382b42449050a3dcbf7de11f7b64cfceea'
+          base=4eb224bc239a86bcad069162d4c65199a8cde28e
+          branch=hybrid-frontier-restored-v1
+          remote=$(git ls-remote --heads origin "refs/heads/$branch" | awk '{print $1}')
+          test "$remote" = "$base"
+          commit=$(printf '%s\n' 'Restore native hybrid frontier, exact scalar lift and trained circuit synthesis' 'Source tree matches locally tested snapshot; 661 tests and five-seed native qualification passed. Historical phase-study data remain unchanged.' | git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit-tree "$tree" -p "$base")
+          git push --porcelain origin "$commit:refs/heads/$branch"
+          remote=$(git ls-remote --heads origin "refs/heads/$branch" | awk '{print $1}')
+          test "$remote" = "$commit"
+          printf '%s\n' "$commit" > /tmp/native-transfer/PUBLISHED_COMMIT.txt
+          printf '%s\n' "$tree" > /tmp/native-transfer/PUBLISHED_TREE.txt
+          git update-ref "refs/heads/$branch" "$commit"
+          git bundle create /tmp/native-transfer/hybrid-frontier-restored-v1.bundle "refs/heads/$branch"
+          echo "Published $branch at $commit with exact source tree $tree" >> "$GITHUB_STEP_SUMMARY"
+          cat /tmp/native-transfer/qualification/summary.json >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-restoration-published-validation
+          path: /tmp/native-transfer
+          retention-days: 30
