@@ -109,6 +109,13 @@ class NativeSearch:
         self.allocations.append([rid,token])
         return result
 
+    def context(self,record):
+        """The same decision-time features for ranking and the SARSA update."""
+        x=record.x.copy()
+        x[-1]*=self.remaining_fraction()
+        x[15]=record.pending.bit_count()/len(self.p.actions)
+        return x
+
     def select(self,model,scheduler,train,epsilon):
         start=time.perf_counter()
         try:
@@ -127,7 +134,7 @@ class NativeSearch:
                 elif train=='outer' and model.rng.random()<epsilon:
                     record=panel[int(model.rng.integers(len(panel)))]
                 else:
-                    xs=np.array([r.x for r in panel]);xs[:,-1]*=self.remaining_fraction()
+                    xs=np.array([self.context(r) for r in panel])
                     scores=model.score_outer(xs)
                     record=panel[int(np.argmax(scores))]
                     self.profile['max_scored_panel']=max(self.profile['max_scored_panel'],len(panel))
@@ -148,9 +155,7 @@ class NativeSearch:
                 gate=self.p.actions[token]
                 record.contexts[token]=inner_features(self.p,record,gate,apply_gate_to_isometry(record.isometry,gate))
                 self.profile['lookahead_isometry_updates']+=1
-            x=record.x.copy();x[-1]*=self.remaining_fraction()
-            x[15]=record.pending.bit_count()/len(self.p.actions)
-            return record,token,x,record.contexts[token]
+            return record,token,self.context(record),record.contexts[token]
         finally:
             self.profile['selection_seconds']+=time.perf_counter()-start
 

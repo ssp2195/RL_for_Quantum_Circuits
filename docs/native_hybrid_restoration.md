@@ -70,7 +70,8 @@ reported separately. No full-DAG neural policy is introduced.
 The episodic base reward is certified success credit minus 0.002 per attempted
 native edge. Frontier-potential differences supply shaping, with zero potential
 at terminal outcomes. Staged training freezes the outer values while fitting
-the inner response, then briefly adjusts the outer policy. Evaluation freezes
+the inner response, then briefly adjusts the outer policy. Ranking and SARSA use the same decision-time feature vector, including the
+current pending-action fraction. Evaluation freezes
 all model arrays and checks checkpoint digests. Old phase-study checkpoints are
 rejected by the native schema; the models must be retrained.
 
@@ -135,7 +136,7 @@ hard operating-system CPU or byte-memory kill.
 
 ## Tests and historical evidence
 
-The new suite has 180 cases. 126 actually synthesize circuits using completed,
+The new suite has 181 cases. 126 actually synthesize circuits using completed,
 frozen native training runs: 96 distinct target/seed combinations, 18 clean/
 entangling cases, nine SWAP cases and three exact -I cases. A further 18 tests
 exercise named hard-target frontiers without pretending that a truncated run is

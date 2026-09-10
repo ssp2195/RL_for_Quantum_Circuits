@@ -220,3 +220,25 @@ def test_native_bound_tightening_zero_certificate(native_models):
     p=NativeProblem('H',contract(1),Budget(0,0,1,1),unitary_from_gates(1,[Gate('H',(0,))]))
     r=optimize_native(p,native_models[0],objective='cnot')
     assert r['status']=='optimal_nonnegative_resource_bound' and r['witness']['success']
+
+
+def test_sarsa_selection_and_update_use_identical_pending_context():
+    p=NativeProblem('-I',contract(1),Budget(0,0,12,12),-np.eye(2))
+    e=NativeSearch(p,WorkLimits(100,1000,10,10))
+    root=e.records[0]
+    token=p.actions.index(Gate('H',(0,)))
+    e.step(0,token)
+    m=NativeHierarchy()
+    seen=[]
+    original=m.score_outer
+    def capture(xs):
+        seen.extend(np.array(xs,copy=True))
+        return original(xs)
+    m.score_outer=capture
+    selected=e.select(m,'hierarchy',None,0.)
+    assert seen
+    record,_,update_x,_=selected
+    assert any(np.array_equal(update_x,x) for x in seen)
+    assert e.context(root)[15]==root.pending.bit_count()/len(p.actions)
+    assert e.context(root)[15]!=root.x[15]
+    assert np.array_equal(update_x,e.context(record))
