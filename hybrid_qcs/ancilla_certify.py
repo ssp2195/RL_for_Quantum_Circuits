@@ -57,6 +57,8 @@ def certify_ancilla_state(
         replay = child
     replay_match = (
         replay.canonical_key == state.canonical_key
+        and replay.exact_key == state.exact_key
+        and replay.clifford_lift == state.clifford_lift
         and replay.resource_vector() == state.resource_vector()
     )
 

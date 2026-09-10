@@ -6,6 +6,7 @@ import time
 from typing import Optional
 
 from .canonicalize import canonicalize_projective
+from .clifford_lift import CliffordColumn
 from .pauli import Pauli
 from .rotation import (
     PauliRotation,
@@ -180,6 +181,7 @@ class HybridState:
     wire_depths: tuple[int, ...]
     depth: int
     canonical_key: tuple[object, ...]
+    clifford_lift: CliffordColumn
 
     @classmethod
     def identity(cls, num_qubits: int, budget: Budget) -> "HybridState":
@@ -201,7 +203,21 @@ class HybridState:
             wire_depths=tuple(0 for _ in range(num_qubits)),
             depth=0,
             canonical_key=_canonical_key(num_qubits, tableau, rotations),
+            clifford_lift=CliffordColumn.identity(num_qubits),
         )
+
+    @property
+    def exact_key(self) -> tuple[object, ...]:
+        """Sufficient exact equality, not a complete Clifford+T normal form.
+
+        The legacy canonical_key absorbs Clifford rotations projectively; its
+        phase is not a valid exact key. Use raw ordered factors with our
+        canonical scalar lift instead. Keys never contain dense fingerprints.
+        """
+        return ("native-hybrid-exact-v1", self.num_qubits,
+                self.tableau.canonical_payload(),
+                tuple(r.canonical_payload() for r in self.rotations),
+                self.global_phase_eighths % 16)
 
     def resource_vector(self) -> tuple[int, ...]:
         return (self.t_count, self.cnot_count, self.gate_count, *self.wire_depths)
@@ -268,9 +284,12 @@ class HybridState:
         tableau = self.tableau
         rotations = self.rotations
         phase = self.global_phase_eighths
+        lift = self.clifford_lift
         if gate.is_clifford:
             started = time.perf_counter_ns()
             tableau = tableau.left_multiply(gate.name, gate.qubits)
+            lift, clifford_phase = lift.apply(gate.name, gate.qubits)
+            phase = (phase + clifford_phase) % 16
             if profile is not None:
                 profile.tableau_update_ns += time.perf_counter_ns() - started
         else:
@@ -329,6 +348,7 @@ class HybridState:
             wire_depths=tuple(wire_depths),
             depth=max(wire_depths, default=0),
             canonical_key=key,
+            clifford_lift=lift,
         )
 
     def reconstruct_gates(self) -> tuple[Gate, ...]:
@@ -370,6 +390,8 @@ class HybridState:
             if child is None:
                 raise AssertionError("witness cannot be replayed under its budget")
             replay = child
+        if replay.exact_key != self.exact_key or replay.clifford_lift != self.clifford_lift:
+            raise AssertionError("exact scalar/rotation/frame state disagrees with the DAG witness")
         if replay.canonical_key != self.canonical_key:
             raise AssertionError("symbolic state disagrees with the DAG witness")
         if replay.resource_vector() != self.resource_vector():

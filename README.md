@@ -1,3 +1,43 @@
+# Native hybrid-frontier quantum circuit synthesis
+
+The active implementation on `hybrid-frontier-restored-v1` restores the
+frontier record **v = (persistent DAG, Clifford tableau, ordered signed Pauli
+rotations, global phase, consumed resources)**. Every discovered candidate uses
+`HybridState`; the Clifford/tableau/rotation representation is NOT merely used
+after phase-polynomial search. Arbitrary resource-feasible native H, S, SDG, T,
+TDG and CNOT continuations remain available.
+
+```bash
+python -m pip install -e '.[dev]'
+python -m hybrid_qcs.native_runner --output-dir outputs/native-hybrid-restoration
+python -m pytest -q
+```
+
+`hybrid-qcs`, `hybrid-qcs-native`, and `hybrid-qcs-publication` now select this
+native engine. `hybrid-qcs-legacy` preserves the original general runner;
+`hybrid-qcs-phase-study` explicitly selects the historical restricted study.
+
+See [restoration contracts and limitations](docs/native_hybrid_restoration.md).
+The frozen 25 phase-oracle specifications are retained as matrix targets with
+their original resource caps. QFT-2, QFT-3, 3-logical-qubit Toffoli (CCX),
+4-logical-qubit Toffoli (C^3X), SWAP and clean-ancilla mixed-axis benchmarks all
+use the SAME native frontier. Known decomposition controls are reported
+separately, never injected into policy search or counted as learned discoveries.
+
+The earlier phase-study manuscript, data, and checkpoints remain unchanged as
+historical evidence. Its results and restricted optimality certificates do NOT
+establish results for this restored search domain. Native models are retrained
+under a distinct schema. Global phase now includes an exact canonical lift of
+the projective Clifford frame. No neural graph encoder has been added.
+
+---
+
+## Historical restricted phase-study documentation (not the active engine)
+
+The text below is preserved for provenance, including its historical numbers
+and publishing notes. Use the native runner and restoration document above for
+the current branch; do not interpret the following study as new native results.
+
 # Hierarchical Learning-Guided Exact Clifford+T Synthesis
 
 ## Publication-stage linear phase-synthesis study (September 2026)
