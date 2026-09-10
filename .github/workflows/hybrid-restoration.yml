@@ -1,0 +1,49 @@
+name: Validate restored native hybrid frontier
+on:
+  push:
+    branches: [hybrid-frontier-restored-v1]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Validate restoration when implementation is present
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/hybrid-restoration
+          if [ -f hybrid_qcs/native_runner.py ]; then
+            python -m pip install -e '.[dev]'
+            python -m compileall -q hybrid_qcs tests
+            python -m pytest -q | tee /tmp/hybrid-restoration/pytest.log
+            python -m hybrid_qcs.native_runner --output-dir /tmp/hybrid-restoration/qualification
+          else
+            echo 'Checkout export only; native restoration not installed yet.' > /tmp/hybrid-restoration/status.txt
+          fi
+          git diff --check
+      - name: Export portable checkout
+        if: always()
+        run: |
+          mkdir -p /tmp/hybrid-restoration
+          git rev-parse HEAD > /tmp/hybrid-restoration/COMMIT.txt
+          git bundle create /tmp/hybrid-restoration/checkout.bundle HEAD
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hybrid-restoration-validation
+          path: /tmp/hybrid-restoration
+          retention-days: 30
