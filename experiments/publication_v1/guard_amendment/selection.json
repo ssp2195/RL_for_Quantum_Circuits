@@ -1,0 +1,44 @@
+{
+  "amendment_digest": "309d940f53b85f1791f6e615fbac43fd463766d0eef4a5e648b3ffb38bad2764",
+  "frozen_utc": "2026-09-10T10:55:39.733957+00:00",
+  "model_digests": {
+    "0": "f421b29a9ea491f4cec40f19afb0b2bc4b5877259497ae36da0bbec79efe1c96",
+    "1": "3a6ed13dceafdff4788f0dea3949f9c45c974c811ed8de9f61df33c10c0d218e",
+    "2": "0ec313ed384b2e21e64ba028de478169e91e4a674ef6a8e2df99fa07e170aadc",
+    "3": "7a1607bf203f8093ebecbd00bad11d0b39437c217d9ff3fc4a82cab79b1c31cf",
+    "4": "974ed8e55f21a0b85746f34acc201c2c2121d3b7343fab271cfcc2d499c55eca"
+  },
+  "selected_beta": 0.0,
+  "stats": {
+    "0.0": {
+      "mean_savings": 0.2229166666666667,
+      "successes": 80
+    },
+    "0.01": {
+      "mean_savings": 0.2229166666666667,
+      "successes": 80
+    },
+    "0.03": {
+      "mean_savings": 0.2229166666666667,
+      "successes": 80
+    },
+    "0.1": {
+      "mean_savings": 0.2229166666666667,
+      "successes": 80
+    },
+    "0.25": {
+      "mean_savings": 0.2229166666666667,
+      "successes": 80
+    },
+    "0.5": {
+      "mean_savings": 0.19791666666666669,
+      "successes": 80
+    },
+    "1.0": {
+      "mean_savings": 0.18541666666666667,
+      "successes": 80
+    }
+  },
+  "uses_learned_correction": false,
+  "validation_runs": 560
+}

@@ -1,0 +1,668 @@
+{
+  "claim": "infeasible",
+  "cover": [
+    {
+      "cnot": 0,
+      "depths": [
+        0,
+        1,
+        0
+      ],
+      "gates": 1,
+      "remaining": 14,
+      "rows": [
+        1,
+        2,
+        4
+      ],
+      "t_depths": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "cnot": 0,
+      "depths": [
+        0,
+        0,
+        0
+      ],
+      "gates": 0,
+      "remaining": 15,
+      "rows": [
+        1,
+        2,
+        4
+      ],
+      "t_depths": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "cnot": 1,
+      "depths": [
+        1,
+        1,
+        3
+      ],
+      "gates": 4,
+      "remaining": 12,
+      "rows": [
+        1,
+        2,
+        5
+      ],
+      "t_depths": [
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "cnot": 1,
+      "depths": [
+        1,
+        0,
+        3
+      ],
+      "gates": 3,
+      "remaining": 13,
+      "rows": [
+        1,
+        2,
+        5
+      ],
+      "t_depths": [
+        0,
+        0,
+        1
+      ]
+    },
+    {
+      "cnot": 1,
+      "depths": [
+        1,
+        1,
+        1
+      ],
+      "gates": 2,
+      "remaining": 14,
+      "rows": [
+        1,
+        2,
+        5
+      ],
+      "t_depths": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "cnot": 1,
+      "depths": [
+        1,
+        0,
+        1
+      ],
+      "gates": 1,
+      "remaining": 15,
+      "rows": [
+        1,
+        2,
+        5
+      ],
+      "t_depths": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "cnot": 1,
+      "depths": [
+        0,
+        2,
+        2
+      ],
+      "gates": 3,
+      "remaining": 10,
+      "rows": [
+        1,
+        2,
+        6
+      ],
+      "t_depths": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "cnot": 1,
+      "depths": [
+        0,
+        1,
+        2
+      ],
+      "gates": 2,
+      "remaining": 11,
+      "rows": [
+        1,
+        2,
+        6
+      ],
+      "t_depths": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "cnot": 1,
+      "depths": [
+        0,
+        2,
+        1
+      ],
+      "gates": 2,
+      "remaining": 14,
+      "rows": [
+        1,
+        2,
+        6
+      ],
+      "t_depths": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "cnot": 1,
+      "depths": [
+        0,
+        1,
+        1
+      ],
+      "gates": 1,
+      "remaining": 15,
+      "rows": [
+        1,
+        2,
+        6
+      ],
+      "t_depths": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "cnot": 2,
+      "depths": [
+        3,
+        2,
+        4
+      ],
+      "gates": 5,
+      "remaining": 2,
+      "rows": [
+        1,
+        2,
+        7
+      ],
+      "t_depths": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "cnot": 2,
+      "depths": [
+        3,
+        1,
+        4
+      ],
+      "gates": 4,
+      "remaining": 3,
+      "rows": [
+        1,
+        2,
+        7
+      ],
+      "t_depths": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "cnot": 2,
+      "depths": [
+        1,
+        4,
+        5
+      ],
+      "gates": 6,
+      "remaining": 4,
+      "rows": [
+        1,
+        2,
+        7
+      ],
+      "t_depths": [
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "cnot": 2,
+      "depths": [
+        1,
+        4,
+        5
+      ],
+      "gates": 5,
+      "remaining": 5,
+      "rows": [
+        1,
+        2,
+        7
+      ],
+      "t_depths": [
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "cnot": 2,
+      "depths": [
+        3,
+        2,
+        3
+      ],
+      "gates": 4,
+      "remaining": 10,
+      "rows": [
+        1,
+        2,
+        7
+      ],
+      "t_depths": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "cnot": 2,
+      "depths": [
+        3,
+        1,
+        3
+      ],
+      "gates": 3,
+      "remaining": 11,
+      "rows": [
+        1,
+        2,
+        7
+      ],
+      "t_depths": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "cnot": 2,
+      "depths": [
+        1,
+        4,
+        4
+      ],
+      "gates": 5,
+      "remaining": 12,
+      "rows": [
+        1,
+        2,
+        7
+      ],
+      "t_depths": [
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "cnot": 2,
+      "depths": [
+        1,
+        4,
+        4
+      ],
+      "gates": 4,
+      "remaining": 13,
+      "rows": [
+        1,
+        2,
+        7
+      ],
+      "t_depths": [
+        0,
+        1,
+        1
+      ]
+    },
+    {
+      "cnot": 1,
+      "depths": [
+        0,
+        3,
+        2
+      ],
+      "gates": 3,
+      "remaining": 10,
+      "rows": [
+        1,
+        6,
+        4
+      ],
+      "t_depths": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "cnot": 1,
+      "depths": [
+        0,
+        2,
+        2
+      ],
+      "gates": 2,
+      "remaining": 14,
+      "rows": [
+        1,
+        6,
+        4
+      ],
+      "t_depths": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "cnot": 2,
+      "depths": [
+        4,
+        5,
+        2
+      ],
+      "gates": 5,
+      "remaining": 2,
+      "rows": [
+        1,
+        7,
+        4
+      ],
+      "t_depths": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "cnot": 2,
+      "depths": [
+        4,
+        4,
+        2
+      ],
+      "gates": 4,
+      "remaining": 10,
+      "rows": [
+        1,
+        7,
+        4
+      ],
+      "t_depths": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "cnot": 1,
+      "depths": [
+        3,
+        1,
+        1
+      ],
+      "gates": 4,
+      "remaining": 12,
+      "rows": [
+        5,
+        2,
+        4
+      ],
+      "t_depths": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "cnot": 1,
+      "depths": [
+        3,
+        0,
+        1
+      ],
+      "gates": 3,
+      "remaining": 13,
+      "rows": [
+        5,
+        2,
+        4
+      ],
+      "t_depths": [
+        1,
+        0,
+        0
+      ]
+    },
+    {
+      "cnot": 1,
+      "depths": [
+        1,
+        1,
+        1
+      ],
+      "gates": 2,
+      "remaining": 14,
+      "rows": [
+        5,
+        2,
+        4
+      ],
+      "t_depths": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "cnot": 1,
+      "depths": [
+        1,
+        0,
+        1
+      ],
+      "gates": 1,
+      "remaining": 15,
+      "rows": [
+        5,
+        2,
+        4
+      ],
+      "t_depths": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "cnot": 2,
+      "depths": [
+        5,
+        4,
+        1
+      ],
+      "gates": 6,
+      "remaining": 4,
+      "rows": [
+        7,
+        2,
+        4
+      ],
+      "t_depths": [
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "cnot": 2,
+      "depths": [
+        5,
+        4,
+        1
+      ],
+      "gates": 5,
+      "remaining": 5,
+      "rows": [
+        7,
+        2,
+        4
+      ],
+      "t_depths": [
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "cnot": 2,
+      "depths": [
+        4,
+        4,
+        1
+      ],
+      "gates": 5,
+      "remaining": 12,
+      "rows": [
+        7,
+        2,
+        4
+      ],
+      "t_depths": [
+        1,
+        1,
+        0
+      ]
+    },
+    {
+      "cnot": 2,
+      "depths": [
+        4,
+        4,
+        1
+      ],
+      "gates": 4,
+      "remaining": 13,
+      "rows": [
+        7,
+        2,
+        4
+      ],
+      "t_depths": [
+        1,
+        1,
+        0
+      ]
+    }
+  ],
+  "digest": "b57c55d9589b1404cc53763e2bd2ec9038affa776005bce3d33fad758c2346e8",
+  "problem": {
+    "ancillas": 0,
+    "coefficients": [
+      [
+        2,
+        6
+      ],
+      [
+        5,
+        3
+      ],
+      [
+        6,
+        2
+      ],
+      [
+        7,
+        6
+      ]
+    ],
+    "connectivity": "all-to-all",
+    "constant": 0,
+    "emission": "deferred",
+    "lowering": {
+      "0": [],
+      "1": [
+        "T"
+      ],
+      "2": [
+        "S"
+      ],
+      "3": [
+        "S",
+        "T"
+      ],
+      "4": [
+        "S",
+        "S"
+      ],
+      "5": [
+        "SDG",
+        "TDG"
+      ],
+      "6": [
+        "SDG"
+      ],
+      "7": [
+        "TDG"
+      ]
+    },
+    "max_cnot": 3,
+    "max_depth": 128,
+    "max_gates": 256,
+    "max_t_depth": 64,
+    "n": 3,
+    "phase_emission": "deferred",
+    "phase_mode": "exact",
+    "schema": "scheduled-phase-obligation-v1",
+    "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+  },
+  "root_exceeds": false,
+  "schema": "phase-inductive-cover-v1"
+}

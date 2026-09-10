@@ -1,0 +1,19 @@
+{
+  "environment": {
+    "cpu_clock": "time.process_time",
+    "deadline": "cooperative operation boundaries; includes certification overrun",
+    "memory_units": "ru_maxrss KiB on Linux; process high-water, not per-search allocation",
+    "numpy": "2.3.5",
+    "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+    "processor": "x86_64",
+    "python": "3.13.15 (main, Aug  6 2026, 02:15:18) [GCC 13.3.0]",
+    "runner_sha256": "dc9a8eee081093cc1f129049677d9c4499356c744940eb69ff003f2cdee2b36d",
+    "source_commit_at_execution": "dfa7f9081a289a0b645eea70d8192c89cc17c1eb",
+    "threads": {
+      "OMP_NUM_THREADS": "1",
+      "OPENBLAS_NUM_THREADS": "1"
+    },
+    "wall_clock": "time.perf_counter"
+  },
+  "utc": "2026-09-10T10:54:03.326866+00:00"
+}

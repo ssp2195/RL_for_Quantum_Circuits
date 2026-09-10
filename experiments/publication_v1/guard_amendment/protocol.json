@@ -1,0 +1,35 @@
+{
+  "betas": [
+    0.0,
+    0.01,
+    0.03,
+    0.1,
+    0.25,
+    0.5,
+    1.0
+  ],
+  "confirmation": "12 new logical target orbits, three widths of clean workspace each, five seeds, three timings; paired bootstrap by logical target",
+  "confirmatory_generation_seed": 39092026,
+  "digest": "309d940f53b85f1791f6e615fbac43fd463766d0eef4a5e648b3ffb38bad2764",
+  "limits": {
+    "cpu_seconds": 0.25,
+    "max_edges": 2048,
+    "max_records": 20000,
+    "wall_seconds": 0.25
+  },
+  "no_test_non_regression_guarantee": true,
+  "parent_protocol_digest": "1d89f27d811f779e7b79b1cb4f95155700ea2578b3095c04a1b2f4a88d35e115",
+  "primary_results_reused_for_selection": false,
+  "schema": "validation-shrinkage-amendment-v1",
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "selection": "highest validation mean CNOT savings among coefficients with success at least beta=0; ties prefer smaller beta",
+  "trigger": "original locked primary experiment showed negative transfer; preserve that evidence",
+  "validation_only": true,
+  "validation_repeats": 2
+}

@@ -1,0 +1,45 @@
+{
+  "guarded_minus_untrained": {
+    "clusters": 12,
+    "lower_95": 0.0,
+    "mean": 0.0,
+    "resamples": 10000,
+    "scope": "exploratory target-population interval; training-seed uncertainty also reported separately",
+    "unit": "target; seeds and timings averaged within target first",
+    "upper_95": 0.0
+  },
+  "hierarchy_minus_untrained": {
+    "clusters": 12,
+    "lower_95": -0.06376543209876542,
+    "mean": -0.022383156966490302,
+    "resamples": 10000,
+    "scope": "exploratory target-population interval; training-seed uncertainty also reported separately",
+    "unit": "target; seeds and timings averaged within target first",
+    "upper_95": 0.017824900793650785
+  },
+  "logical_target_clusters": 12,
+  "methods": {
+    "guarded": {
+      "mean_savings": 0.2773589065255732,
+      "runs": 540,
+      "strict_improvement_runs": 105,
+      "successes": 540
+    },
+    "hierarchy": {
+      "mean_savings": 0.2549757495590829,
+      "runs": 540,
+      "strict_improvement_runs": 181,
+      "successes": 498
+    },
+    "untrained": {
+      "mean_savings": 0.2773589065255732,
+      "runs": 540,
+      "strict_improvement_runs": 105,
+      "successes": 540
+    }
+  },
+  "no_test_based_reselection": true,
+  "runs": 1620,
+  "selected_beta": 0.0,
+  "uses_learned_correction": false
+}

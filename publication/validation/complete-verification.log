@@ -1,0 +1,14 @@
+{
+  "all_declared_campaigns_complete": true,
+  "outcome_records": 5501,
+  "unique_native_witness_contract_pairs": 597,
+  "native_witnesses_valid": true,
+  "primary_rows": 2625,
+  "secondary_rows": 375,
+  "confirmation_rows": 1620,
+  "closed_covers_verified": 26,
+  "rank_bounds_verified": 120,
+  "auditor_replacement_of_discovery": false,
+  "application_reference_replayed": true,
+  "protocol_digest": "1d89f27d811f779e7b79b1cb4f95155700ea2578b3095c04a1b2f4a88d35e115"
+}

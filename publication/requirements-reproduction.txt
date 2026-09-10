@@ -1,0 +1,4 @@
+# Exact numerical/test versions used for the local publication campaign.
+# Python 3.13.5 on Linux; the project supports Python >=3.11.
+numpy==2.3.5
+pytest==9.0.2

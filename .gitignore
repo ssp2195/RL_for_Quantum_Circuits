@@ -3,3 +3,10 @@ __pycache__/
 *.py[cod]
 outputs/
 *.egg-info/
+# Generated TeX intermediates; source and final manuscript remain tracked.
+publication/*.aux
+publication/*.log
+publication/*.out
+publication/*.toc
+publication/*.fls
+publication/*.fdb_latexmk

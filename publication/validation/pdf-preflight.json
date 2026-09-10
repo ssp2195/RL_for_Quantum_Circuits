@@ -1,0 +1,6 @@
+{
+  "pages": 12,
+  "out_of_safe_margins": [],
+  "renderer": "PDFium via provided render_pdf.py",
+  "dpi": 160
+}

@@ -1,0 +1,3997 @@
+{
+  "audit": "separate baseline and post-campaign proof job; never repairs a learned outcome",
+  "co_primary": "certified discovery success fraction; failures retained",
+  "confidence_interval": "paired target-cluster bootstrap 10000 resamples; average seeds and repeats within each target first",
+  "digest": "1d89f27d811f779e7b79b1cb4f95155700ea2578b3095c04a1b2f4a88d35e115",
+  "discovery_limits": {
+    "cpu_seconds": 0.25,
+    "max_edges": 2048,
+    "max_records": 20000,
+    "wall_seconds": 0.25
+  },
+  "engine_sha256": {
+    "phase_audit.py": "13b8f2f996cb049ebf077f3be6f871a1de78935cf3b3825b065eedf66692c533",
+    "phase_baselines.py": "3b82752c5d9b64bc37561c6b36d8d2463e5bf4e58711ef307e8cc171524da8d5",
+    "phase_contract.py": "517d79d4385539835e5453879760a194d2853fc0515aa9eb9dbfc76dc7fbe2c1",
+    "phase_graysynth.py": "e9e960d0b9ee92c4f825af7823d23db8fccce4f5ab35c042c9727c364f35e311",
+    "phase_index.py": "6b1d65c63b124cda3a19f4736aa20012fb2faae53dbcd4e90e264e8378fefa3f",
+    "phase_policy.py": "08e347e7bbc5a6f601f9be6152e28034874876e78f248c750a1e1c3c0e039dee",
+    "phase_search.py": "a46743be61ab6659494f1b86338478f110a015d8b10e6ee2631a50cf5b950122",
+    "publication_corpus.py": "ec567d389d4d3ef8a714d6569475f0d8f11af581a5ee609b029f34fe71f82293",
+    "publication_pipeline.py": "dd36d8f41cf4c75abe4c9acc27548e17dcf7dc97155d909ca063cb4b7e788e5a",
+    "publication_train.py": "683b559514df81d90897bbaccd6728f9041dcb7cafa22dfb6ffb421eadf451d5"
+  },
+  "fairness_period": 32,
+  "locked_before_test": true,
+  "panel_size": 32,
+  "primary_endpoint": "mean normalized CNOT savings vs specification-derived parity-star count; failed discovery contributes zero savings",
+  "primary_methods": [
+    "hierarchy",
+    "untrained",
+    "greedy",
+    "outer",
+    "inner",
+    "uniform_cost",
+    "audit_only"
+  ],
+  "rate": 0.01,
+  "rate_selection": "validation-only seed 0: {0.001,0.003,0.01,0.03}; maximize mean normalized CNOT savings, then success count",
+  "schema": "linear-certified-publication-protocol-v1",
+  "scope": "fixed phase polynomial CNOT/required-phase synthesis; T count fixed, optimize CNOT under width/depth/gate constraints",
+  "secondary": [
+    "retrained no_budget",
+    "retrained no_workspace",
+    "full-frontier scoring with identical frozen weights",
+    "rank-tight T-depth contracts on first eight test targets",
+    "controlled-S ancilla calibration",
+    "BNN exactly-one phase oracle and one amplitude-amplification iteration"
+  ],
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "split": {
+    "bnn": {
+      "hidden_thresholds": [
+        1,
+        2
+      ],
+      "hidden_weights": [
+        [
+          1,
+          1,
+          1
+        ],
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "input_encoding": "x in {0,1}^3; q0 is least significant",
+      "output_threshold": 1,
+      "output_weights": [
+        1,
+        -1
+      ],
+      "predicate": "network output differs from reference label 0",
+      "reference_label": 0
+    },
+    "construction_seed": 19092026,
+    "disjointness": "exact diagonal target modulo input permutations, complements, and global phase",
+    "schema": "qcs-publication-split-v1",
+    "test": [
+      {
+        "name": "test-00",
+        "orbit": "8069093c7ad624925a01c3e1dfd8bbbc69bf19feb061ed63b139868e49941217",
+        "problem": {
+          "ancillas": 0,
+          "coefficients": [
+            [
+              5,
+              5
+            ],
+            [
+              6,
+              6
+            ],
+            [
+              7,
+              5
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 36,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-01",
+        "orbit": "96e6e07f2ce8af03fad9a456c247f9ca1270a7c6cbcf87b9612f2976c2aba714",
+        "problem": {
+          "ancillas": 1,
+          "coefficients": [
+            [
+              6,
+              2
+            ],
+            [
+              7,
+              2
+            ],
+            [
+              13,
+              7
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 48,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 4,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-02",
+        "orbit": "333a9e26990caa5e2231d6741b5c6fa5d8e4ad31478e620b86371cdcb4e593a0",
+        "problem": {
+          "ancillas": 2,
+          "coefficients": [
+            [
+              15,
+              7
+            ],
+            [
+              17,
+              5
+            ],
+            [
+              19,
+              1
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 60,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 5,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-03",
+        "orbit": "b47559d1f07f0bad852bf5648d8e8cfbb78ff1e0569c71a67b766c331e697a34",
+        "problem": {
+          "ancillas": 0,
+          "coefficients": [
+            [
+              2,
+              6
+            ],
+            [
+              5,
+              3
+            ],
+            [
+              6,
+              2
+            ],
+            [
+              7,
+              6
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 48,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-04",
+        "orbit": "52149a8dcead5f15af80967db24c85b3da0ec48d6c12c15f6776e05d81898c4c",
+        "problem": {
+          "ancillas": 1,
+          "coefficients": [
+            [
+              3,
+              6
+            ],
+            [
+              4,
+              6
+            ],
+            [
+              10,
+              1
+            ],
+            [
+              11,
+              2
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 64,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 4,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-05",
+        "orbit": "f19129a8ea98f5e4b046c4cb922dba452ad06b99b249972787847a4e729715f0",
+        "problem": {
+          "ancillas": 2,
+          "coefficients": [
+            [
+              2,
+              6
+            ],
+            [
+              3,
+              7
+            ],
+            [
+              23,
+              3
+            ],
+            [
+              29,
+              5
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 80,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 5,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-06",
+        "orbit": "8ab438c3d614bf117fb28d402df42a2c2284166e9ab860ae3a23aaf8650c6d1c",
+        "problem": {
+          "ancillas": 0,
+          "coefficients": [
+            [
+              2,
+              2
+            ],
+            [
+              3,
+              6
+            ],
+            [
+              4,
+              1
+            ],
+            [
+              6,
+              6
+            ],
+            [
+              7,
+              3
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 60,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-07",
+        "orbit": "e6176f2f414eb1326229693a9d45121f2176a9971596caf2cd50d19a2a670706",
+        "problem": {
+          "ancillas": 1,
+          "coefficients": [
+            [
+              3,
+              6
+            ],
+            [
+              5,
+              2
+            ],
+            [
+              8,
+              3
+            ],
+            [
+              11,
+              3
+            ],
+            [
+              13,
+              3
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 80,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 4,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-08",
+        "orbit": "39662dbf81c92226c5b11c04884b41c78c0363cb33f8ba21f44097e59a905ad9",
+        "problem": {
+          "ancillas": 2,
+          "coefficients": [
+            [
+              1,
+              5
+            ],
+            [
+              14,
+              2
+            ],
+            [
+              16,
+              1
+            ],
+            [
+              18,
+              7
+            ],
+            [
+              20,
+              7
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 100,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 5,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-09",
+        "orbit": "d448bfa68d92b7d6b0f716cfd1414bd44836099c3c994679d22cc7a700cf750e",
+        "problem": {
+          "ancillas": 0,
+          "coefficients": [
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              6
+            ],
+            [
+              4,
+              3
+            ],
+            [
+              5,
+              7
+            ],
+            [
+              6,
+              1
+            ],
+            [
+              7,
+              6
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 72,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-10",
+        "orbit": "f9f08d1dab96c0058b58b9b157e6a894bac7dc945e55fd04d59ea1b980283dda",
+        "problem": {
+          "ancillas": 1,
+          "coefficients": [
+            [
+              1,
+              7
+            ],
+            [
+              4,
+              2
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              6,
+              1
+            ],
+            [
+              8,
+              6
+            ],
+            [
+              14,
+              6
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 96,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 4,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-11",
+        "orbit": "161d5800b7a6ec636bf7130b80dfcc58d322a7b00558fb0cf29c6a1dd610e3e4",
+        "problem": {
+          "ancillas": 2,
+          "coefficients": [
+            [
+              4,
+              6
+            ],
+            [
+              5,
+              1
+            ],
+            [
+              9,
+              1
+            ],
+            [
+              13,
+              6
+            ],
+            [
+              19,
+              5
+            ],
+            [
+              29,
+              5
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 120,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 5,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-12",
+        "orbit": "da03869e87f569679c1941b9e2d4713ef711b978b55e468dd9a613bbb7979fa1",
+        "problem": {
+          "ancillas": 0,
+          "coefficients": [
+            [
+              1,
+              3
+            ],
+            [
+              5,
+              3
+            ],
+            [
+              6,
+              1
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 36,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-13",
+        "orbit": "7eb00b69239e96fe10c97d9c2adc2ccabd834cae35a4dece47df4ed7a45529f9",
+        "problem": {
+          "ancillas": 1,
+          "coefficients": [
+            [
+              3,
+              2
+            ],
+            [
+              11,
+              3
+            ],
+            [
+              13,
+              7
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 48,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 4,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-14",
+        "orbit": "fb96c1ec0f57c2b03b7e47557552a0387af5c5d20e8cfe0760ec14c0a64aaf5e",
+        "problem": {
+          "ancillas": 2,
+          "coefficients": [
+            [
+              6,
+              3
+            ],
+            [
+              15,
+              1
+            ],
+            [
+              29,
+              1
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 60,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 5,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-15",
+        "orbit": "4730f5b518729bc0e596b33cb0bf769693fd8f9ec7728f4bb427d50a3e090918",
+        "problem": {
+          "ancillas": 0,
+          "coefficients": [
+            [
+              1,
+              6
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              4,
+              5
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              7,
+              1
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 48,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-16",
+        "orbit": "f7f4c625008a2031ccc93260898a8147893aaff3b8af153fa06edc54806f6a87",
+        "problem": {
+          "ancillas": 1,
+          "coefficients": [
+            [
+              3,
+              5
+            ],
+            [
+              9,
+              7
+            ],
+            [
+              12,
+              1
+            ],
+            [
+              15,
+              5
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 64,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 4,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-17",
+        "orbit": "4034e2fafb1c8edb7062e9543b8d70c7bc033397267564b5cecd11a51bdfd4e7",
+        "problem": {
+          "ancillas": 2,
+          "coefficients": [
+            [
+              4,
+              5
+            ],
+            [
+              28,
+              2
+            ],
+            [
+              29,
+              6
+            ],
+            [
+              30,
+              5
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 80,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 5,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-18",
+        "orbit": "eaabd49251e0e8d2395e2be97438e1b14220d38e2d91287216348187830dd393",
+        "problem": {
+          "ancillas": 0,
+          "coefficients": [
+            [
+              1,
+              5
+            ],
+            [
+              2,
+              7
+            ],
+            [
+              3,
+              7
+            ],
+            [
+              6,
+              5
+            ],
+            [
+              7,
+              6
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 60,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-19",
+        "orbit": "df70a65e4a7e13c4ff5bdb5ff85d951fa4a8a54f73b69d9f6829bd13958d5143",
+        "problem": {
+          "ancillas": 1,
+          "coefficients": [
+            [
+              3,
+              1
+            ],
+            [
+              4,
+              5
+            ],
+            [
+              5,
+              7
+            ],
+            [
+              6,
+              2
+            ],
+            [
+              13,
+              3
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 80,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 4,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-20",
+        "orbit": "01ec9ed560c4b3bfaa1ea6845c3f0aaff391800854b98ff52bb2532dd33031e3",
+        "problem": {
+          "ancillas": 2,
+          "coefficients": [
+            [
+              1,
+              5
+            ],
+            [
+              3,
+              7
+            ],
+            [
+              5,
+              7
+            ],
+            [
+              7,
+              7
+            ],
+            [
+              17,
+              6
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 100,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 5,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-21",
+        "orbit": "ade68d5351ca92f1c9005bd9829cadc6362f78e2f026b37c56e09ef64ce10d7f",
+        "problem": {
+          "ancillas": 0,
+          "coefficients": [
+            [
+              2,
+              2
+            ],
+            [
+              3,
+              1
+            ],
+            [
+              4,
+              3
+            ],
+            [
+              5,
+              1
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              7
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 72,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-22",
+        "orbit": "b81c1be6606d0376f336d3b802a7c2216c8a9613ff5b83d275188604f55a48df",
+        "problem": {
+          "ancillas": 1,
+          "coefficients": [
+            [
+              1,
+              7
+            ],
+            [
+              4,
+              1
+            ],
+            [
+              7,
+              5
+            ],
+            [
+              9,
+              3
+            ],
+            [
+              10,
+              6
+            ],
+            [
+              12,
+              5
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 96,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 4,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "test-23",
+        "orbit": "5b03dffc02646efca73c947b7223aa2cff38087f3129ace4b91e8be046969c9d",
+        "problem": {
+          "ancillas": 2,
+          "coefficients": [
+            [
+              5,
+              2
+            ],
+            [
+              10,
+              7
+            ],
+            [
+              18,
+              5
+            ],
+            [
+              19,
+              5
+            ],
+            [
+              20,
+              1
+            ],
+            [
+              22,
+              1
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 120,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 5,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "heldout-bnn-exactly-one",
+        "orbit": "0511617656dce87ae0f15337bd9914d5b931db63b621fe2755ec08e9f1d70b2c",
+        "problem": {
+          "ancillas": 0,
+          "coefficients": [
+            [
+              1,
+              5
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              3,
+              7
+            ],
+            [
+              4,
+              5
+            ],
+            [
+              5,
+              7
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              1
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 14,
+          "max_depth": 40,
+          "max_gates": 64,
+          "max_t_depth": 5,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      }
+    ],
+    "training": [
+      {
+        "name": "train-2-3-1-0",
+        "orbit": "010d8467b5cc3cc8387e3d72a16ed0a188fca38dd2f1c4c47c7f3361d5d6db19",
+        "problem": {
+          "ancillas": 1,
+          "coefficients": [
+            [
+              1,
+              6
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              7
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 24,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 1,
+          "n": 2,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-2-3-1-1",
+        "orbit": "f2c3fcfbcece9ad7dd2801ed26b73316d6a99a5d705900d0d97aca5051d9bdb2",
+        "problem": {
+          "ancillas": 1,
+          "coefficients": [
+            [
+              1,
+              6
+            ],
+            [
+              2,
+              2
+            ],
+            [
+              3,
+              1
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 24,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 1,
+          "n": 2,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-2-3-1-2",
+        "orbit": "010d8467b5cc3cc8387e3d72a16ed0a188fca38dd2f1c4c47c7f3361d5d6db19",
+        "problem": {
+          "ancillas": 1,
+          "coefficients": [
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              1
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 24,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 1,
+          "n": 2,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-2-3-1-3",
+        "orbit": "875f9ad50da5eab45426a8a0c428aeee9d40c9085b3ecf85d78b551aa7fb8514",
+        "problem": {
+          "ancillas": 1,
+          "coefficients": [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              3
+            ],
+            [
+              3,
+              3
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 24,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 1,
+          "n": 2,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-2-3-2-0",
+        "orbit": "010d8467b5cc3cc8387e3d72a16ed0a188fca38dd2f1c4c47c7f3361d5d6db19",
+        "problem": {
+          "ancillas": 2,
+          "coefficients": [
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              7
+            ],
+            [
+              3,
+              3
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 24,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 1,
+          "n": 2,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-2-3-2-1",
+        "orbit": "7303af9eeb3a1d2347172da0ec2935fcc3e85f66c8f38429dd6d00baf8fd4feb",
+        "problem": {
+          "ancillas": 2,
+          "coefficients": [
+            [
+              1,
+              6
+            ],
+            [
+              2,
+              7
+            ],
+            [
+              3,
+              7
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 24,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 1,
+          "n": 2,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-2-3-2-2",
+        "orbit": "7303af9eeb3a1d2347172da0ec2935fcc3e85f66c8f38429dd6d00baf8fd4feb",
+        "problem": {
+          "ancillas": 2,
+          "coefficients": [
+            [
+              1,
+              3
+            ],
+            [
+              2,
+              6
+            ],
+            [
+              3,
+              5
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 24,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 1,
+          "n": 2,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-2-3-2-3",
+        "orbit": "1bbbadcab80a50761c181edadc181868bac366afc45866c39e04b44516d7cea9",
+        "problem": {
+          "ancillas": 2,
+          "coefficients": [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              2
+            ],
+            [
+              3,
+              3
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 24,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 1,
+          "n": 2,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-2-3-0-0",
+        "orbit": "c8ef433dee88c2cbd7fe20a6705f4076a4e5990cb15bd86154863a2d80480853",
+        "problem": {
+          "ancillas": 0,
+          "coefficients": [
+            [
+              1,
+              6
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              3,
+              7
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 24,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 2,
+          "n": 2,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-2-3-0-1",
+        "orbit": "1bbbadcab80a50761c181edadc181868bac366afc45866c39e04b44516d7cea9",
+        "problem": {
+          "ancillas": 0,
+          "coefficients": [
+            [
+              1,
+              6
+            ],
+            [
+              2,
+              7
+            ],
+            [
+              3,
+              3
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 24,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 2,
+          "n": 2,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-2-3-0-2",
+        "orbit": "c8ef433dee88c2cbd7fe20a6705f4076a4e5990cb15bd86154863a2d80480853",
+        "problem": {
+          "ancillas": 0,
+          "coefficients": [
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              7
+            ],
+            [
+              3,
+              7
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 24,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 2,
+          "n": 2,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-2-3-0-3",
+        "orbit": "fd6d5465758ce853a4d75a57bac6ced04dec2c629e342783e3168df2f3414d45",
+        "problem": {
+          "ancillas": 0,
+          "coefficients": [
+            [
+              1,
+              7
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              3,
+              5
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 24,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 2,
+          "n": 2,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-3-5-0-0",
+        "orbit": "671b291b22a556d69abf4bf568578bdd2060f268fb4320340f85d79369feb77d",
+        "problem": {
+          "ancillas": 0,
+          "coefficients": [
+            [
+              1,
+              7
+            ],
+            [
+              2,
+              2
+            ],
+            [
+              3,
+              2
+            ],
+            [
+              4,
+              1
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              7,
+              1
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 60,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 4,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-3-5-0-1",
+        "orbit": "40de5991b84e9236b6641a362c68e1a0744b7d674cb8cb1132217b551ff28ff8",
+        "problem": {
+          "ancillas": 0,
+          "coefficients": [
+            [
+              1,
+              1
+            ],
+            [
+              3,
+              1
+            ],
+            [
+              5,
+              5
+            ],
+            [
+              6,
+              5
+            ],
+            [
+              7,
+              5
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 60,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 4,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-3-5-0-2",
+        "orbit": "edf9faeaf1d0ee79eb2f00dc7fc7e4294a19986b8ed523d51435f88b46e93289",
+        "problem": {
+          "ancillas": 0,
+          "coefficients": [
+            [
+              1,
+              6
+            ],
+            [
+              2,
+              6
+            ],
+            [
+              3,
+              6
+            ],
+            [
+              4,
+              1
+            ],
+            [
+              6,
+              3
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 60,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 4,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-3-5-0-3",
+        "orbit": "af961b6eaed8115bdcaa469e115fa27bef182f170b2cda22279cc62ea80e1b12",
+        "problem": {
+          "ancillas": 0,
+          "coefficients": [
+            [
+              2,
+              7
+            ],
+            [
+              3,
+              7
+            ],
+            [
+              4,
+              6
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              6,
+              6
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 60,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 4,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-3-6-1-0",
+        "orbit": "5b6b5319491ef781e5f27faada74386f189e033c5d98b4b65676c84da43f0335",
+        "problem": {
+          "ancillas": 1,
+          "coefficients": [
+            [
+              2,
+              7
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              4,
+              3
+            ],
+            [
+              5,
+              7
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              6
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 72,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 4,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-3-6-1-1",
+        "orbit": "9c529c9fe1157a5dc9cbe31be49ebb2539212ff0be98b7e7478da761d1e91913",
+        "problem": {
+          "ancillas": 1,
+          "coefficients": [
+            [
+              1,
+              7
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              3,
+              3
+            ],
+            [
+              4,
+              2
+            ],
+            [
+              5,
+              1
+            ],
+            [
+              7,
+              5
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 72,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 4,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-3-6-1-2",
+        "orbit": "29b4ddeb64370753bff6fe9f1d505021588eebec61ab84979098d7ac0f92910a",
+        "problem": {
+          "ancillas": 1,
+          "coefficients": [
+            [
+              1,
+              2
+            ],
+            [
+              2,
+              2
+            ],
+            [
+              3,
+              7
+            ],
+            [
+              4,
+              7
+            ],
+            [
+              5,
+              5
+            ],
+            [
+              7,
+              2
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 72,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 4,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-3-6-1-3",
+        "orbit": "c1ea6adc72ddfb679d32cffc153ef5c6982a0963b21c6c992064cace989ac58d",
+        "problem": {
+          "ancillas": 1,
+          "coefficients": [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              3,
+              1
+            ],
+            [
+              4,
+              6
+            ],
+            [
+              6,
+              5
+            ],
+            [
+              7,
+              5
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 72,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 4,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-3-7-2-0",
+        "orbit": "f7965dc360770201c57d744da05b96c26c4a2d780e40d0239208e3463c2610e6",
+        "problem": {
+          "ancillas": 2,
+          "coefficients": [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              5
+            ],
+            [
+              3,
+              6
+            ],
+            [
+              4,
+              6
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              2
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 84,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 4,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-3-7-2-1",
+        "orbit": "2e97bf74771ed76f6c26f3d13d2c48952e501038b60fe94ed75e5b36ba38ac1f",
+        "problem": {
+          "ancillas": 2,
+          "coefficients": [
+            [
+              1,
+              3
+            ],
+            [
+              2,
+              7
+            ],
+            [
+              3,
+              7
+            ],
+            [
+              4,
+              1
+            ],
+            [
+              5,
+              7
+            ],
+            [
+              6,
+              2
+            ],
+            [
+              7,
+              6
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 84,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 4,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-3-7-2-2",
+        "orbit": "b06d45f26622b090d8d385aff249c1c25093864f02c5068818e23a91b71da94a",
+        "problem": {
+          "ancillas": 2,
+          "coefficients": [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              6
+            ],
+            [
+              3,
+              6
+            ],
+            [
+              4,
+              5
+            ],
+            [
+              5,
+              6
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              3
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 84,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 4,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "train-3-7-2-3",
+        "orbit": "e778aae6f87e40569e59e10e12cbc57f5dee522837e3cff8587ccf9859bfb8f3",
+        "problem": {
+          "ancillas": 2,
+          "coefficients": [
+            [
+              1,
+              7
+            ],
+            [
+              2,
+              7
+            ],
+            [
+              3,
+              3
+            ],
+            [
+              4,
+              3
+            ],
+            [
+              5,
+              7
+            ],
+            [
+              6,
+              1
+            ],
+            [
+              7,
+              7
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 84,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 4,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "controlled-S-calibration",
+        "orbit": "555f3adfac329f2b3caa2446b0ac69b773ba89bb69d9d233e01c354f8581151b",
+        "problem": {
+          "ancillas": 1,
+          "coefficients": [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              3,
+              7
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 8,
+          "max_depth": 20,
+          "max_gates": 32,
+          "max_t_depth": 1,
+          "n": 2,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "cubic-calibration",
+        "orbit": "8310e1fa1646fdc5bef140be7052a8b2de3f388d912158395e190133cebeadc8",
+        "problem": {
+          "ancillas": 0,
+          "coefficients": [
+            [
+              1,
+              1
+            ],
+            [
+              2,
+              1
+            ],
+            [
+              3,
+              7
+            ],
+            [
+              4,
+              1
+            ],
+            [
+              5,
+              7
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              1
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 8,
+          "max_depth": 24,
+          "max_gates": 32,
+          "max_t_depth": 3,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      }
+    ],
+    "validation": [
+      {
+        "name": "validation-00",
+        "orbit": "d56d5dad4d9165cce1bbd1f9090b40e2c6c545f10b50bc2dfe1d85b570906428",
+        "problem": {
+          "ancillas": 0,
+          "coefficients": [
+            [
+              1,
+              2
+            ],
+            [
+              3,
+              1
+            ],
+            [
+              5,
+              1
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 36,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "validation-01",
+        "orbit": "4503cd845712525df35dc26485a58d236705358ac2bf988defa570ad52d3a942",
+        "problem": {
+          "ancillas": 1,
+          "coefficients": [
+            [
+              9,
+              3
+            ],
+            [
+              11,
+              5
+            ],
+            [
+              12,
+              5
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 48,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 4,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "validation-02",
+        "orbit": "2c1db04ae147c19566a4417ead7ffa8ce4064b7fa768918623e3c072d5716c4d",
+        "problem": {
+          "ancillas": 2,
+          "coefficients": [
+            [
+              2,
+              1
+            ],
+            [
+              5,
+              5
+            ],
+            [
+              6,
+              6
+            ],
+            [
+              7,
+              3
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 48,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "validation-03",
+        "orbit": "4e61729b20afc524084313d4966db993fb6bdbcbe2749e66c97034a9ce598f87",
+        "problem": {
+          "ancillas": 0,
+          "coefficients": [
+            [
+              2,
+              6
+            ],
+            [
+              8,
+              1
+            ],
+            [
+              10,
+              7
+            ],
+            [
+              13,
+              6
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 64,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 4,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "validation-04",
+        "orbit": "591fcfc48740858a6aa20ad3d4dcc821249a1ffbf926dcbe0588da75f9141c8a",
+        "problem": {
+          "ancillas": 1,
+          "coefficients": [
+            [
+              1,
+              1
+            ],
+            [
+              3,
+              5
+            ],
+            [
+              4,
+              1
+            ],
+            [
+              6,
+              7
+            ],
+            [
+              7,
+              6
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 60,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "validation-05",
+        "orbit": "eddfd04d948fe54303c25014f5217643ca8e6d1dbeaa49ba658217b77f0e601d",
+        "problem": {
+          "ancillas": 2,
+          "coefficients": [
+            [
+              3,
+              6
+            ],
+            [
+              4,
+              3
+            ],
+            [
+              5,
+              2
+            ],
+            [
+              10,
+              2
+            ],
+            [
+              13,
+              5
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 80,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 4,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "validation-06",
+        "orbit": "3d352dc12bd04802c9b3157a1579792a8848282451ba8fa0ee319dab185c363b",
+        "problem": {
+          "ancillas": 0,
+          "coefficients": [
+            [
+              1,
+              5
+            ],
+            [
+              3,
+              7
+            ],
+            [
+              7,
+              3
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 36,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 3,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      },
+      {
+        "name": "validation-07",
+        "orbit": "8e7a334178edc659fbb8ccaa76c76e2ff152f913ff4bca900a59252a56b8231a",
+        "problem": {
+          "ancillas": 1,
+          "coefficients": [
+            [
+              5,
+              6
+            ],
+            [
+              9,
+              3
+            ],
+            [
+              10,
+              7
+            ]
+          ],
+          "connectivity": "all-to-all",
+          "constant": 0,
+          "emission": "deferred",
+          "lowering": {
+            "0": [],
+            "1": [
+              "T"
+            ],
+            "2": [
+              "S"
+            ],
+            "3": [
+              "S",
+              "T"
+            ],
+            "4": [
+              "S",
+              "S"
+            ],
+            "5": [
+              "SDG",
+              "TDG"
+            ],
+            "6": [
+              "SDG"
+            ],
+            "7": [
+              "TDG"
+            ]
+          },
+          "max_cnot": 48,
+          "max_depth": 128,
+          "max_gates": 256,
+          "max_t_depth": 64,
+          "n": 4,
+          "phase_emission": "deferred",
+          "phase_mode": "exact",
+          "schema": "scheduled-phase-obligation-v1",
+          "scope": "fixed polynomial, scheduled CNOT/required-phase continuation; no measurement"
+        }
+      }
+    ]
+  },
+  "timing_repeats": 3,
+  "training_episodes": [
+    64,
+    96,
+    24
+  ],
+  "training_limits": {
+    "cpu_seconds": 20.0,
+    "max_edges": 512,
+    "max_records": 10000,
+    "wall_seconds": 20.0
+  }
+}

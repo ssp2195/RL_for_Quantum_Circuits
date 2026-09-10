@@ -1,0 +1,7 @@
+The final 12-page manuscript was rendered with the provided PDF pipeline at 160 dpi.
+All pages were inspected in a montage; the result-table and confirmation/trade-off
+pages were inspected individually at full resolution. An independent text-box
+margin preflight found no content outside the safe page bounds. Final LaTeX
+passes contain no overfull boxes or unresolved references. Minor underfull-table
+spacing warnings do not clip or overlap content. No broken glyphs or black boxes
+were observed. This is layout inspection, not a claim of external scientific review.

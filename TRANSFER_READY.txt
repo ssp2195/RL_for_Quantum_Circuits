@@ -1,1 +1,0 @@
-Publication transfer staging is ready for the verified local tree reconstruction.

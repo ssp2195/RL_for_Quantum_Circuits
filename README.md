@@ -1,5 +1,35 @@
 # Hierarchical Learning-Guided Exact Clifford+T Synthesis
 
+## Publication-stage linear phase-synthesis study (September 2026)
+
+The `publication-linear-certified-qcs-v1` delivery adds an indexed, bounded-scoring
+linear SARSA/residual-LinUCB scheduler over a fully retained exact phase frontier,
+clean-ancilla/T-depth contracts, and independently checkable bounded exclusions.
+The input is a phase specification, not a target gate witness. The fixed phase
+polynomial fixes T-count; the new study minimizes CNOT count under declared caps.
+
+**The locked experiment found negative transfer:** the trained hierarchy achieved
+244/375 successful discovery runs versus 375/375 for the identical untrained
+prior. A new confirmation set corroborated this; validation selected a zero
+learned correction. Correct circuits, proof checks, and known ancilla trade-offs
+are not relabelled as learned superiority. The adapted GraySynth control is
+stronger in this domain.
+
+The local suite has **481 passing tests**, including **320 actual post-training
+circuit-generation tests**. Full evidence contains 5,501 recorded outcomes,
+597 independently replayed native witness/contract pairs, 26 checked closed
+covers, and 120 checked rank-bound records. Eleven of 25 primary CNOT gaps close;
+fourteen remain upper bounds. Earlier functionality and historical manuscripts
+are retained separately.
+
+See `publication/IMPLEMENTATION_REPORT.md`, `publication/main.tex` and `main.pdf`,
+`publication/RELATED_WORK.md`, and `publication/REPRODUCE.md`. The complete raw
+records and frozen checkpoints are in `experiments/publication_v1/`.
+The prepared CI retrains before circuit-generation tests. Remote publishing was
+not available in the delivery session; `publication/PUSH_TO_GITHUB.md` gives the
+non-force push for the portable Git bundle. No remote CI success is asserted.
+
+
 This branch implements exact unitary Clifford+T synthesis with hierarchical
 outer-SARSA frontier allocation, role-aware inner LinUCB continuation
 allocation, strengthened projective canonicalization, and fixed-pool clean or

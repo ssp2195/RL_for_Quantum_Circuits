@@ -1,0 +1,16 @@
+{
+  "tests_passed": 481,
+  "generated_tests": 320,
+  "support_and_legacy_tests": 161,
+  "fresh_remote_ci_ran": false,
+  "remote_push_completed": false,
+  "local_pytest_log": "pytest-local.log",
+  "full_evidence_verifier_log": "complete-verification.log",
+  "manuscript_pages": 12,
+  "base_commit": "dfa7f9081a289a0b645eea70d8192c89cc17c1eb",
+  "source_branch": "resource-ancilla-optimality-v1",
+  "new_branch": "publication-linear-certified-qcs-v1",
+  "remote_blocker": "GitHub actions exposed in this session have no write operations; local Git DNS lookup fails.",
+  "git_diff_check_passed": true,
+  "compileall_passed": true
+}

@@ -1,0 +1,301 @@
+{
+  "auditor_replacement_of_discovery": false,
+  "closed_covers_verified": 26,
+  "cover_checks": [
+    {
+      "check": {
+        "cpu_seconds": 0.001661640000065745,
+        "edges": 153,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.0016645910000079311
+      },
+      "path": "proofs/target-00.json"
+    },
+    {
+      "check": {
+        "cpu_seconds": 0.34759149399997114,
+        "edges": 32575,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.34761661600009575
+      },
+      "path": "proofs/target-01.json"
+    },
+    {
+      "check": {
+        "cpu_seconds": 0.002969913999777418,
+        "edges": 270,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.002970180000147593
+      },
+      "path": "proofs/target-03.json"
+    },
+    {
+      "check": {
+        "cpu_seconds": 0.009147794999989856,
+        "edges": 850,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.009147897999810084
+      },
+      "path": "proofs/target-04.json"
+    },
+    {
+      "check": {
+        "cpu_seconds": 0.005342390000123487,
+        "edges": 486,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.005342708999933166
+      },
+      "path": "proofs/target-06.json"
+    },
+    {
+      "check": {
+        "cpu_seconds": 0.21457016299996212,
+        "edges": 19089,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.2145968830000129
+      },
+      "path": "proofs/target-09.json"
+    },
+    {
+      "check": {
+        "cpu_seconds": 0.0030668379999951867,
+        "edges": 288,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.0030670159999317548
+      },
+      "path": "proofs/target-12.json"
+    },
+    {
+      "check": {
+        "cpu_seconds": 0.01716811400001461,
+        "edges": 1602,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.017168546999982937
+      },
+      "path": "proofs/target-15.json"
+    },
+    {
+      "check": {
+        "cpu_seconds": 0.004693074999977398,
+        "edges": 432,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.004693268999972133
+      },
+      "path": "proofs/target-18.json"
+    },
+    {
+      "check": {
+        "cpu_seconds": 0.20893942700013213,
+        "edges": 18657,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.20898685099996328
+      },
+      "path": "proofs/target-21.json"
+    },
+    {
+      "check": {
+        "cpu_seconds": 0.31537718799995673,
+        "edges": 27990,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.3154292459998942
+      },
+      "path": "proofs/target-24.json"
+    },
+    {
+      "ancillas": 0,
+      "check": {
+        "cpu_seconds": 0.00032660600004419393,
+        "edges": 16,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.00032802400005493837
+      },
+      "path": "ancilla_calibration.json",
+      "seed": 0
+    },
+    {
+      "ancillas": 1,
+      "check": {
+        "cpu_seconds": 0.004198860000087734,
+        "edges": 414,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.0041997349999292055
+      },
+      "path": "ancilla_calibration.json",
+      "seed": 0
+    },
+    {
+      "ancillas": 2,
+      "check": {
+        "cpu_seconds": 0.014690162000078999,
+        "edges": 1424,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.01469158999998399
+      },
+      "path": "ancilla_calibration.json",
+      "seed": 0
+    },
+    {
+      "ancillas": 0,
+      "check": {
+        "cpu_seconds": 0.00024311100014529075,
+        "edges": 16,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.00024357699999200122
+      },
+      "path": "ancilla_calibration.json",
+      "seed": 1
+    },
+    {
+      "ancillas": 1,
+      "check": {
+        "cpu_seconds": 0.004220291999899928,
+        "edges": 414,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.004220877000079781
+      },
+      "path": "ancilla_calibration.json",
+      "seed": 1
+    },
+    {
+      "ancillas": 2,
+      "check": {
+        "cpu_seconds": 0.014619497000012416,
+        "edges": 1424,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.014620293000007223
+      },
+      "path": "ancilla_calibration.json",
+      "seed": 1
+    },
+    {
+      "ancillas": 0,
+      "check": {
+        "cpu_seconds": 0.0002414279999811697,
+        "edges": 16,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.00024201499991249875
+      },
+      "path": "ancilla_calibration.json",
+      "seed": 2
+    },
+    {
+      "ancillas": 1,
+      "check": {
+        "cpu_seconds": 0.004242856000018946,
+        "edges": 414,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.004243760999997903
+      },
+      "path": "ancilla_calibration.json",
+      "seed": 2
+    },
+    {
+      "ancillas": 2,
+      "check": {
+        "cpu_seconds": 0.014639056000078199,
+        "edges": 1424,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.014639981999835072
+      },
+      "path": "ancilla_calibration.json",
+      "seed": 2
+    },
+    {
+      "ancillas": 0,
+      "check": {
+        "cpu_seconds": 0.00024404200007666077,
+        "edges": 16,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.00024450899991279584
+      },
+      "path": "ancilla_calibration.json",
+      "seed": 3
+    },
+    {
+      "ancillas": 1,
+      "check": {
+        "cpu_seconds": 0.004209806000062599,
+        "edges": 414,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.0042103299999780575
+      },
+      "path": "ancilla_calibration.json",
+      "seed": 3
+    },
+    {
+      "ancillas": 2,
+      "check": {
+        "cpu_seconds": 0.014669291000018347,
+        "edges": 1424,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.014670038000076602
+      },
+      "path": "ancilla_calibration.json",
+      "seed": 3
+    },
+    {
+      "ancillas": 0,
+      "check": {
+        "cpu_seconds": 0.00024265999991257559,
+        "edges": 16,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.00024311699985446467
+      },
+      "path": "ancilla_calibration.json",
+      "seed": 4
+    },
+    {
+      "ancillas": 1,
+      "check": {
+        "cpu_seconds": 0.004218820000005508,
+        "edges": 414,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.00421933400002672
+      },
+      "path": "ancilla_calibration.json",
+      "seed": 4
+    },
+    {
+      "ancillas": 2,
+      "check": {
+        "cpu_seconds": 0.014798552999991443,
+        "edges": 1424,
+        "reason": "closed_cover_verified",
+        "valid": true,
+        "wall_seconds": 0.014799292999896352
+      },
+      "path": "ancilla_calibration.json",
+      "seed": 4
+    }
+  ],
+  "native_witnesses_valid": true,
+  "protocol_digest": "1d89f27d811f779e7b79b1cb4f95155700ea2578b3095c04a1b2f4a88d35e115",
+  "rank_bounds_verified": 40,
+  "successful_primary_secondary_runs": 1961,
+  "unique_native_witnesses_replayed": 232
+}

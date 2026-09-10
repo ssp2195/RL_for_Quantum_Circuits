@@ -1,0 +1,113 @@
+\subsection{Locked discovery experiment}
+
+Every failure remains in the endpoint. Table~\ref{tab:primary} reports the complete locked campaign, not only successful trajectories. The main comparison is against the identical untrained prior; that control shares the representation, candidate panel, fairness, native certifier, and feature computation.
+
+\begin{table}[htbp]\centering\small
+
+\begin{tabular}{@{}lrrrr@{}}\toprule
+
+Method & Correct/375 & Savings (\%) & Time (s) & Improving runs \\\midrule
+
+Trained hierarchy & 278 & 24.38 & 0.2152 & 150 \\
+
+Identical untrained prior & 375 & 30.72 & 0.1946 & 105 \\
+
+Greedy & 345 & 25.62 & 0.1968 & 105 \\
+
+Outer only & 312 & 26.89 & 0.2137 & 150 \\
+
+Inner only & 345 & 24.82 & 0.2020 & 120 \\
+
+Uniform cost & 15 & 0.00 & 0.0282 & 0 \\
+
+Audit only & 15 & 0.00 & 0.0266 & 0 \\
+
+\bottomrule\end{tabular}
+
+\caption{Primary discovery outcomes. Savings are normalized CNOT reductions relative to the specification-derived parity-star count, with zero credit for failures. Time includes the whole anytime job, not merely first-solution latency. Improving runs contain at least two successively better, self-discovered certified incumbents. Each method has 25 targets, five seeds, and three timings.}\label{tab:primary}\end{table}
+
+The trained hierarchy has -6.34 percentage points less mean normalized savings than the untrained prior; the paired target-cluster 95\% interval is [-12.10, -0.86]. This is negative transfer, not evidence of a learned speed or resource advantage. The 121 hierarchy runs with strict incumbent improvement demonstrate working anytime synthesis, but the untrained control also improves incumbents. Correct output circuits and improvement during search therefore do not establish a benefit from training.
+
+The mean final-model training cost is 4.934 CPU seconds (4.935 wall seconds), across five models of 184 episodes each. At 1,000 uses this contributes 0.0049 CPU seconds per target. These figures exclude hyperparameter selection, ablation retraining, and the later shrinkage-selection experiment; all are separate artifact records. A small training bill does not compensate for worse discovery performance.
+
+\subsection{Constructive and feature controls}
+
+\begin{table}[htbp]\centering\small
+
+\begin{tabular}{@{}lrrr@{}}\toprule
+
+Constructive control & In-contract/75 & Savings (\%) & Time (s) \\\midrule
+
+Adapted GraySynth & 72 & 33.61 & 0.0022 \\
+
+Parity star & 75 & 0.00 & 0.0030 \\
+
+Rank-partition reference & 0 & 0.00 & 0.0065 \\
+
+\bottomrule\end{tabular}
+
+\caption{Constructive controls on the same 25 contracts, with three timings. These are one-shot algorithms, not algorithms padded to the search timeout. All emitted circuits are independently replayed, including those outside the original caps.}\label{tab:constructive}\end{table}
+
+The adapted GraySynth control is stronger than the trained hierarchy in this domain. Its three failed in-contract repetitions refer to one target with a correctly synthesized circuit outside the CNOT cap. The rank-partition reference prioritizes T-depth rather than CNOT count; its circuits are correct but exceed these tight CNOT comparison caps. It is not accurate to call those circuits semantically incorrect or to hide the relaxed resource checks.
+
+\begin{table}[htbp]\centering\small
+
+\begin{tabular}{@{}lrrr@{}}\toprule
+
+Secondary control & Correct/125 & Savings (\%) & Maximum panel \\\midrule
+
+Retrained without budget features & 106 & 24.48 & 32 \\
+
+Retrained without workspace features & 85 & 20.34 & 32 \\
+
+Full-frontier scoring & 85 & 22.27 & 647 \\
+
+\bottomrule\end{tabular}
+
+\caption{Separately trained feature ablations and identical-weight full-frontier scoring, one timing per seed/target. These are descriptive secondary comparisons; the primary untrained comparison remains unfavorable.}\label{tab:ablation}\end{table}
+
+The bounded panel scores at most 32 candidates, compared with an observed maximum of 647 under full-frontier scoring. With identical trained weights, the bounded version improves normalized savings by 2.18 percentage points in the matched secondary contrast (descriptive 95\% interval [-0.48, 5.93]). This supports limiting ranking overhead within this implementation; it does not establish that learning itself is beneficial. The secondary timings are not additional independent replications of the primary contrast.
+
+On 40 rank-tight T-depth jobs per scheduler, the hierarchy finds 30 circuits and the untrained prior 25; this exploratory subset uses only eight original targets. The nonlearned rank-partition reference succeeds on all of these widened-CNOT contracts. This local contrast cannot overturn the unfavorable prespecified primary result.
+
+\subsection{Validation safeguard and fresh confirmation}
+
+Validation selects $\beta=0$ from the declared shrinkage grid. Hence the guarded deployment uses \emph{no learned correction}. The first five coefficients in the grid tie on validation savings and success; the declared smaller-coefficient tie rule selects zero. No new confirmation outcome is used to reselect the coefficient.
+
+\begin{table}[htbp]\centering\small
+
+\begin{tabular}{@{}lrr@{}}\toprule
+
+Fresh-confirmation method & Correct/540 & Savings (\%) \\\midrule
+
+Raw trained hierarchy & 498 & 25.50 \\
+
+Untrained prior & 540 & 27.74 \\
+
+Validation-selected guard ($\beta=0$) & 540 & 27.74 \\
+
+\bottomrule\end{tabular}
+
+\caption{New logical target orbits after the separately declared amendment. Twelve targets are crossed with three ancilla widths, five seeds, and three timings. Intervals cluster by twelve logical targets.}\label{tab:confirmation}\end{table}
+
+The raw hierarchy remains worse than the prior: -2.24 percentage points (95\% interval [-6.38, 1.78]). The guarded-minus-prior effect is 0.000 percentage points, interval [0.000, 0.000]. Because their scores are identical at $\beta=0$, small wall-budget differences reflect timing and termination variability, not learned generalization. This amendment prevents unsupported deployment of a degraded learned controller; it does not rescue the positive learning hypothesis.
+
+\subsection{Certified resource trade-off and independent audits}
+
+For controlled-S, $2x_0x_1=x_0+x_1-(x_0\oplus x_1)$ modulo eight. Frozen trained models generate three-T circuits with the following verified costs:
+
+\begin{center}\small\begin{tabular}{@{}rrrrrr@{}}\toprule
+
+Available clean & Used & T-depth & CNOT & Native depth & Gates \\\midrule
+
+0 & 0 & 2 & 2 & 4 & 5 \\
+
+1 & 1 & 1 & 4 & 5 & 7 \\
+
+2 & 1 & 1 & 4 & 5 & 7 \\\bottomrule\end{tabular}\end{center}
+
+All five seeds reproduce all three calibration settings. Independent rank bounds certify T-depth two without workspace and one with at least one clean ancilla; independently verified tighter-CNOT covers certify the stated CNOT minima under the corresponding depth contracts. Thus one auxiliary qubit removes a T-layer but costs two CNOTs and two native gates. The construction and rank principle are known; this is a calibration of the learned-generation and proof pipeline, not a newly discovered quantum identity.
+
+Post-campaign auditing closes 11 of the 25 primary CNOT gaps; the other 14 remain certified upper bounds. No audit result repairs a failed discovery record. The complete evidence verifier replays 641 unique native witness/contract pairs across 5,501 recorded outcomes, checks 26 closed covers and 120 rank-bound records, and verifies the coherent evaluator reference. The 5,501 outcomes include calibration, validation, constructive controls and the amendment; they are not 5,501 independent target problems.
+
+The learned seed-zero BNN phase oracle uses no auxiliary qubits, seven T gates, six CNOTs, eleven native depth levels, sixteen native gates, and five T-layers. The separately constructed compute--phase--uncompute reference uses two auxiliaries, 42 T gates, 42 CNOTs, native depth 66, and 98 gates. This is a representation comparison, not a learning ablation. Running the actual synthesized oracle and diffusion gives marked probability $0.8437499999999996$, agreeing with $27/32$ to $4.45\times10^{-16}$; workspace leakage is zero in the simulation.
