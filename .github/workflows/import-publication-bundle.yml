@@ -35,13 +35,31 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/qcs-transfer /tmp/qcs-publication
-          for sha in 2b9ed23b44e461ee62047fb756c65f68907592ce 5f2b668fc4fdc2b1ea2cd9b8cd1089d740405529; do
-            gh api "repos/${GITHUB_REPOSITORY}/git/blobs/${sha}" --jq .content | base64 --decode >> /tmp/qcs-transfer/source.patch.zst
+          rm -rf /tmp/qcs-transfer /tmp/qcs-publication
+          mkdir -p /tmp/qcs-transfer
+          for sha in \
+            2338526bb70595382c21f9df882ce9490bf01a73 \
+            dbe23590bbd5718232831ee0dc204fe879705813 \
+            5428a698f9a8725f5f21e8e9cac112fd3edf4e99 \
+            bc0e956f3cadcdbdc1bcaed94b8b94e5d67376ae \
+            e910fae8f4293eedd5b1c0bd563e281fa89f2ad6 \
+            3bca659009618ebc0b9e9cf5d3e2788065e1d065 \
+            4a13548a6e42c4805ee29dbe8b381b157df49289 \
+            b5b216744155b3afe313fc8bbc7343e2cfe2492b \
+            b9c8304a6cf7a82c5885fbb46f9b54df494fca52 \
+            e27100d1e3d4ba06a36db43976e6eceeeb60ec6d \
+            016b6b86eb15e1441aef4adf879e37e4105a085b \
+            726c4c7ceace607b60c49c95e839b439697250c2 \
+            ecdcaa41931a15ff7614d14af41e97197207f578 \
+            2e25b42d22ea4f0c0f93c2dda021665187af5bc6 \
+            c205f2b8a8a7e7da7bd81e65b9b930aa8777f975 \
+            78ee880ce4feabee37a9c506077b718f4a147141 \
+            0d5f767a8bf3df27b39ac5c22867dce5a159f951; do
+            gh api "repos/${GITHUB_REPOSITORY}/git/blobs/${sha}" --jq .content | base64 --decode >> /tmp/qcs-transfer/source.patch.xz
           done
-          echo 'e9d1f1acccf24ec8b19f74f4a4fb4ad7f2dbde3fc6505a39f2c4d6f4625cbaf6  /tmp/qcs-transfer/source.patch.zst' | sha256sum -c -
-          zstd -q -d /tmp/qcs-transfer/source.patch.zst -o /tmp/qcs-transfer/source.patch
-          echo '341f9a16fe582f462463b0d80392f32ea2b2007d211031f6347fbac4034349fb  /tmp/qcs-transfer/source.patch' | sha256sum -c -
+          echo 'bd5fa237e875141712f9eed408bcd6ae5ba73add010fa0916e0d31881331f05d  /tmp/qcs-transfer/source.patch.xz' | sha256sum -c -
+          xz -dc /tmp/qcs-transfer/source.patch.xz > /tmp/qcs-transfer/source.patch
+          echo '8f743fdd5a688bf24ae50e02d04ba616a64bac32e7af4a7a761268164c354606  /tmp/qcs-transfer/source.patch' | sha256sum -c -
           git worktree add --detach /tmp/qcs-publication dfa7f9081a289a0b645eea70d8192c89cc17c1eb
           cd /tmp/qcs-publication
           git apply --check /tmp/qcs-transfer/source.patch
@@ -49,10 +67,13 @@ jobs:
           git add -A
           test "$(git write-tree)" = 'eba5f4740b34109577bd98e377f6c8ea02678bcd'
           git diff --cached --check
+          test "$(git hash-object .github/workflows/publication-ci.yml)" = '2048b318a5f90752fbca9747ba0a7b78fae136e2'
+          echo 'Source payload, patch and exact source tree verified.' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Install publication dependencies
         working-directory: /tmp/qcs-publication
         run: |
+          python -m pip install --upgrade pip
           python -m pip install -r publication/requirements-reproduction.txt
           python -m pip install -e '.[dev]'
 
@@ -89,7 +110,7 @@ jobs:
           make -C publication
           test -s publication/main.pdf
 
-      - name: Publish the complete regenerated tree without force pushing
+      - name: Publish complete regenerated tree by fast-forward only
         working-directory: /tmp/qcs-publication
         shell: bash
         run: |
@@ -99,6 +120,7 @@ jobs:
           tree=$(git write-tree)
           git fetch origin publication-linear-certified-qcs-v1
           parent=$(git rev-parse origin/publication-linear-certified-qcs-v1)
+          test "$(git rev-parse ${parent}:.github/workflows/publication-ci.yml)" = '2048b318a5f90752fbca9747ba0a7b78fae136e2'
           commit=$(printf '%s\n' 'Publish final linear certified QCS study with regenerated evidence' | git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit-tree "$tree" -p "$parent")
           git push --porcelain origin "$commit":refs/heads/publication-linear-certified-qcs-v1
           remote=$(git ls-remote --heads origin refs/heads/publication-linear-certified-qcs-v1 | awk '{print $1}')
