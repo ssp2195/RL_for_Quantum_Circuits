@@ -10,3 +10,9 @@ publication/*.out
 publication/*.toc
 publication/*.fls
 publication/*.fdb_latexmk
+
+# Native manuscript intermediates; its final PDF remains tracked.
+publication_native/*.aux
+publication_native/*.log
+publication_native/*.out
+publication_native/*.toc

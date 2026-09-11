@@ -1,0 +1,201 @@
+\documentclass[11pt]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern,microtype}
+\usepackage[margin=0.9in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools,booktabs,tabularx,graphicx,tikz}
+\usepackage[hidelinks]{hyperref}
+\newtheorem{theorem}{Theorem}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+\newcommand{\ket}[1]{\lvert #1\rangle}
+\newcommand{\F}{\mathcal F}
+\newcommand{\R}{\mathcal R}
+\newcommand{\CX}{\mathrm{CNOT}}
+\newcommand{\ord}{\operatorname{ord}}
+\title{Exact evidence and linear search scheduling\\for resource-constrained native quantum circuit synthesis}
+\author{Anonymous Authors}
+\date{September 11, 2026}
+\input{numbers.tex}
+\begin{document}
+\maketitle
+\begin{abstract}
+A circuit implementing a quantum operation, a proof of its resource optimality, and an effective learned synthesis controller are different scientific objects. We study their separation in a native Clifford+$T$ search whose every frontier record contains a persistent circuit dependency graph, a signed Clifford tableau, an ordered signed Pauli-rotation word, a global-phase coordinate, and consumed resources. A linear semi-gradient SARSA policy selects a frontier record; six linear contextual-bandit models rank its pending native continuations. A bounded candidate panel limits scoring without deleting the remaining frontier. Deterministic bound tightening and independently checked closed covers establish resource minima within explicit finite contracts. A separate cyclotomic-arithmetic verifier replaces tolerance-based target comparisons for eligible ideal targets. We construct disjoint mixed-axis unitary corpora, compare equal-edge and equal-time budgets, isolate audit-generated evidence, and diagnose local credit assignment after held-out evaluation. Determinant obstructions distinguish impossible exact-phase, ancilla-free benchmark contracts from failures of a search policy. \input{abstract_results.tex}
+The contribution is a reproducible native-search and exact-evidence interface with a controlled empirical assessment; neither a new universal synthesis algorithm nor a general advantage of learning is presumed.
+\end{abstract}
+
+\section{Scientific question and relation to prior work}
+A quantum circuit is a product of native unitary gates acting on a logical register and, when allowed, auxiliary qubits. Its utility depends on the logical transformation, coherent return of workspace, and the resources of the executable circuit. The classical computation used to discover that circuit is a separate resource. This distinction follows the circuit-model viewpoint of Nielsen and Chuang~\cite{nielsen}: minimizing quantum gates does not mean minimizing the number of candidate gates examined by a classical algorithm.
+
+Our question is whether inexpensive learned allocation of classical search effort improves the discovery of low-resource \emph{native} circuits while leaving feasibility and optimality conclusions independent of learned estimates. The authoritative state is not a list of required parity phases. Diagonal targets may be specified by phase functions, but arbitrary permitted $H,S,S^\dagger,T,T^\dagger,\CX$ extensions remain available. Therefore neither the final Pauli-rotation sequence nor its $T$-count is prescribed by a target phase polynomial.
+
+We contribute a concrete interface and empirical study: persistent exact symbolic prefixes; computationally bounded linear ranking with global continuation coverage; resource-minimization receipts that can be checked independently of the policy; an additional exact-arithmetic target verifier; and a benchmark protocol separating search difficulty from exact reachability, reference constructions, and proof effort. These are implementation and evaluation contributions, not priority claims for induction, resource dominance, matrix rings, or learning-assisted circuit synthesis. Their scientific value is assessed against explicit controls and stated limitations.
+
+The relevant prior art is substantial. Giles and Selinger characterize exact multiqubit Clifford+$T$ representability with and without ancillas~\cite{giles}. Selinger gives ancilla-assisted $T$-depth constructions~\cite{selinger}; phase-polynomial and parity-network optimization are well established~\cite{amy}. These results preclude presenting a familiar phase identity, a determinant obstruction, or a known clean-workspace construction as a learned discovery. Dubal et al. directly study reinforcement-learning synthesis of Clifford operations and arbitrary Pauli rotations~\cite{dubal}. AlphaTensor-Quantum optimizes $T$-counts through learned tensor decompositions and uses Z3 to confirm small-instance optimality in its domain~\cite{ruiz}. Learned node selection for branch-and-bound also precedes this work~\cite{mattick}. Thus ``learning plus verification'' is not, by itself, our novelty claim.
+
+Our specific experimental distinction is a retained native frontier controlled by small linear models, with provenance-separated exclusion certificates and exact target replay. The trained circuit-generation tests do not substitute for comparisons with an untrained policy. We execute global uniform-cost and cold-table meet-in-the-middle controls in the native grammar. We do not claim to reproduce the larger neural, MILP, or tensor systems' published results. In particular, GraySynth's parity-network task is not used as a proxy for the noncommuting native corpus.
+
+\section{Native circuit semantics and resource contracts}
+For $n$ logical and $a$ clean auxiliary qubits, write $w=n+a$ and
+\begin{equation}
+ J_a\ket{x}=\ket{x}\ket{0^a},\qquad U_CJ_a=J_aU_\star.
+ \label{eq:contract}
+\end{equation}
+Equation~\eqref{eq:contract} requires the specified action on every superposition, not only correct measurement probabilities. It constrains the promised input subspace and restores clean workspace, without prescribing the action on invalid initial ancilla states. Global phase is exact unless a different contract explicitly says otherwise. All new exact-arithmetic results use exact phase. Gates use all-to-all connectivity; measurements, resets and magic-state factory costs are not part of the experiment.
+
+Every native prefix has the authoritative description
+\begin{equation}
+ v=(G_v,\Theta_v,\R_v,\phi_v,\rho_v),\quad
+ U_v=e^{i\phi_v}C(\Theta_v)\prod_{j=1}^{m_v}R_{P_{v,j}}(k_{v,j}\pi/4),\quad
+ R_P(\theta)=e^{-i\theta P/2}.
+ \label{eq:hybrid}
+\end{equation}
+Here $G_v$ is a lossless persistent dependency DAG; $\Theta_v$ contains signed forward and inverse Clifford generator images; and $\R_v$ is an \emph{ordered} signed-Pauli word. Noncommuting factors cannot be sorted arbitrarily. The scalar convention for the Clifford representative makes the first nonzero amplitude of $C\ket{0}$ positive real. The separately stored $\phi_v$ is an integer multiple of $\pi/8$, tracked exactly. A derived Gaussian-integer Clifford-column cache supplies this scalar convention. It is not a phase polynomial and is not itself a scalable stabilizer-state algorithm.
+
+Native extensions are deterministic. Clifford conjugation obeys $C R_P(\theta)C^\dagger=R_{CPC^\dagger}(\theta)$, so Hadamards change Pauli axes rather than ending the representation. The identity $T=e^{i\pi/8}R_Z(\pi/4)$ determines the scalar and axis transport of a non-Clifford extension. Native witness replay and an independently rendered hybrid factorization are checked by regression tests. This is not a claim of a complete canonical normal form for Clifford+$T$: equality of retained keys is sufficient for merging, not necessary for every pair of equivalent circuits.
+
+Consumed resources include
+\begin{equation}
+ \rho=(N_T,N_{CX},N_G,d_1,\ldots,d_w,\tau_1,\ldots,\tau_w).
+\end{equation}
+A gate on wires $Q$ sets their native depths to $1+\max_{q\in Q}d_q$ and their $T$-depth boundaries to $\max_{q\in Q}\tau_q+\mathbf1[g\in\{T,T^\dagger\}]$. The maxima define native depth $D$ and weighted dependency-DAG $T$-depth $D_T$. These measures exclude physical routing and distillation scheduling. Every native gate increases $N_G$ by one; a finite gate cap therefore makes the search domain finite even when optimizing a different resource.
+
+\begin{lemma}[Semantic and continuation invariants]
+Assuming the native tableau and Pauli rewrite identities, every reachable record represents its persistent native word exactly. If two records have the same exact retained operator key and $\rho(u)\le\rho(v)$ componentwise, every resource-feasible common suffix from $v$ can be applied to $u$ with the same operator action and no greater final resources.
+\end{lemma}
+\begin{proof}
+Induction over gate append operations proves the first assertion: a Clifford updates the frame and its scalar, and a $T$-type gate transports a signed Pauli axis with the corresponding scalar. The lossless DAG records the same appended gate. For the second assertion, gate-operand legality depends on the fixed physical register. Counter updates add nonnegative constants and wire-depth updates are coordinatewise monotone maxima followed by nonnegative increments. The resource inequality is preserved at each common suffix step. Full physical-operator equality implies equality on the clean-input subspace. The latter implication is conservative; it need not merge every pair equivalent only on that subspace.
+\end{proof}
+
+\section{Learning-independent optimality and exact evidence}
+For one resource $c(C)$ and all other contract fields fixed, a certified incumbent of cost $k$ supplies $c^\star\le k$. The deterministic optimizer searches the stricter problem $c(C)\le k-1$. Discovery can supply a better incumbent; otherwise the deterministic auditor may generate a closed-cover certificate. A timeout does not supply a lower bound.
+
+A closed cover is a finite set of resource-labelled operator states that covers the root, contains no target state, and covers every feasible one-gate successor. Coverage requires equal retained operator semantics and componentwise no-greater resources. The checker reconstructs labels and legal successors independently of the policy and the auditor's queue.
+\begin{theorem}[Closed-cover exclusion]
+A checked closed cover excludes every circuit satisfying the same finite native resource and logical contract.
+\end{theorem}
+\begin{proof}
+Suppose a feasible target circuit exists. Its root is covered. If a prefix is covered, the continuation lemma makes its next gate feasible from the covering label, with resources no greater than those of the target prefix. Closure provides a covering label for the child. Induction reaches a feasible target-equivalent label in the cover, contradicting target exclusion. The proof is independent of the order in which the cover was found.
+\end{proof}
+\begin{corollary}[Resource minima]
+A certified incumbent at $k$ and a checked exclusion at $k-1$ establish the minimum of that integer resource within the remaining bounds. Applying this procedure to an ordered resource vector, fixing each proved coordinate before proceeding, establishes a bounded lexicographic optimum. At zero, nonnegative resource increments suffice. A feasible clean width $a$ and checked exclusions at every smaller width establish a minimum clean-ancilla budget under the same other caps.
+\end{corollary}
+
+The native optimizer supports $(N_T,N_{CX},D,N_G)$ lexicographic minimization and configurable $D_T$ placement. The primary efficiency experiment isolates single-resource native-gate minimization under fixed $T$, CNOT and depth caps; it is not a claim that gate count is universally preferable to $T$-count. Post-campaign proof jobs optimize $(N_G,N_T,N_{CX},D)$ on a fixed sample, keeping the state representation and grammar unchanged. Discovery, auditing and checking are timed separately. Audit-generated words are never attributed to learning; the primary experiment does not call the auditor at all.
+
+The earlier native checker compares arbitrary numerical target isometries to a declared tolerance. Such a receipt is not automatically an exact algebraic proof. We add a separately executed backend over
+\begin{equation}
+ \mathcal A=\mathbb Z[\omega,1/2],\quad \omega=e^{i\pi/4},\quad
+ z=2^{-b}(z_0+z_1\omega+z_2\omega^2+z_3\omega^3),\quad \omega^4=-1.
+ \label{eq:ring}
+\end{equation}
+Native $S,T$ operations multiply rows by powers of $\omega$, CNOT permutes rows, and $H$ uses $(\omega-\omega^3)/2=1/\sqrt2$. Integer arithmetic and denominator normalization give exact promised-input evolution. The exact descriptor is part of the mathematical target; it is not inferred by rounding an arbitrary unknown floating-point matrix. Numerical target matrices are only a scoring/rendering interface.
+
+\begin{proposition}[Exact replay and exact target exclusion]
+For an exact target descriptor in $\mathcal A$, complete integer replay establishes the clean-input equality in~\eqref{eq:contract}. If a native closed cover additionally passes exact target exclusion and the same continuation-closure checks, its exclusion and the associated bounded optimum hold for that ideal target without a floating-point equality predicate.
+\end{proposition}
+\begin{proof}
+Every native row operation is an identity in the ring~\eqref{eq:ring}; induction gives exact coefficients for the returned isometry. Equality of normalized coefficient tuples is equality in the degree-four cyclotomic field. The closed-cover induction then uses this exact target predicate. The symbolic archive-key and resource algebra remain a shared trusted base; this is not a proof-assistant verification of all implementation code.
+\end{proof}
+
+\subsection*{Reachability before interpreting search failures}
+An important benchmark distinction follows from established exact-synthesis theory~\cite{giles}. For a gate $g$ acting on $r$ wires of a $w$-qubit register,
+\begin{equation}
+ \det(g\otimes I_{2^{w-r}})=\det(g)^{2^{w-r}}.
+\end{equation}
+On three physical qubits, the determinant subgroup generated by the native grammar is $\{1,-1\}$. The forward eight-dimensional Fourier matrix has determinant $i$. On four physical qubits, every native generator has determinant one, whereas logical $C^3X$ has determinant $-1$.
+\begin{corollary}[Known exact-phase ancilla obstructions]
+The specified QFT-3 and four-logical-qubit Toffoli have no ancilla-free exact-phase realization in this native grammar. Independently checked one-clean-ancilla constructions establish minimum clean width one for these ideal targets.
+\end{corollary}
+\begin{proof}
+Determinants multiply under circuit composition, so each target determinant lies outside the appropriate ancilla-free subgroup. The archived one-clean-wire native words are checked exactly on the promised subspace. Their unconstrained action on invalid clean inputs can compensate the full-register determinant. Neither this argument nor the known constructions are discoveries attributable to learning. The argument does not assert an obstruction under an arbitrary projective-phase or borrowed-ancilla contract.
+\end{proof}
+
+\section{Linear control of a retained native search}
+In Sutton--Barto terminology~\cite{sutton}, the environment state $S_t$ is the complete classical search configuration, including frontier records, pending continuations, archive, resource bounds and work budget. The action is allocation of the next search operation, not the physical quantum state or an instruction to measure a qubit. An outer action chooses record $v_t$ and an inner action chooses one still-pending native continuation. The transition is known and deterministic; the compact feature representation is not asserted to be Markov-sufficient.
+
+The outer approximation has twenty coordinates,
+\begin{equation}
+ \hat q(S,v;w)=w^\mathsf T\varphi(S,v),\quad
+ \delta_t=R_{t+1}+\hat q(S_{t+1},v_{t+1};w_t)-\hat q(S_t,v_t;w_t),
+\end{equation}
+\begin{equation}
+ w_{t+1}=\operatorname{clip}_{[-20,20]}
+ \left(w_t+\alpha\delta_t\frac{\varphi(S_t,v_t)}{\max(1,\|\varphi(S_t,v_t)\|^2)}\right).
+\end{equation}
+This is a normalized semi-gradient SARSA update with the actually selected next action and zero terminal bootstrap. Features contain target isometry discrepancy, native resource use and slack interactions, rotation length and Pauli weight, anticommutation fraction, a tableau summary, global phase, workspace leakage and depth, pending continuations, and remaining computational budget. Exact state and numerical scoring cache have separate roles. The publication harness supplies the fraction of the budget axis actually being measured; it does not call a large artificial edge cap a remaining wall-time fraction.
+
+The six inner models retain twenty-four-dimensional features and disjoint LinUCB regression~\cite{li}. In training they rank by
+\begin{equation}
+ x^\mathsf T(\theta_{0,f}+\hat\theta_f)+
+ \beta\sqrt{x^\mathsf TA_f^{-1}x},\qquad
+ A_f\leftarrow A_f+xx^\mathsf T,
+\end{equation}
+where the public prior $\theta_{0,f}$ is shared with the untrained control. Evaluation disables the exploration bonus. The baseline inner response is one-step, frozen-outer-value feedback rather than an admissible resource bound. Independently retrained ablations remove this bootstrap, use the actual next selected frontier context instead of the child-prefix context, or remove Pauli/tableau structural feature coordinates. These remain linear models; no graph neural network or third controller is introduced.
+
+The base reward is $r_t=\mathbf1[\text{certified hit}]-0.002$ per attempted native edge. Shaping adds $\Phi(S_{t+1})-\Phi(S_t)$ at $\gamma=1$, with zero potential at every terminal outcome. Over an episode it telescopes to $-\Phi(S_0)$; it redistributes feedback without certifying gate optimality. The expected-return objective and wall-time resource quality remain different evaluation objects. We claim neither global SARSA convergence nor direct applicability of stationary-bandit regret bounds to the endogenous search contexts.
+
+An indexed panel with $K=32$ bounds record scoring. Every thirty-second allocation instead selects the globally oldest live record and a pending continuation. Records outside the panel are retained, not beam-pruned.
+\begin{theorem}[Coverage and scoring boundary]
+For a finite resource-bounded domain, with no external interruption and sound dominance, global fairness preserves feasibility coverage independently of the learned scores. With cached feature dimensions $d_o,d_i$, ranking a size-$K$ panel and $b$ pending native continuations uses $O(K\log K+Kd_o+bd_i)$ work, apart from frontier-index updates, feature construction, symbolic transitions and certification.
+\end{theorem}
+\begin{proof}
+Each finite live record has finitely many pending continuations; periodic oldest-record service eventually processes them or they are covered by a no-more-expensive replacement. A finite native gate cap bounds the total unpruned word set. Induction over that set and the continuation lemma gives coverage. The scoring bound counts panel extraction and linear dot products. It is not a bound on total synthesis cost or memory. Restricting scored candidates also changes which record can win a policy decision; its performance cannot be attributed solely to reduced arithmetic.
+\end{proof}
+
+\section{Locked experimental protocol and results}
+The new campaign is separate from the archived fixed-phase-polynomial study. Its protocol is generated before policy selection or held-out evaluation, using \TrainingCases{} training, \ValidationCases{} validation, and \TestCases{} test logical unitaries on one to three logical qubits. Candidate specifications require Hadamards, non-Clifford gates and connected entangling structure when applicable. One- and two-qubit identities and all at-most-two-gate targets are excluded by exact orbit de-duplication. The split excludes eighth-root global-phase, adjoint and wire-permutation duplicates. It does not claim disjointness under arbitrary Clifford conjugation. No scheduler's observed success is used to retain or reject a target.
+
+Short generating words establish reachability and reference upper bounds but are stored separately. A NativeProblem supplies only the target matrix and contracts to discovery. Construction paths are unavailable to training, discovery and primary bound tightening. A fixed twenty-four-target regression corpus is separate from the performance split. The complete old forty-three-target QFT/Toffoli/SWAP/oracle registry remains unchanged and is evaluated as a separate challenge campaign.
+
+Each full policy completes $64+96+24=184$ staged native training episodes: outer updates, inner updates with frozen outer parameters, then outer adjustment. One quarter of episodes make an additional clean qubit available. All six gate families must receive updates. The learning-rate candidates $0.003,0.01,0.03$ are selected on validation only, with seed 101 and a fixed 512-edge budget. The chosen rate is \SelectedAlpha{}. Five final training seeds are $11,19,23,31,47$. Ablations are separately retrained with seeds $11,23,47$. All fitting, including validation selection and ablations, uses \FittingCPU{} CPU seconds against the declared 1,800-second aggregate limit. This excludes subsequent evaluation and proof effort, which are reported separately.
+
+The primary experiment compares the full hierarchy, its identical untrained prior, outer-only and inner-only learning, greedy allocation, global goal-on-pop uniform-cost search, and cold-table native meet-in-the-middle. The latter uses rounded numerical fingerprints only to nominate matches; every returned native word is independently certified. A miss is not an exclusion certificate. Its half-depth is at most four, it uses no hidden precomputed table, and it may leave available ancillas idle. Table construction and candidate replay are charged per call. It is a native witness-finding control, not a complete general ancilla optimizer.
+
+We compare edge budgets 128 and 1,024, and separate wall budgets 0.2 and 1.0 seconds. The edge runs have a 30-second safety guard; the wall runs have a large nonbinding edge allowance and a 30-second CPU guard. Record ceilings and actual termination reasons are retained. Timed runs have two repetitions; deterministic edge controls need one, while the learned methods retain five trained seeds. Jobs are interleaved in a fixed shuffled order. Terminal witnesses arriving after the wall deadline are archived but are not timely successes. All limits are cooperative, not operating-system hard kills.
+
+Primary discovery never calls the auditor. It repeats discovery under a native-gate cap one below its incumbent, charging all rounds to the same budget. The predeclared endpoint is the one-second score
+\begin{equation}
+ Q_B=\mathbf1[\text{timely certified witness}]
+       \frac{B_G+1-N_G(C_B)}{B_G+1},
+ \label{eq:score}
+\end{equation}
+where $B_G$ is the original gate cap. Every feasible timely circuit receives positive score; an unresolved run receives zero. Success, literal constructor-relative savings, conditional gate counts, first-hit time and resource profiles are reported separately. Paired bootstrap intervals resample logical targets after averaging seeds and repetitions within targets. Five thousand resamples are used; non-primary intervals are descriptive and not multiplicity-adjusted. Across-seed sensitivity is archived separately.
+
+\input{results.tex}
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=.82\linewidth]{figures/edges.pdf}
+\caption{Native resource score versus attempted-edge allowance. Feature look-ahead is reported separately and is not mistaken for an attempted symbolic edge.}
+\end{figure}
+\begin{figure}[htbp]\centering
+\includegraphics[width=.82\linewidth]{figures/wall_seconds.pdf}
+\caption{Resource score versus total wall allowance, including selection and native certification. This is a different experiment from equal-edge allocation.}
+\end{figure}
+
+\section{Interpretation, limitations and reproducibility}
+The controlled experiment, not the existence of trained checkpoints, determines whether learning is useful. The primary outcome is stated numerically without selecting a favorable seed or budget. Ablation effects concern the specified intervention and corpus; off-policy short-completion probes are explanatory measurements, not a proof of the cause of every failure. Exact or near-identical feature summaries can omit relevant future structure, and a contextual one-step response may misassign credit to compute--use--uncompute paths. Conversely, observing a negative effect does not establish that all linear policies or all quantum-synthesis learning tasks must fail.
+
+The determinant classification prevents impossible ideal exact-phase tasks from being mistaken for evidence that the controller needs more training. The minimum-width results are analytically stronger than a timeout, but use known constructions and existing exact-synthesis theory. The controlled-$S$ references show a gate/depth trade-off without claiming a new identity or attributing it to a policy that did not find it. The small threshold-network oracle verifies coherent integration into amplitude amplification, not scalable BNN verification or end-to-end quantum advantage. The original multi-marked three-input BNN target remains among the unchanged challenge contracts.
+
+Scalability remains limited by the size of the native search and dense caches. Clifford columns have $2^w$ entries; promised-input numerical isometries have $2^w2^n$ entries. The implementation restricts physical width to eight, while the principal mixed-native corpus is much smaller. Full physical-operator equality is conservative for clean-input subspaces, and the ordered-rotation key is not a complete normal form. The scoring bound therefore does not imply inexpensive transitions, efficient proofs, or polynomial synthesis. Classical discovery can find a useful circuit long before it can exclude all cheaper circuits.
+
+All native results are relative to the chosen native grammar, exact or numerical target predicate, clean-width convention and finite resource bounds. The new exact checker must actually finish before an exact target-optimality upgrade is claimed. Numerical proofs are not relabelled exact because a target happens to have a familiar name. Neither procedure is a proof-assistant verification of its shared symbolic kernel.
+
+The artifact includes a locked target protocol, source checksums, completed training trajectories, frozen checkpoint digests, validation selection, interleaved raw results, all failed and late outcomes, independently checked witnesses, exact receipts, analytical reachability certificates and environment records. Numerical manuscript text and plots are generated from one analysis source. The historic phase-study manuscript and records are preserved under their old paths and are not merged with native results. Reproduction commands distinguish fresh training and search from archived witness/proof replay. Most new unit tests generate and verify native circuits only after their declared regression training schedule has completed. That shorter regression schedule is not the performance study and does not estimate its success rate.
+
+The appropriate conclusion is conditional: this artifact supplies a mathematically specified native synthesis and exact-evidence interface, and the executed controlled study establishes only the performance statements shown above. It does not justify a claim of universal learned superiority, novel elementary circuit identities, or unrestricted native resource optimality.
+
+\begin{thebibliography}{10}
+\bibitem{nielsen} M. A. Nielsen and I. L. Chuang, \emph{Quantum Computation and Quantum Information}, 10th anniversary ed., Cambridge University Press, 2010.
+\bibitem{sutton} R. S. Sutton and A. G. Barto, \emph{Reinforcement Learning: An Introduction}, 2nd ed., MIT Press, 2018.
+\bibitem{giles} B. Giles and P. Selinger, ``Exact synthesis of multiqubit Clifford+$T$ circuits,'' \emph{Physical Review A} \textbf{87}, 032332, 2013. doi:10.1103/PhysRevA.87.032332.
+\bibitem{selinger} P. Selinger, ``Quantum circuits of $T$-depth one,'' \emph{Physical Review A} \textbf{87}, 042302, 2013. doi:10.1103/PhysRevA.87.042302.
+\bibitem{amy} M. Amy, P. Azimzadeh and M. Mosca, ``On the CNOT-complexity of CNOT-PHASE circuits,'' \emph{Quantum Science and Technology} \textbf{4}, 015002, 2019. arXiv:1712.01859.
+\bibitem{dubal} A. Dubal, D. Kremer, S. Martiel, V. Villar, D. Wang and J. Cruz-Benito, ``Pauli Network Circuit Synthesis with Reinforcement Learning,'' arXiv:2503.14448, 2025.
+\bibitem{ruiz} F. J. R. Ruiz et al., ``Quantum circuit optimization with AlphaTensor,'' \emph{Nature Machine Intelligence}, 2025. doi:10.1038/s42256-025-01001-1.
+\bibitem{mattick} A. Mattick and C. Mutschler, ``Reinforcement Learning for Node Selection in Branch-and-Bound,'' \emph{Transactions on Machine Learning Research}, 2024. arXiv:2310.00112.
+\bibitem{li} L. Li, W. Chu, J. Langford and R. E. Schapire, ``A contextual-bandit approach to personalized news article recommendation,'' in \emph{WWW}, pp. 661--670, 2010. doi:10.1145/1772690.1772758.
+\end{thebibliography}
+\end{document}

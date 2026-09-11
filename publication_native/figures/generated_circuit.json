@@ -1,0 +1,1 @@
+{"name":"test-n2-14","native":[["TDG",[0]],["H",[0]],["CNOT",[1,0]],["T",[0]],["TDG",[1]]],"scope":"actual frozen-hierarchy discovery, not a reference","seed":47,"source_run_key":"test-n2-14:wall_seconds:1.0:1:hierarchy:47"}

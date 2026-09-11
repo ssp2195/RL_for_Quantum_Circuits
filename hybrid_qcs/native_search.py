@@ -162,7 +162,9 @@ class NativeSearch:
     def remaining_fraction(self):
         return max(0.,1-self.meter.edges/max(1,self.limits.max_edges))
 
-    def run(self,model=None,*,scheduler='hierarchy',train=None,epsilon=.15):
+    def run(self,model=None,*,scheduler='hierarchy',train=None,epsilon=.15,inner_response='child'):
+        if inner_response not in ('child','frontier','base'):
+            raise ValueError('unknown inner response ablation')
         if scheduler not in ('hierarchy','untrained','greedy','outer','inner','cost') or train not in (None,'outer','inner') or not 0<=epsilon<=1:
             raise ValueError('invalid scheduler or training configuration')
         if model is None:
@@ -196,11 +198,19 @@ class NativeSearch:
                 # It never supplies pruning or certification decisions.
                 child_value=0. if ended else float(model.score_outer(child.x if child else record.x))
                 response=base+child_value-float(model.score_outer(x))
+                if inner_response == 'frontier':
+                    response=base+(0. if ended else float(model.score_outer(nxt[2])))-float(model.score_outer(x))
+                elif inner_response == 'base':
+                    response=base
                 model.update_inner(ix,self.p.actions[token].name,response)
             if train:
                 training.append({'rid':record.record_id,'token':token,'family':self.p.actions[token].name,
                                  'reward':reward,'base_reward':base,'potential_before':before,
-                                 'potential_after':after,'terminal':ended})
+                                 'potential_after':after,'terminal':ended,
+                                 'parent_distance':float(record.x[1]),
+                                 'child_distance':float(child.x[1]) if child else None,
+                                 'inner_response_mode':inner_response,
+                                 'inner_response':float(response) if train=='inner' else None})
             choice=nxt
         reason='certified' if self.solution else self.halt or self.meter.reason() or 'exhausted_without_independent_proof'
         if train:
