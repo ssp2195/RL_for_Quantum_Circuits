@@ -1,0 +1,150 @@
+name: Validate and publish native credit-assignment amendment
+on:
+  push:
+    branches: [native-credit-transfer-20260911]
+    paths: [.github/workflows/publish-native-credit.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: native-credit-publication
+  cancel-in-progress: false
+jobs:
+  validate-confirm-publish:
+    if: github.repository == 'ssp2195/RL_for_Quantum_Circuits' && github.ref == 'refs/heads/native-credit-transfer-20260911'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      MPLBACKEND: Agg
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Reconstruct the exact locally tested source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/credit-transfer
+          for sha in \
+            3b39162a07b4f71c23859328c55fc52d815ba541 \
+            ea4b2e177e5c3ebc682bea1db998174f02767504 \
+            f603ab6a5c162d7701fbb1e6f9ad1c7859505aea \
+            540a5d31e77b9842edc7498d8a82e6059b68b802 \
+            d9edba39565f2a0415ee2e44f8bad9fda797d46c \
+            e4f54306bab33a4ae2a00df273e314ecc498914b \
+            8b3b6cf1d113eed618a621093fc7dafd438f5313 \
+            94363a79cc6684bb697cbb7c6b9070470b7afb27 \
+            cbb266fcf9c379ac626c0f3674d0bbc8a5809d2f \
+            bbdf7e823208d234b3ccfe9c9a123bf1eeea1604 \
+            e9beb568cc033a76108010e31b2219e8d5a2e6a4 \
+            066b4565c5a872a10968cdc4a6b3a27e32db61c0 \
+            b7cdd287d19c508ef0d6737e0d20a83e12785149 \
+            179884fee12c3f3552a1277e9191d960d8fd846c \
+            e5a77cf0fa31e73da1a5e5b0933b33df2d08b1a8; do
+            gh api "repos/${GITHUB_REPOSITORY}/git/blobs/${sha}" --jq .content | base64 --decode >> /tmp/credit-transfer/source.patch.xz
+          done
+          echo '28c39e1b5de45d439ef64bbc7fc9369ffb3b4da02d955d30ddee1296f5ec296b  /tmp/credit-transfer/source.patch.xz' | sha256sum -c -
+          xz -dc /tmp/credit-transfer/source.patch.xz > /tmp/credit-transfer/source.patch
+          echo '0074d4bca78b2ad14d3dbca4e2e9ffea1d6b34ce8e023326b3c71e1b4301c46f  /tmp/credit-transfer/source.patch' | sha256sum -c -
+          git worktree add --detach /tmp/native-credit-build 6c2f15ffc2e0ce524c6492f40f234a2862dba51a
+          cd /tmp/native-credit-build
+          git apply --check /tmp/credit-transfer/source.patch
+          git apply /tmp/credit-transfer/source.patch
+          git add -A
+          test "$(git write-tree)" = '1509fb9b426b974c3007c34fb5ce5ce20ea5b8e5'
+          git diff --cached --check
+          git diff --cached --stat > /tmp/credit-transfer/source-diff-stat.txt
+      - name: Full regression including 63 new post-training generation cases
+        working-directory: /tmp/native-credit-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install -r publication_native/requirements-reproduction.txt
+          python -m pip install -e '.[dev]'
+          python -m compileall -q hybrid_qcs tests
+          python -m pytest -q | tee /tmp/credit-transfer/pytest.log
+          grep -Eq '928 passed' /tmp/credit-transfer/pytest.log
+          python -m pip freeze > /tmp/credit-transfer/runtime.txt
+      - name: Correct derived historical claims without rerunning raw experiments
+        working-directory: /tmp/native-credit-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/correct_native_reporting.py | tee /tmp/credit-transfer/statistical-correction.log
+      - name: Freeze validation selection and run the complete fresh confirmation study
+        working-directory: /tmp/native-credit-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -u -m hybrid_qcs.native_credit_study --output-dir experiments/native_credit_v1 | tee /tmp/credit-transfer/study.log
+          test -f experiments/native_credit_v1/EVALUATION_COMPLETE
+          test -f experiments/native_credit_v1/verification.json
+          test -f experiments/native_credit_v1/analysis.json
+      - name: Independent exact replay of saved outcomes and frozen-model provenance
+        working-directory: /tmp/native-credit-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp experiments/native_credit_v1/verification.json /tmp/credit-transfer/verification-before.json
+          python -m hybrid_qcs.native_credit_study --stage verify --output-dir experiments/native_credit_v1 | tee /tmp/credit-transfer/verification.log
+          cmp experiments/native_credit_v1/verification.json /tmp/credit-transfer/verification-before.json
+      - name: Rebuild the corrected manuscript with actual confirmation outcomes
+        working-directory: /tmp/native-credit-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -q
+          sudo apt-get install -y texlive-latex-base texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended
+          make -C publication_native > /tmp/credit-transfer/latex.log
+          test -s publication_native/main.pdf
+          python - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          root=Path('experiments/native_credit_v1')
+          files={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(root.rglob('*')) if p.is_file() and p.name!='EVIDENCE_SHA256.json'}
+          (root/'EVIDENCE_SHA256.json').write_text(json.dumps(files,indent=2)+'\n')
+          Path('/tmp/credit-transfer/EXECUTION.json').write_text(json.dumps({'run_id':os.environ['GITHUB_RUN_ID'],'workflow_sha':os.environ['GITHUB_SHA'],'tested_source_tree':'1509fb9b426b974c3007c34fb5ce5ce20ea5b8e5','base_commit':'6c2f15ffc2e0ce524c6492f40f234a2862dba51a','original_raw_experiments_rerun':False,'new_confirmation_study':True,'publication_requires_positive_learning_result':False},indent=2)+'\n')
+          PY
+      - name: Publish tested source and every confirmation outcome without force pushing
+        working-directory: /tmp/native-credit-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A
+          git diff --cached --check
+          git diff --cached --exit-code -- experiments/publication_v1 publication
+          tree=$(git write-tree)
+          base=6c2f15ffc2e0ce524c6492f40f234a2862dba51a
+          branch=hybrid-frontier-restored-v1
+          test "$(git ls-remote --heads origin "refs/heads/$branch" | awk '{print $1}')" = "$base"
+          commit=$(printf '%s\n' 'Correct native statistical claims and add bounded-residual multi-step linear search control' 'Retain the authoritative hybrid frontier and independent certificates. Exact rational reporting corrects the old zero confidence bound without rerunning raw evidence. Publish validation-selected controllers, fresh held-out confirmations, unchanged strong controls, independently retrained ablations, exact witness verification and all negative outcomes. No superiority claim is presumed.' | git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit-tree "$tree" -p "$base")
+          git push --porcelain origin "$commit:refs/heads/$branch"
+          test "$(git ls-remote --heads origin "refs/heads/$branch" | awk '{print $1}')" = "$commit"
+          printf '%s\n' "$commit" > /tmp/credit-transfer/PUBLISHED_COMMIT.txt
+          printf '%s\n' "$tree" > /tmp/credit-transfer/PUBLISHED_TREE.txt
+          git update-ref "refs/heads/$branch" "$commit"
+          git bundle create /tmp/credit-transfer/native-credit-publication.bundle "refs/heads/$branch"
+          echo "Published $branch at $commit" >> "$GITHUB_STEP_SUMMARY"
+          cat experiments/native_credit_v1/RESULTS.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve complete or interrupted evidence and manuscript
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p /tmp/credit-transfer
+          if [ -d /tmp/native-credit-build/experiments/native_credit_v1 ]; then cp -a /tmp/native-credit-build/experiments/native_credit_v1 /tmp/credit-transfer/evidence; fi
+          if [ -f /tmp/native-credit-build/experiments/native_publication_v1/reporting_revision.json ]; then cp /tmp/native-credit-build/experiments/native_publication_v1/reporting_revision.json /tmp/credit-transfer/reporting_revision.json; fi
+          if [ -d /tmp/native-credit-build/publication_native ]; then cp -a /tmp/native-credit-build/publication_native /tmp/credit-transfer/manuscript; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-credit-study-and-validation
+          path: /tmp/credit-transfer
+          retention-days: 30
