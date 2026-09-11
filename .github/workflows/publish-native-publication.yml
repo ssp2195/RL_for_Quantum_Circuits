@@ -1,0 +1,158 @@
+name: Execute and publish the locked native hybrid study
+on:
+  push:
+    branches: [native-publication-transfer-20260911]
+    paths: [.github/workflows/publish-native-publication.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: native-hybrid-publication-study
+  cancel-in-progress: false
+jobs:
+  validate-study-publish:
+    if: github.repository == 'ssp2195/RL_for_Quantum_Circuits' && github.ref == 'refs/heads/native-publication-transfer-20260911'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      MPLBACKEND: Agg
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Reconstruct and verify the tested native source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/native-publication-transfer
+          for sha in \
+            10c3e0da9e1f76891f028a1b373d658df6bda584 \
+            586327cda53f57f7005ef7f5d334a526b92cf8b2 \
+            4f603c2fc7a5c96f3e2ddcf15efeaf937068e729 \
+            9fef44fd980001c9891764f46e8f91c047edfe4e \
+            bb8c789f82a30eb1f31df0b87eaf57895c728a7b \
+            f2677afcc651c9e0b0e233b3720948c405aa3a1d \
+            fe63be1b0bd61b21aeaeb38b40bc6520dd5c0ab3 \
+            cbb4c64ec2e9e3b12d4659f6f235fa9e5385edac \
+            5d31759d0b032bdf5c23da8fd5e7a9feb74d30b6 \
+            cc91197a0a74d86c1c099219bf2cad5467c70a2c \
+            3b8bd297974bb55992ed154db377651c5cd810ed \
+            afc81696cb3949e8f81f5c152fd622a9f6020544 \
+            1c8d4f14a5fe076ba0395815e4250eb1b677d5c4 \
+            bb88cfbf2b2003eeb972f4eb92aef47f14fe9442 \
+            d361b43734193b99fa43ddcafc356a8ffac10f49 \
+            9438cd9b2b45246d1cb0d6388aded022d5d06e41 \
+            f094171402426ef8ff38f2e3a190f45505172802 \
+            3ef8527e47cf467fcaa1b311644c52fdfc0edbc0 \
+            14cc7933050ae2b4d393e8bd7b07a2d391927d2b \
+            2c9aeab546bbda3de1ddb4acb9d2b42b3503292d \
+            b9e1e84249d06dda80a12a6b50b5108f6879f350 \
+            50391148a2fd8f488587323a890a4e839876deb5 \
+            69287bffbf679a1035c441a0e7331f83d60141e7 \
+            1262c388621ea49f9e3ae397586e8dbe4ddf9ab4 \
+            f64e5364b4a6ad436c5b8cfec14196e524e4a4b4 \
+            7966b54bac0d32642219fd3209fb21f39471a054 \
+            1f3012c81f60c852b2276a0d8b17b4ff05f5b059; do
+            gh api "repos/${GITHUB_REPOSITORY}/git/blobs/${sha}" --jq .content | base64 --decode >> /tmp/native-publication-transfer/source.patch.xz
+          done
+          echo '9db57c6d20e151b3202d8fdcce151d262eaad897a16fe0c19f481de6b6985c1d  /tmp/native-publication-transfer/source.patch.xz' | sha256sum -c -
+          xz -dc /tmp/native-publication-transfer/source.patch.xz > /tmp/native-publication-transfer/source.patch
+          echo 'd8897c53daaf486cbfaa4c9bb5e4143094520bc389e752f62b4302a7700d977c  /tmp/native-publication-transfer/source.patch' | sha256sum -c -
+          git worktree add --detach /tmp/native-publication-build 9f811ca5a5f5ca10389032a0045270d469b64a56
+          cd /tmp/native-publication-build
+          git apply --check /tmp/native-publication-transfer/source.patch
+          git apply /tmp/native-publication-transfer/source.patch
+          git add -A
+          test "$(git write-tree)" = 'da4bd4a18e81c1b7fa9bc29ccbd2524a5d46ae9a'
+          git diff --cached --check
+          git diff --cached --stat > /tmp/native-publication-transfer/source-diff-stat.txt
+          git diff --cached --exit-code -- experiments/publication_v1 publication
+          echo 'da4bd4a18e81c1b7fa9bc29ccbd2524a5d46ae9a' > /tmp/native-publication-transfer/TESTED_SOURCE_TREE.txt
+      - name: Full native and historical regression including trained circuit generation
+        working-directory: /tmp/native-publication-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install -r publication_native/requirements-reproduction.txt
+          python -m pip install -e '.[dev]'
+          python -m compileall -q hybrid_qcs tests
+          python -m pytest -q | tee /tmp/native-publication-transfer/pytest.log
+          grep -Eq '848 passed' /tmp/native-publication-transfer/pytest.log
+          python -m pip freeze > /tmp/native-publication-transfer/runtime.txt
+      - name: Lock train and execute all native experiments without audit-assisted discovery
+        working-directory: /tmp/native-publication-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -u -m hybrid_qcs.native_study_runner --output-dir experiments/native_publication_v1 | tee /tmp/native-publication-transfer/study.log
+          test -f experiments/native_publication_v1/ALL_CAMPAIGNS_COMPLETE
+          test -f experiments/native_publication_v1/PRIMARY_COMPLETE
+      - name: Generate every numerical manuscript claim and compile the native paper
+        working-directory: /tmp/native-publication-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m hybrid_qcs.native_study_report --output-dir experiments/native_publication_v1 --publication-dir publication_native | tee /tmp/native-publication-transfer/report.log
+          sudo apt-get update -q
+          sudo apt-get install -y texlive-latex-base texlive-latex-recommended texlive-latex-extra texlive-fonts-recommended
+          make -C publication_native > /tmp/native-publication-transfer/latex.log
+          test -s publication_native/main.pdf
+      - name: Recheck exact circuits and certificates independently and preserve provenance
+        working-directory: /tmp/native-publication-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp experiments/native_publication_v1/verification.json /tmp/native-publication-transfer/verification-before.json
+          python -m hybrid_qcs.native_study_runner --stage verify --output-dir experiments/native_publication_v1 | tee /tmp/native-publication-transfer/independent-verification.log
+          cmp experiments/native_publication_v1/verification.json /tmp/native-publication-transfer/verification-before.json
+          python - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          root=Path('experiments/native_publication_v1')
+          files={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(root.rglob('*')) if p.is_file() and p.name!='EVIDENCE_SHA256.json'}
+          (root/'EVIDENCE_SHA256.json').write_text(json.dumps(files,indent=2)+'\n')
+          Path('/tmp/native-publication-transfer/EXECUTION.json').write_text(json.dumps({'run_id':os.environ['GITHUB_RUN_ID'],'workflow_sha':os.environ['GITHUB_SHA'],'source_tree':'da4bd4a18e81c1b7fa9bc29ccbd2524a5d46ae9a','base_commit':'9f811ca5a5f5ca10389032a0045270d469b64a56','data_regenerated':False,'study':'new native campaign; historical phase records unchanged'},indent=2)+'\n')
+          PY
+      - name: Publish the complete validated study to the requested native branch
+        working-directory: /tmp/native-publication-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          git add -A
+          git diff --cached --check
+          git diff --cached --exit-code -- experiments/publication_v1 publication
+          tree=$(git write-tree)
+          base=9f811ca5a5f5ca10389032a0045270d469b64a56
+          branch=hybrid-frontier-restored-v1
+          remote=$(git ls-remote --heads origin "refs/heads/$branch" | awk '{print $1}')
+          test "$remote" = "$base"
+          commit=$(printf '%s\n' 'Add exact native verification, locked publication experiments and aligned hybrid manuscript' 'Preserve the native hybrid frontier and linear policies. Include all experimental failures, paired equal-time/equal-edge controls, exact-orbit splits, independent native algebra verification, determinant reachability contracts and provenance-separated reference circuits. Validated with 848 tests and the complete locked native campaign.' | git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit-tree "$tree" -p "$base")
+          git push --porcelain origin "$commit:refs/heads/$branch"
+          test "$(git ls-remote --heads origin "refs/heads/$branch" | awk '{print $1}')" = "$commit"
+          printf '%s\n' "$commit" > /tmp/native-publication-transfer/PUBLISHED_COMMIT.txt
+          printf '%s\n' "$tree" > /tmp/native-publication-transfer/PUBLISHED_TREE.txt
+          git update-ref "refs/heads/$branch" "$commit"
+          git bundle create /tmp/native-publication-transfer/native-publication.bundle "refs/heads/$branch"
+          echo "Published $branch at $commit" >> "$GITHUB_STEP_SUMMARY"
+          cat experiments/native_publication_v1/RESULTS.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve successful or interrupted study records
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p /tmp/native-publication-transfer
+          if [ -d /tmp/native-publication-build/experiments/native_publication_v1 ]; then cp -a /tmp/native-publication-build/experiments/native_publication_v1 /tmp/native-publication-transfer/evidence; fi
+          if [ -d /tmp/native-publication-build/publication_native ]; then cp -a /tmp/native-publication-build/publication_native /tmp/native-publication-transfer/manuscript; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-publication-study-and-validation
+          path: /tmp/native-publication-transfer
+          retention-days: 30
