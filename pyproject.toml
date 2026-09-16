@@ -13,6 +13,7 @@ dependencies = ["numpy>=1.24"]
 dev = ["pytest>=7.4", "matplotlib>=3.7"]
 
 [project.scripts]
+hybrid-qcs-cleanup = "hybrid_qcs.cleanup.runner:main"
 hybrid-qcs-native-study = "hybrid_qcs.native_study_runner:main"
 hybrid-qcs-native-study-report = "hybrid_qcs.native_study_report:main"
 hybrid-qcs-native-optimality = "hybrid_qcs.native_optimality_runner:main"

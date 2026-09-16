@@ -1,0 +1,44 @@
+name: Validate theorem-certified cleanup protocols
+on:
+  push:
+    branches: [theorem-cleanup-sarsa-linucb-v1]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install reproducible test environment
+        run: |
+          python -m pip install -r publication_native/requirements-reproduction.txt
+          python -m pip install -e '.[dev]'
+      - name: Historical and post-training protocol regression
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m compileall -q hybrid_qcs tests
+          python -m pytest -q | tee /tmp/cleanup-tests.log
+          git diff --check
+      - name: Fresh five-seed circuit generation and exact verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -u -m hybrid_qcs.cleanup.runner --output-dir /tmp/cleanup-study
+          python -m hybrid_qcs.cleanup.runner --stage verify --output-dir /tmp/cleanup-study
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: theorem-cleanup-validation
+          path: |
+            /tmp/cleanup-tests.log
+            /tmp/cleanup-study

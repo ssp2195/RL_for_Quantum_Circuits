@@ -1,0 +1,1529 @@
+{
+  "by_method": {
+    "bank_free_anf": {
+      "correct": 15,
+      "mean_wall_seconds": 0.00427738213333176,
+      "median_wall_seconds": 0.0010770780000086688,
+      "runs": 15,
+      "timely": 15
+    },
+    "coherent_inverse_trained": {
+      "correct": 75,
+      "mean_wall_seconds": 0.024948889573332734,
+      "median_wall_seconds": 0.014568975000003093,
+      "runs": 75,
+      "timely": 75
+    },
+    "control_helpers_trained": {
+      "correct": 75,
+      "mean_wall_seconds": 0.02561899875999908,
+      "median_wall_seconds": 0.017384292000002688,
+      "runs": 75,
+      "timely": 75
+    },
+    "deterministic_control_side": {
+      "correct": 15,
+      "mean_wall_seconds": 0.006092694933333102,
+      "median_wall_seconds": 0.004764359999995804,
+      "runs": 15,
+      "timely": 15
+    },
+    "deterministic_smaller_side": {
+      "correct": 15,
+      "mean_wall_seconds": 0.005444001199998638,
+      "median_wall_seconds": 0.004110714999995935,
+      "runs": 15,
+      "timely": 15
+    },
+    "theorem_trained": {
+      "correct": 75,
+      "mean_wall_seconds": 0.044434702093332515,
+      "median_wall_seconds": 0.021599654999988616,
+      "runs": 75,
+      "timely": 75
+    },
+    "theorem_untrained": {
+      "correct": 15,
+      "mean_wall_seconds": 0.027579910599998432,
+      "median_wall_seconds": 0.019234704000012925,
+      "runs": 15,
+      "timely": 15
+    }
+  },
+  "candidate_count": 5,
+  "candidates": [
+    {
+      "logical_qubits": 5,
+      "m": 1,
+      "methods": {
+        "bank_free_anf": {
+          "correct": 3,
+          "median_wall_seconds": 0.0009437289999993936,
+          "resource_ranges": {
+            "cnot": [
+              32,
+              32
+            ],
+            "measurement_rounds": [
+              7,
+              7
+            ],
+            "native_depth": [
+              126,
+              126
+            ],
+            "native_gates": [
+              138,
+              138
+            ],
+            "peak_aux": [
+              2,
+              2
+            ],
+            "t_count": [
+              28,
+              28
+            ],
+            "t_depth": [
+              22,
+              22
+            ],
+            "worst_case_ticks": [
+              175,
+              175
+            ]
+          }
+        },
+        "coherent_inverse_trained": {
+          "correct": 15,
+          "median_wall_seconds": 0.005465333000017836,
+          "resource_ranges": {
+            "cnot": [
+              27,
+              27
+            ],
+            "measurement_rounds": [
+              0,
+              0
+            ],
+            "native_depth": [
+              65,
+              65
+            ],
+            "native_gates": [
+              91,
+              91
+            ],
+            "peak_aux": [
+              4,
+              4
+            ],
+            "t_count": [
+              32,
+              32
+            ],
+            "t_depth": [
+              23,
+              23
+            ],
+            "worst_case_ticks": [
+              65,
+              65
+            ]
+          }
+        },
+        "control_helpers_trained": {
+          "correct": 15,
+          "median_wall_seconds": 0.006643010000004779,
+          "resource_ranges": {
+            "cnot": [
+              27,
+              27
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              59,
+              59
+            ],
+            "native_gates": [
+              119,
+              119
+            ],
+            "peak_aux": [
+              6,
+              6
+            ],
+            "t_count": [
+              24,
+              24
+            ],
+            "t_depth": [
+              10,
+              10
+            ],
+            "worst_case_ticks": [
+              73,
+              73
+            ]
+          }
+        },
+        "deterministic_control_side": {
+          "correct": 3,
+          "median_wall_seconds": 0.0019253379999781828,
+          "resource_ranges": {
+            "cnot": [
+              27,
+              27
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              58,
+              58
+            ],
+            "native_gates": [
+              119,
+              119
+            ],
+            "peak_aux": [
+              6,
+              6
+            ],
+            "t_count": [
+              24,
+              24
+            ],
+            "t_depth": [
+              10,
+              10
+            ],
+            "worst_case_ticks": [
+              72,
+              72
+            ]
+          }
+        },
+        "deterministic_smaller_side": {
+          "correct": 3,
+          "median_wall_seconds": 0.001549534000020003,
+          "resource_ranges": {
+            "cnot": [
+              19,
+              19
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              58,
+              58
+            ],
+            "native_gates": [
+              83,
+              83
+            ],
+            "peak_aux": [
+              4,
+              4
+            ],
+            "t_count": [
+              16,
+              16
+            ],
+            "t_depth": [
+              11,
+              11
+            ],
+            "worst_case_ticks": [
+              72,
+              72
+            ]
+          }
+        },
+        "theorem_trained": {
+          "correct": 15,
+          "median_wall_seconds": 0.008993385999986003,
+          "resource_ranges": {
+            "cnot": [
+              19,
+              19
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              57,
+              57
+            ],
+            "native_gates": [
+              83,
+              83
+            ],
+            "peak_aux": [
+              4,
+              4
+            ],
+            "t_count": [
+              16,
+              16
+            ],
+            "t_depth": [
+              11,
+              11
+            ],
+            "worst_case_ticks": [
+              71,
+              71
+            ]
+          }
+        },
+        "theorem_untrained": {
+          "correct": 3,
+          "median_wall_seconds": 0.006615737000004174,
+          "resource_ranges": {
+            "cnot": [
+              19,
+              19
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              58,
+              58
+            ],
+            "native_gates": [
+              83,
+              83
+            ],
+            "peak_aux": [
+              4,
+              4
+            ],
+            "t_count": [
+              16,
+              16
+            ],
+            "t_depth": [
+              11,
+              11
+            ],
+            "worst_case_ticks": [
+              72,
+              72
+            ]
+          }
+        }
+      },
+      "name": "enabled-three-feature-coupling",
+      "phase_anf_degree": 4,
+      "r": 3,
+      "theorem_vs_control_helpers": {
+        "cnot": {
+          "conservative_improvement": 8,
+          "conservative_percent": 29.62962962962963
+        },
+        "native_gates": {
+          "conservative_improvement": 36,
+          "conservative_percent": 30.252100840336134
+        },
+        "peak_aux": {
+          "conservative_improvement": 2,
+          "conservative_percent": 33.333333333333336
+        },
+        "t_count": {
+          "conservative_improvement": 8,
+          "conservative_percent": 33.333333333333336
+        }
+      }
+    },
+    {
+      "logical_qubits": 7,
+      "m": 2,
+      "methods": {
+        "bank_free_anf": {
+          "correct": 3,
+          "median_wall_seconds": 0.0005385389999901236,
+          "resource_ranges": {
+            "cnot": [
+              11,
+              11
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              45,
+              45
+            ],
+            "native_gates": [
+              45,
+              45
+            ],
+            "peak_aux": [
+              1,
+              1
+            ],
+            "t_count": [
+              8,
+              8
+            ],
+            "t_depth": [
+              8,
+              8
+            ],
+            "worst_case_ticks": [
+              59,
+              59
+            ]
+          }
+        },
+        "coherent_inverse_trained": {
+          "correct": 15,
+          "median_wall_seconds": 0.010328438000016149,
+          "resource_ranges": {
+            "cnot": [
+              67,
+              67
+            ],
+            "measurement_rounds": [
+              0,
+              0
+            ],
+            "native_depth": [
+              89,
+              94
+            ],
+            "native_gates": [
+              225,
+              225
+            ],
+            "peak_aux": [
+              10,
+              10
+            ],
+            "t_count": [
+              80,
+              80
+            ],
+            "t_depth": [
+              31,
+              33
+            ],
+            "worst_case_ticks": [
+              89,
+              94
+            ]
+          }
+        },
+        "control_helpers_trained": {
+          "correct": 15,
+          "median_wall_seconds": 0.011985503999994762,
+          "resource_ranges": {
+            "cnot": [
+              55,
+              55
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              86,
+              86
+            ],
+            "native_gates": [
+              241,
+              241
+            ],
+            "peak_aux": [
+              12,
+              12
+            ],
+            "t_count": [
+              48,
+              48
+            ],
+            "t_depth": [
+              18,
+              18
+            ],
+            "worst_case_ticks": [
+              100,
+              100
+            ]
+          }
+        },
+        "deterministic_control_side": {
+          "correct": 3,
+          "median_wall_seconds": 0.0035773330000097303,
+          "resource_ranges": {
+            "cnot": [
+              55,
+              55
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              67,
+              67
+            ],
+            "native_gates": [
+              241,
+              241
+            ],
+            "peak_aux": [
+              12,
+              12
+            ],
+            "t_count": [
+              48,
+              48
+            ],
+            "t_depth": [
+              12,
+              12
+            ],
+            "worst_case_ticks": [
+              81,
+              81
+            ]
+          }
+        },
+        "deterministic_smaller_side": {
+          "correct": 3,
+          "median_wall_seconds": 0.003194445999980644,
+          "resource_ranges": {
+            "cnot": [
+              47,
+              47
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              67,
+              67
+            ],
+            "native_gates": [
+              205,
+              205
+            ],
+            "peak_aux": [
+              10,
+              10
+            ],
+            "t_count": [
+              40,
+              40
+            ],
+            "t_depth": [
+              13,
+              13
+            ],
+            "worst_case_ticks": [
+              81,
+              81
+            ]
+          }
+        },
+        "theorem_trained": {
+          "correct": 15,
+          "median_wall_seconds": 0.01616094000002022,
+          "resource_ranges": {
+            "cnot": [
+              47,
+              47
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              79,
+              84
+            ],
+            "native_gates": [
+              205,
+              205
+            ],
+            "peak_aux": [
+              10,
+              10
+            ],
+            "t_count": [
+              40,
+              40
+            ],
+            "t_depth": [
+              17,
+              19
+            ],
+            "worst_case_ticks": [
+              93,
+              98
+            ]
+          }
+        },
+        "theorem_untrained": {
+          "correct": 3,
+          "median_wall_seconds": 0.013710266000003912,
+          "resource_ranges": {
+            "cnot": [
+              47,
+              47
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              67,
+              67
+            ],
+            "native_gates": [
+              205,
+              205
+            ],
+            "peak_aux": [
+              10,
+              10
+            ],
+            "t_count": [
+              40,
+              40
+            ],
+            "t_depth": [
+              13,
+              13
+            ],
+            "worst_case_ticks": [
+              81,
+              81
+            ]
+          }
+        }
+      },
+      "name": "two-channel-feature-ring",
+      "phase_anf_degree": 3,
+      "r": 4,
+      "theorem_vs_control_helpers": {
+        "cnot": {
+          "conservative_improvement": 8,
+          "conservative_percent": 14.545454545454545
+        },
+        "native_gates": {
+          "conservative_improvement": 36,
+          "conservative_percent": 14.937759336099585
+        },
+        "peak_aux": {
+          "conservative_improvement": 2,
+          "conservative_percent": 16.666666666666668
+        },
+        "t_count": {
+          "conservative_improvement": 8,
+          "conservative_percent": 16.666666666666668
+        }
+      }
+    },
+    {
+      "logical_qubits": 8,
+      "m": 2,
+      "methods": {
+        "bank_free_anf": {
+          "correct": 3,
+          "median_wall_seconds": 0.0010770780000086688,
+          "resource_ranges": {
+            "cnot": [
+              33,
+              33
+            ],
+            "measurement_rounds": [
+              7,
+              7
+            ],
+            "native_depth": [
+              133,
+              133
+            ],
+            "native_gates": [
+              141,
+              141
+            ],
+            "peak_aux": [
+              2,
+              2
+            ],
+            "t_count": [
+              28,
+              28
+            ],
+            "t_depth": [
+              24,
+              24
+            ],
+            "worst_case_ticks": [
+              182,
+              182
+            ]
+          }
+        },
+        "coherent_inverse_trained": {
+          "correct": 15,
+          "median_wall_seconds": 0.014568975000003093,
+          "resource_ranges": {
+            "cnot": [
+              84,
+              84
+            ],
+            "measurement_rounds": [
+              0,
+              0
+            ],
+            "native_depth": [
+              105,
+              115
+            ],
+            "native_gates": [
+              282,
+              282
+            ],
+            "peak_aux": [
+              12,
+              12
+            ],
+            "t_count": [
+              96,
+              96
+            ],
+            "t_depth": [
+              35,
+              39
+            ],
+            "worst_case_ticks": [
+              105,
+              115
+            ]
+          }
+        },
+        "control_helpers_trained": {
+          "correct": 15,
+          "median_wall_seconds": 0.017384292000002688,
+          "resource_ranges": {
+            "cnot": [
+              72,
+              72
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              103,
+              107
+            ],
+            "native_gates": [
+              312,
+              312
+            ],
+            "peak_aux": [
+              15,
+              15
+            ],
+            "t_count": [
+              60,
+              60
+            ],
+            "t_depth": [
+              22,
+              22
+            ],
+            "worst_case_ticks": [
+              117,
+              121
+            ]
+          }
+        },
+        "deterministic_control_side": {
+          "correct": 3,
+          "median_wall_seconds": 0.004764359999995804,
+          "resource_ranges": {
+            "cnot": [
+              72,
+              72
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              83,
+              83
+            ],
+            "native_gates": [
+              312,
+              312
+            ],
+            "peak_aux": [
+              15,
+              15
+            ],
+            "t_count": [
+              60,
+              60
+            ],
+            "t_depth": [
+              14,
+              14
+            ],
+            "worst_case_ticks": [
+              97,
+              97
+            ]
+          }
+        },
+        "deterministic_smaller_side": {
+          "correct": 3,
+          "median_wall_seconds": 0.004110714999995935,
+          "resource_ranges": {
+            "cnot": [
+              60,
+              60
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              82,
+              82
+            ],
+            "native_gates": [
+              258,
+              258
+            ],
+            "peak_aux": [
+              12,
+              12
+            ],
+            "t_count": [
+              48,
+              48
+            ],
+            "t_depth": [
+              15,
+              15
+            ],
+            "worst_case_ticks": [
+              96,
+              96
+            ]
+          }
+        },
+        "theorem_trained": {
+          "correct": 15,
+          "median_wall_seconds": 0.021599654999988616,
+          "resource_ranges": {
+            "cnot": [
+              60,
+              60
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              93,
+              103
+            ],
+            "native_gates": [
+              258,
+              258
+            ],
+            "peak_aux": [
+              12,
+              12
+            ],
+            "t_count": [
+              48,
+              48
+            ],
+            "t_depth": [
+              19,
+              23
+            ],
+            "worst_case_ticks": [
+              107,
+              117
+            ]
+          }
+        },
+        "theorem_untrained": {
+          "correct": 3,
+          "median_wall_seconds": 0.019234704000012925,
+          "resource_ranges": {
+            "cnot": [
+              60,
+              60
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              82,
+              82
+            ],
+            "native_gates": [
+              258,
+              258
+            ],
+            "peak_aux": [
+              12,
+              12
+            ],
+            "t_count": [
+              48,
+              48
+            ],
+            "t_depth": [
+              15,
+              15
+            ],
+            "worst_case_ticks": [
+              96,
+              96
+            ]
+          }
+        }
+      },
+      "name": "mixed-five-row-predicate",
+      "phase_anf_degree": 4,
+      "r": 5,
+      "theorem_vs_control_helpers": {
+        "cnot": {
+          "conservative_improvement": 12,
+          "conservative_percent": 16.666666666666668
+        },
+        "native_gates": {
+          "conservative_improvement": 54,
+          "conservative_percent": 17.307692307692307
+        },
+        "peak_aux": {
+          "conservative_improvement": 3,
+          "conservative_percent": 20.0
+        },
+        "t_count": {
+          "conservative_improvement": 12,
+          "conservative_percent": 20.0
+        }
+      }
+    },
+    {
+      "logical_qubits": 10,
+      "m": 3,
+      "methods": {
+        "bank_free_anf": {
+          "correct": 3,
+          "median_wall_seconds": 0.008046298000010665,
+          "resource_ranges": {
+            "cnot": [
+              310,
+              310
+            ],
+            "measurement_rounds": [
+              70,
+              70
+            ],
+            "native_depth": [
+              1186,
+              1186
+            ],
+            "native_gates": [
+              1350,
+              1350
+            ],
+            "peak_aux": [
+              3,
+              3
+            ],
+            "t_count": [
+              280,
+              280
+            ],
+            "t_depth": [
+              198,
+              198
+            ],
+            "worst_case_ticks": [
+              1676,
+              1676
+            ]
+          }
+        },
+        "coherent_inverse_trained": {
+          "correct": 15,
+          "median_wall_seconds": 0.0356058020000205,
+          "resource_ranges": {
+            "cnot": [
+              150,
+              150
+            ],
+            "measurement_rounds": [
+              0,
+              0
+            ],
+            "native_depth": [
+              131,
+              157
+            ],
+            "native_gates": [
+              504,
+              504
+            ],
+            "peak_aux": [
+              21,
+              21
+            ],
+            "t_count": [
+              168,
+              168
+            ],
+            "t_depth": [
+              45,
+              55
+            ],
+            "worst_case_ticks": [
+              131,
+              157
+            ]
+          }
+        },
+        "control_helpers_trained": {
+          "correct": 15,
+          "median_wall_seconds": 0.03666522899999336,
+          "resource_ranges": {
+            "cnot": [
+              120,
+              120
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              128,
+              147
+            ],
+            "native_gates": [
+              516,
+              516
+            ],
+            "peak_aux": [
+              24,
+              24
+            ],
+            "t_count": [
+              96,
+              96
+            ],
+            "t_depth": [
+              30,
+              36
+            ],
+            "worst_case_ticks": [
+              142,
+              161
+            ]
+          }
+        },
+        "deterministic_control_side": {
+          "correct": 3,
+          "median_wall_seconds": 0.008489029999992681,
+          "resource_ranges": {
+            "cnot": [
+              120,
+              120
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              92,
+              92
+            ],
+            "native_gates": [
+              516,
+              516
+            ],
+            "peak_aux": [
+              24,
+              24
+            ],
+            "t_count": [
+              96,
+              96
+            ],
+            "t_depth": [
+              16,
+              16
+            ],
+            "worst_case_ticks": [
+              106,
+              106
+            ]
+          }
+        },
+        "deterministic_smaller_side": {
+          "correct": 3,
+          "median_wall_seconds": 0.007854638999987174,
+          "resource_ranges": {
+            "cnot": [
+              108,
+              108
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              91,
+              91
+            ],
+            "native_gates": [
+              462,
+              462
+            ],
+            "peak_aux": [
+              21,
+              21
+            ],
+            "t_count": [
+              84,
+              84
+            ],
+            "t_depth": [
+              17,
+              17
+            ],
+            "worst_case_ticks": [
+              105,
+              105
+            ]
+          }
+        },
+        "theorem_trained": {
+          "correct": 15,
+          "median_wall_seconds": 0.09007328600000619,
+          "resource_ranges": {
+            "cnot": [
+              108,
+              108
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              117,
+              143
+            ],
+            "native_gates": [
+              462,
+              462
+            ],
+            "peak_aux": [
+              21,
+              21
+            ],
+            "t_count": [
+              84,
+              84
+            ],
+            "t_depth": [
+              27,
+              37
+            ],
+            "worst_case_ticks": [
+              131,
+              157
+            ]
+          }
+        },
+        "theorem_untrained": {
+          "correct": 3,
+          "median_wall_seconds": 0.041173995999997715,
+          "resource_ranges": {
+            "cnot": [
+              108,
+              108
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              92,
+              92
+            ],
+            "native_gates": [
+              462,
+              462
+            ],
+            "peak_aux": [
+              21,
+              21
+            ],
+            "t_count": [
+              84,
+              84
+            ],
+            "t_depth": [
+              17,
+              17
+            ],
+            "worst_case_ticks": [
+              106,
+              106
+            ]
+          }
+        }
+      },
+      "name": "three-channel-cross-feature-bank",
+      "phase_anf_degree": 5,
+      "r": 6,
+      "theorem_vs_control_helpers": {
+        "cnot": {
+          "conservative_improvement": 12,
+          "conservative_percent": 10.0
+        },
+        "native_gates": {
+          "conservative_improvement": 54,
+          "conservative_percent": 10.465116279069768
+        },
+        "peak_aux": {
+          "conservative_improvement": 3,
+          "conservative_percent": 12.5
+        },
+        "t_count": {
+          "conservative_improvement": 12,
+          "conservative_percent": 12.5
+        }
+      }
+    },
+    {
+      "logical_qubits": 12,
+      "m": 3,
+      "methods": {
+        "bank_free_anf": {
+          "correct": 3,
+          "median_wall_seconds": 0.010792938999998114,
+          "resource_ranges": {
+            "cnot": [
+              406,
+              406
+            ],
+            "measurement_rounds": [
+              92,
+              92
+            ],
+            "native_depth": [
+              1554,
+              1554
+            ],
+            "native_gates": [
+              1770,
+              1770
+            ],
+            "peak_aux": [
+              3,
+              3
+            ],
+            "t_count": [
+              368,
+              368
+            ],
+            "t_depth": [
+              260,
+              260
+            ],
+            "worst_case_ticks": [
+              2198,
+              2198
+            ]
+          }
+        },
+        "coherent_inverse_trained": {
+          "correct": 15,
+          "median_wall_seconds": 0.05659121700000469,
+          "resource_ranges": {
+            "cnot": [
+              192,
+              192
+            ],
+            "measurement_rounds": [
+              0,
+              0
+            ],
+            "native_depth": [
+              163,
+              197
+            ],
+            "native_gates": [
+              646,
+              646
+            ],
+            "peak_aux": [
+              27,
+              27
+            ],
+            "t_count": [
+              216,
+              216
+            ],
+            "t_depth": [
+              57,
+              71
+            ],
+            "worst_case_ticks": [
+              163,
+              197
+            ]
+          }
+        },
+        "control_helpers_trained": {
+          "correct": 15,
+          "median_wall_seconds": 0.05517905799999312,
+          "resource_ranges": {
+            "cnot": [
+              158,
+              158
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              162,
+              189
+            ],
+            "native_gates": [
+              682,
+              682
+            ],
+            "peak_aux": [
+              32,
+              32
+            ],
+            "t_count": [
+              128,
+              128
+            ],
+            "t_depth": [
+              40,
+              48
+            ],
+            "worst_case_ticks": [
+              176,
+              203
+            ]
+          }
+        },
+        "deterministic_control_side": {
+          "correct": 3,
+          "median_wall_seconds": 0.011646117999987382,
+          "resource_ranges": {
+            "cnot": [
+              158,
+              158
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              113,
+              113
+            ],
+            "native_gates": [
+              682,
+              682
+            ],
+            "peak_aux": [
+              32,
+              32
+            ],
+            "t_count": [
+              128,
+              128
+            ],
+            "t_depth": [
+              20,
+              20
+            ],
+            "worst_case_ticks": [
+              127,
+              127
+            ]
+          }
+        },
+        "deterministic_smaller_side": {
+          "correct": 3,
+          "median_wall_seconds": 0.010514276999998629,
+          "resource_ranges": {
+            "cnot": [
+              138,
+              138
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              110,
+              110
+            ],
+            "native_gates": [
+              592,
+              592
+            ],
+            "peak_aux": [
+              27,
+              27
+            ],
+            "t_count": [
+              108,
+              108
+            ],
+            "t_depth": [
+              21,
+              21
+            ],
+            "worst_case_ticks": [
+              124,
+              124
+            ]
+          }
+        },
+        "theorem_trained": {
+          "correct": 15,
+          "median_wall_seconds": 0.12939433299999337,
+          "resource_ranges": {
+            "cnot": [
+              138,
+              138
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              145,
+              179
+            ],
+            "native_gates": [
+              592,
+              592
+            ],
+            "peak_aux": [
+              27,
+              27
+            ],
+            "t_count": [
+              108,
+              108
+            ],
+            "t_depth": [
+              35,
+              49
+            ],
+            "worst_case_ticks": [
+              159,
+              193
+            ]
+          }
+        },
+        "theorem_untrained": {
+          "correct": 3,
+          "median_wall_seconds": 0.05729576500002054,
+          "resource_ranges": {
+            "cnot": [
+              138,
+              138
+            ],
+            "measurement_rounds": [
+              2,
+              2
+            ],
+            "native_depth": [
+              109,
+              109
+            ],
+            "native_gates": [
+              592,
+              592
+            ],
+            "peak_aux": [
+              27,
+              27
+            ],
+            "t_count": [
+              108,
+              108
+            ],
+            "t_depth": [
+              21,
+              21
+            ],
+            "worst_case_ticks": [
+              123,
+              123
+            ]
+          }
+        }
+      },
+      "name": "wide-shared-mask-oracle",
+      "phase_anf_degree": 5,
+      "r": 8,
+      "theorem_vs_control_helpers": {
+        "cnot": {
+          "conservative_improvement": 20,
+          "conservative_percent": 12.658227848101266
+        },
+        "native_gates": {
+          "conservative_improvement": 90,
+          "conservative_percent": 13.196480938416423
+        },
+        "peak_aux": {
+          "conservative_improvement": 5,
+          "conservative_percent": 15.625
+        },
+        "t_count": {
+          "conservative_improvement": 20,
+          "conservative_percent": 15.625
+        }
+      }
+    }
+  ],
+  "claim": "measured resources of five selected full-bank oracle problems; not unrestricted optimality or learner superiority",
+  "classical_search": "bounded structured macro search, not unrestricted native circuit enumeration",
+  "hardware_ticks": "declared synthetic latency model; no hardware execution",
+  "primitive_cache": "shared verified <=3-qubit primitives; no target witness cache",
+  "sampling": "five problem instances; seeds and repetitions are not independent logical tasks",
+  "schema": "cleanup-study-analysis-v1",
+  "strong_control_has_same_theorem": true,
+  "total_runs": 285
+}

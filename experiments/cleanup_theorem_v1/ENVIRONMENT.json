@@ -1,0 +1,7 @@
+{
+  "base_commit": "6c2f15ffc2e0ce524c6492f40f234a2862dba51a",
+  "clock": "namespace(implementation='clock_gettime(CLOCK_MONOTONIC)', monotonic=True, adjustable=False, resolution=1e-09)",
+  "numpy": "2.3.5",
+  "platform": "Linux-6.17.0-1022-azure-x86_64-with-glibc2.39",
+  "python": "3.13.15 (main, Aug  6 2026, 02:15:18) [GCC 13.3.0]"
+}

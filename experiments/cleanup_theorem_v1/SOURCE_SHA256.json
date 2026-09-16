@@ -1,0 +1,21 @@
+{
+  "hybrid_qcs/cleanup/__init__.py": "b09fcefd51cb490948008f731f47ad4bcb188ed7627425e6fdd52f759b670a12",
+  "hybrid_qcs/cleanup/benchmarks.py": "a028eaacf0f946e705d1fcf002bfc1d452eb62267475217e475f35f260fdce90",
+  "hybrid_qcs/cleanup/contract.py": "f3dc456bbcdbeabfa2a1e3dd46399030782376727d53e0c44660e6142a28d09d",
+  "hybrid_qcs/cleanup/ir.py": "623833fb336df2b237f9fee5259c390416b8550ab91ddcc6580cb62f4ce06105",
+  "hybrid_qcs/cleanup/plan.py": "07d3e316251ca0db8251b0fc93c60f9a930654c8bf4239a05e98d4377eb892d8",
+  "hybrid_qcs/cleanup/policy.py": "3bf1a2d85f2a7e298cb7b8f117772e4796c3c331401fd4126ef862fe301e5b5e",
+  "hybrid_qcs/cleanup/reference.py": "3aab5e98151ce98b218ab992f87cd1cd79f49bd1ba21afc9c510907124f73849",
+  "hybrid_qcs/cleanup/runner.py": "689496937aca199a2b554710cc85bec97aea3b8d958ccbfb6d3089e2ccd5348e",
+  "hybrid_qcs/cleanup/search.py": "8283c819f245f09d46ff073f4c6ce203ea462e2d8a1932de861d9e8a25463920",
+  "hybrid_qcs/cleanup/training.py": "f1ad6e2c0e0a72f655e3d24155a033b8966314d251361b1465b1a9958b2e6366",
+  "hybrid_qcs/cleanup/verify.py": "875622898a2e4f266bfde0d60f50b8c183c72f546267c90ec29d4089cc4fc001",
+  "hybrid_qcs/clifford_lift.py": "5aad3ab4e7a6ad7f4b1ac2ff984831308c162b37b253b1123ba4a93a85e9e537",
+  "hybrid_qcs/model.py": "34e7113bea7b616b732b6ae5cb5ce5037f7038c788087d42eede8f68ddacd4a1",
+  "hybrid_qcs/native_audit.py": "8a80dd4052d06f91ed3a9548b33bdccfffee4ad9dcc409eb4f26c758650e35f5",
+  "hybrid_qcs/native_domain.py": "6816d0b0814dcc3e4235c67d2d26559ac64c6347a202555809371b47189078a2",
+  "hybrid_qcs/native_exact.py": "c1224bd658d09b3af057c15863d49a36a244de5b199d911975046acdec948706",
+  "hybrid_qcs/native_optimize.py": "4bab03539d2e818bceaa054bc0f3a6017826427a77fc805adce63e13a9305f9a",
+  "hybrid_qcs/native_policy.py": "b9ba6db3b9e8a4bb3cd60cf11cf9c4b80f16d048f612fadd7149dfee2dba1ad7",
+  "hybrid_qcs/native_search.py": "111de2149e467b923900d19c2d1a6a8229bc0083ad136d37e1668d72febcf817"
+}

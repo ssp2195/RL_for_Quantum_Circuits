@@ -1,0 +1,581 @@
+{
+  "problem": {
+    "assumptions": [
+      "full-independent-raw-input-cube",
+      "F_ij=a*b_i*x_j",
+      "helpers=a*(P*b+Q*x+c)",
+      "all-r*m-products-coexist",
+      "quadratic-diagonal-sign-consumer",
+      "one-main-garbage-only-instrument-then-Clifford-feedback",
+      "helpers-preserved-through-main-feedback",
+      "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+      "no-postselection",
+      "no-extra-unaccounted-workspace"
+    ],
+    "consumer": [
+      [
+        "b0",
+        "f3_0"
+      ],
+      [
+        "b3",
+        "f1_0"
+      ],
+      [
+        "f0_0",
+        "f2_1"
+      ],
+      [
+        "f0_0",
+        "f3_1"
+      ],
+      [
+        "f0_1"
+      ],
+      [
+        "f0_1",
+        "f2_0"
+      ],
+      [
+        "f0_1",
+        "f3_0"
+      ],
+      [
+        "f1_0",
+        "f3_1"
+      ],
+      [
+        "f1_0",
+        "f4_1"
+      ],
+      [
+        "f1_1",
+        "f3_0"
+      ],
+      [
+        "f1_1",
+        "f4_0"
+      ],
+      [
+        "f2_0"
+      ],
+      [
+        "f2_0",
+        "f4_1"
+      ],
+      [
+        "f2_1",
+        "f4_0"
+      ],
+      [
+        "f3_1"
+      ]
+    ],
+    "hardware": {
+      "feedback_ticks": 2,
+      "gate_ticks": 1,
+      "measurement_ticks": 5
+    },
+    "input_domain": "full_cube",
+    "limits": {
+      "max_aux": null,
+      "max_cnot": null,
+      "max_depth": null,
+      "max_gates": null,
+      "max_rounds": null,
+      "max_t": null,
+      "max_t_depth": null,
+      "max_ticks": null
+    },
+    "m": 2,
+    "name": "mixed-five-row-predicate",
+    "phase_mode": "exact",
+    "r": 5,
+    "schema": "outer-product-cleanup-v1",
+    "split": "test"
+  },
+  "protocol": {
+    "cleanup_mode": "coherent",
+    "layout": {
+      "m": 2,
+      "r": 5,
+      "side": "column"
+    },
+    "ops": [
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          0,
+          6,
+          18
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          0,
+          7,
+          19
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          1,
+          18,
+          8
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          2,
+          19,
+          11
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          2,
+          18,
+          10
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          1,
+          19,
+          9
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          3,
+          19,
+          13
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          4,
+          19,
+          15
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          5,
+          19,
+          17
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          5,
+          18,
+          16
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          3,
+          18,
+          12
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          4,
+          18,
+          14
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          1,
+          14
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          4,
+          10
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          8,
+          13
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          8,
+          15
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          9,
+          12
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          9,
+          14
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          10,
+          15
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          10,
+          17
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          11,
+          14
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          11,
+          16
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          12,
+          17
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          13,
+          16
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "Z",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          9
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "Z",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          12
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "Z",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          15
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "UNAND",
+        "outcome": null,
+        "stage": "uncompute_products",
+        "wires": [
+          5,
+          19,
+          17
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "UNAND",
+        "outcome": null,
+        "stage": "uncompute_products",
+        "wires": [
+          5,
+          18,
+          16
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "UNAND",
+        "outcome": null,
+        "stage": "uncompute_products",
+        "wires": [
+          4,
+          19,
+          15
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "UNAND",
+        "outcome": null,
+        "stage": "uncompute_products",
+        "wires": [
+          4,
+          18,
+          14
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "UNAND",
+        "outcome": null,
+        "stage": "uncompute_products",
+        "wires": [
+          3,
+          19,
+          13
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "UNAND",
+        "outcome": null,
+        "stage": "uncompute_products",
+        "wires": [
+          3,
+          18,
+          12
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "UNAND",
+        "outcome": null,
+        "stage": "uncompute_products",
+        "wires": [
+          2,
+          19,
+          11
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "UNAND",
+        "outcome": null,
+        "stage": "uncompute_products",
+        "wires": [
+          2,
+          18,
+          10
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "UNAND",
+        "outcome": null,
+        "stage": "uncompute_products",
+        "wires": [
+          1,
+          19,
+          9
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "UNAND",
+        "outcome": null,
+        "stage": "uncompute_products",
+        "wires": [
+          1,
+          18,
+          8
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "UNAND",
+        "outcome": null,
+        "stage": "uncompute_helpers",
+        "wires": [
+          0,
+          7,
+          19
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "UNAND",
+        "outcome": null,
+        "stage": "uncompute_helpers",
+        "wires": [
+          0,
+          6,
+          18
+        ]
+      }
+    ],
+    "primitive": "and4",
+    "problem_digest": "6bf5acfe37da2f094303b1bb2ba9186512e8b0f30edd5f0a15eaef4a4e6469c4",
+    "provenance": "structured_frontier_discovery",
+    "schema": "cleanup-protocol-v1"
+  },
+  "verification": {
+    "all_outcomes_checked_symbolically": true,
+    "branch_amplitude": "2^(-0/2)",
+    "branch_count": 1,
+    "branch_probability": "1",
+    "exact_branch_coefficient_identities": 0,
+    "global_dense_arrays_allocated": false,
+    "max_live_polynomial_terms": 25,
+    "native_lowering_verified": true,
+    "preserves_reference_entanglement": true,
+    "primitive_receipt": {
+      "MX_reset_exact": true,
+      "clean_AND_isometry_digest": "45a4ea9e03d4520e8cd14345f9bf82780bccc20b1c8cdaf01b792c9c8e9fdf86",
+      "exact_Clifford_blocks": {
+        "CX": "5c1515d2c861f8ffbe886db149984cbe1736a039977da64e4ec9888f130ac54e",
+        "CZ": "fc0e471d8003cbd28ba0a84f5b868b8279fedc3f6b0d268c119803ef0db9b490",
+        "H": "53581f8bdeb38798851f68246fd3452e801a27de17ef0b29c79b68948ec8996c",
+        "MINUS": "a9b845beb3530f25f8fef3b0396eef671e57df484e34e67a02db95393bf31c69",
+        "X": "c8de4b125e5a1e314cee2c57bcebd3f0057dc0aa9d7a10f86ac1eb8433bef5f4",
+        "Z": "72ac981ab655a164c2d1fb6be50fb9911778960413be5e337692427231c676b9"
+      },
+      "native_word_digest": "51fd23b66f30dbe0b51b223dcb6828f869bbde77e1d53c5642b6f52188f3a074",
+      "primitive": "and4",
+      "scope": "exact integer-cyclotomic local identities; not a full-target Toffoli for and4"
+    },
+    "probability_sum": "1",
+    "problem_digest": "6bf5acfe37da2f094303b1bb2ba9186512e8b0f30edd5f0a15eaef4a4e6469c4",
+    "protocol_digest": "cd7748c0d6e91e48f67c4849d2034cd539badddd6e32cb137defb342457cc9c9",
+    "resources": {
+      "aux_at_end": 0,
+      "cleanup_t": 48,
+      "cnot": 84,
+      "expected_native_gates": "282",
+      "forward_and": 12,
+      "measurement_rounds": 0,
+      "measurements": 0,
+      "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+      "native_depth": 105,
+      "native_gates": 282,
+      "peak_aux": 12,
+      "physical_qubits": 20,
+      "retained_classical_bits": 0,
+      "t_count": 96,
+      "t_depth": 35,
+      "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+      "worst_case_correction_cz": 0,
+      "worst_case_ticks": 105
+    },
+    "schema": "cleanup-proof-v1",
+    "scope": "complete exact phase oracle, internal classical transcript discarded after feedback",
+    "target_anf": [
+      73,
+      83,
+      85,
+      131,
+      145
+    ],
+    "valid": true
+  }
+}

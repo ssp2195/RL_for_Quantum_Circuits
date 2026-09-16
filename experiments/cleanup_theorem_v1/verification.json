@@ -1,0 +1,22 @@
+{
+  "exact_primitive_receipts": {
+    "MX_reset_exact": true,
+    "clean_AND_isometry_digest": "45a4ea9e03d4520e8cd14345f9bf82780bccc20b1c8cdaf01b792c9c8e9fdf86",
+    "exact_Clifford_blocks": {
+      "CX": "5c1515d2c861f8ffbe886db149984cbe1736a039977da64e4ec9888f130ac54e",
+      "CZ": "fc0e471d8003cbd28ba0a84f5b868b8279fedc3f6b0d268c119803ef0db9b490",
+      "H": "53581f8bdeb38798851f68246fd3452e801a27de17ef0b29c79b68948ec8996c",
+      "MINUS": "a9b845beb3530f25f8fef3b0396eef671e57df484e34e67a02db95393bf31c69",
+      "X": "c8de4b125e5a1e314cee2c57bcebd3f0057dc0aa9d7a10f86ac1eb8433bef5f4",
+      "Z": "72ac981ab655a164c2d1fb6be50fb9911778960413be5e337692427231c676b9"
+    },
+    "native_word_digest": "51fd23b66f30dbe0b51b223dcb6828f869bbde77e1d53c5642b6f52188f3a074",
+    "primitive": "and4",
+    "scope": "exact integer-cyclotomic local identities; not a full-target Toffoli for and4"
+  },
+  "rows": 285,
+  "scope": "full symbolic all-input/all-outcome checks; no dense global state and no policy/auditor invocation",
+  "symbolically_covered_transcripts_sum": 4951761337733141839518762436,
+  "unique_protocols": 64,
+  "valid": true
+}

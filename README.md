@@ -1,5 +1,21 @@
 # Native hybrid quantum-circuit synthesis
 
+## Optional theorem-certified dynamic cleanup backend
+
+The `hybrid_qcs.cleanup` backend adds all-outcome measurement/reset and Clifford
+feedback for the supplied **lifecycle-accounted outer-product cleanup theorem**.
+It retains native `HybridState` witnesses for coherent blocks and introduces an
+explicit dynamic protocol/interface layer; it does not replace the native
+unitary search with a phase-polynomial frontier.
+
+Run `python -m hybrid_qcs.cleanup.runner --output-dir outputs/cleanup-study`.
+See [the exact scope, API and reproduction guide](docs/theorem_cleanup_backend.md)
+and, on the published study branch, `experiments/cleanup_theorem_v1/RESULTS.md`.
+The reported workspace optimum is **within the full-bank architecture**, not a
+minimum for every circuit implementing the same oracle. Trained, untrained,
+coherent, deterministic smaller-side and bank-free controls are distinguished.
+
+
 The active native frontier is
 
 `v = (persistent circuit DAG, Clifford tableau, ordered signed Pauli rotations, global phase, consumed resources)`.

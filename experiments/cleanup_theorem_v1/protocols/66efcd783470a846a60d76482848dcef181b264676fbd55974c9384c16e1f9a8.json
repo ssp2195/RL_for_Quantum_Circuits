@@ -1,0 +1,202 @@
+{
+  "problem": {
+    "assumptions": [
+      "full-independent-raw-input-cube",
+      "F_ij=a*b_i*x_j",
+      "helpers=a*(P*b+Q*x+c)",
+      "all-r*m-products-coexist",
+      "quadratic-diagonal-sign-consumer",
+      "one-main-garbage-only-instrument-then-Clifford-feedback",
+      "helpers-preserved-through-main-feedback",
+      "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+      "no-postselection",
+      "no-extra-unaccounted-workspace"
+    ],
+    "consumer": [
+      [
+        "a",
+        "x1"
+      ],
+      [
+        "b1",
+        "f3_1"
+      ],
+      [
+        "b3",
+        "f1_1"
+      ],
+      [
+        "f0_0",
+        "f2_1"
+      ],
+      [
+        "f0_1",
+        "f2_0"
+      ],
+      [
+        "f1_0"
+      ],
+      [
+        "f1_0",
+        "f3_1"
+      ],
+      [
+        "f1_1",
+        "f3_0"
+      ],
+      [
+        "f2_1"
+      ]
+    ],
+    "hardware": {
+      "feedback_ticks": 2,
+      "gate_ticks": 1,
+      "measurement_ticks": 5
+    },
+    "input_domain": "full_cube",
+    "limits": {
+      "max_aux": null,
+      "max_cnot": null,
+      "max_depth": null,
+      "max_gates": null,
+      "max_rounds": null,
+      "max_t": null,
+      "max_t_depth": null,
+      "max_ticks": null
+    },
+    "m": 2,
+    "name": "two-channel-feature-ring",
+    "phase_mode": "exact",
+    "r": 4,
+    "schema": "outer-product-cleanup-v1",
+    "split": "test"
+  },
+  "protocol": {
+    "ops": [
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          0,
+          2,
+          7
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          7,
+          5
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 0,
+        "stage": "measure_reference_0",
+        "wires": [
+          7
+        ]
+      },
+      {
+        "guard": 0,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_reference_0",
+        "wires": [
+          0,
+          2
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          0,
+          6
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          0,
+          3,
+          7
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          7,
+          6
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 1,
+        "stage": "measure_reference_1",
+        "wires": [
+          7
+        ]
+      },
+      {
+        "guard": 1,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_reference_1",
+        "wires": [
+          0,
+          3
+        ]
+      }
+    ],
+    "primitive": "and4",
+    "problem_digest": "e6befa9754323fa3c4f4b7c3021ed154f3d58b61e0ffd5a159a663334aaabe65",
+    "schema": "bank-free-phase-reference-v1",
+    "width": 8
+  },
+  "verification": {
+    "all_outcomes_checked_symbolically": true,
+    "branch_count": 4,
+    "global_oracle_optimality": false,
+    "problem_digest": "e6befa9754323fa3c4f4b7c3021ed154f3d58b61e0ffd5a159a663334aaabe65",
+    "protocol_digest": "66efcd783470a846a60d76482848dcef181b264676fbd55974c9384c16e1f9a8",
+    "resources": {
+      "aux_at_end": 0,
+      "cleanup_t": 0,
+      "cnot": 11,
+      "expected_native_gates": "38",
+      "forward_and": 2,
+      "measurement_rounds": 2,
+      "measurements": 2,
+      "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+      "native_depth": 45,
+      "native_gates": 45,
+      "peak_aux": 1,
+      "physical_qubits": 8,
+      "retained_classical_bits": 2,
+      "t_count": 8,
+      "t_depth": 8,
+      "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+      "worst_case_correction_cz": 2,
+      "worst_case_ticks": 59
+    },
+    "scope": "bank-free reference, NOT covered by the materialization lower bound",
+    "source": "direct ANF monomial compiler with measured AND-chain cleanup",
+    "valid": true
+  }
+}
