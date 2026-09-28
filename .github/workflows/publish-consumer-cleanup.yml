@@ -1,0 +1,148 @@
+name: Validate and prepare consumer-aware cleanup publication
+on:
+  push:
+    branches: [consumer-cleanup-transfer-20260928]
+    paths: [.github/workflows/publish-consumer-cleanup.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: consumer-cleanup-publication-20260928
+  cancel-in-progress: false
+jobs:
+  validate-and-prepare:
+    if: github.repository == 'ssp2195/RL_for_Quantum_Circuits' && github.ref == 'refs/heads/consumer-cleanup-transfer-20260928'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      PYTHONHASHSEED: '0'
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Reconstruct pinned tested source without changing historical evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/consumer-publication
+          for sha in 6c4154e91d5f78d3327f17eb441782ea990b288c f77eb407f88309c04ca653058942d88ba3d12ffc 2d0c3c7bf23f982b59203de729996cff9910ca4c e50ade75e8394025f84a63d84d574839c610a3b0 cc03b6a568dbfab63682fe2f91d33920b1c90f16; do
+            gh api "repos/${GITHUB_REPOSITORY}/git/blobs/$sha" --jq .content | base64 --decode >> /tmp/consumer-publication/source.patch.xz
+          done
+          echo '06567958596945d9b9fcd8fc97bdbcf3622f5442f9405668e8621134883ae51e  /tmp/consumer-publication/source.patch.xz' | sha256sum -c -
+          xz -dc /tmp/consumer-publication/source.patch.xz > /tmp/consumer-publication/source.patch
+          echo '4ad3173a6865647254a8cdd7c2722f514355da8d37b4d23ffce7341c70683028  /tmp/consumer-publication/source.patch' | sha256sum -c -
+          git worktree add --detach /tmp/consumer-build 84c55c94f4b4c33ca55cbdbb9c7738222d6b32b8
+          cd /tmp/consumer-build
+          git apply --check /tmp/consumer-publication/source.patch
+          git apply /tmp/consumer-publication/source.patch
+          git add -A
+          test "$(git write-tree)" = da2c5938bd23fa5484d34617eb9975a615a12352
+          git diff --cached --check
+          test -z "$(git diff --cached --name-only --diff-filter=MDR)"
+          git diff --cached --stat > /tmp/consumer-publication/source-diff-stat.txt
+      - name: Full regression including actual post-training circuit generation
+        working-directory: /tmp/consumer-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install -r publication_native/requirements-reproduction.txt
+          python -m pip install -e '.[dev]'
+          python -m compileall -q hybrid_qcs tests
+          python -m pytest -q | tee /tmp/consumer-publication/pytest.log
+          grep -Eq '1272 passed' /tmp/consumer-publication/pytest.log
+          python -m pip freeze > /tmp/consumer-publication/runtime.txt
+      - name: Fresh five-seed study and exact streaming diagnostic
+        working-directory: /tmp/consumer-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m hybrid_qcs.cleanup.consumer_runner --output-dir experiments/consumer_cleanup_v1 | tee /tmp/consumer-publication/study.log
+          python -m hybrid_qcs.cleanup.consumer_diagnostics --output-dir experiments/consumer_cleanup_v1 | tee /tmp/consumer-publication/diagnostic.log
+          python -m hybrid_qcs.cleanup.consumer_report --output-dir experiments/consumer_cleanup_v1 --report-dir docs/consumer_cleanup | tee /tmp/consumer-publication/report.log
+          test -s experiments/consumer_cleanup_v1/COMPLETE
+      - name: Independently recheck all recorded circuits and evidence hashes
+        working-directory: /tmp/consumer-build
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp experiments/consumer_cleanup_v1/verification.json /tmp/consumer-publication/verification-before.json
+          python -m hybrid_qcs.cleanup.consumer_runner --stage verify --output-dir experiments/consumer_cleanup_v1 | tee /tmp/consumer-publication/independent-verification.log
+          cmp experiments/consumer_cleanup_v1/verification.json /tmp/consumer-publication/verification-before.json
+          git add -A
+          git diff --cached --check
+          test -z "$(git diff --cached --name-only --diff-filter=MDR)"
+      - name: Prepare validated Git objects for final publication through GitHub integration
+        working-directory: /tmp/consumer-build
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64,datetime,hashlib,json,os,subprocess
+          from pathlib import Path
+          base='84c55c94f4b4c33ca55cbdbb9c7738222d6b32b8'
+          repo=os.environ['GITHUB_REPOSITORY']
+          out=Path('/tmp/consumer-publication')
+          def api(path,body):
+              p=subprocess.run(['gh','api','--method','POST',f'repos/{repo}/{path}','--input','-'],input=json.dumps(body),text=True,capture_output=True,check=True)
+              return json.loads(p.stdout)
+          def git(*args):
+              return subprocess.check_output(['git',*args],text=True).strip()
+          paths=git('diff','--cached','--name-only','--diff-filter=A').splitlines()
+          entries=[]
+          for name in paths:
+              raw=Path(name).read_bytes()
+              entry={'path':name,'mode':'100644','type':'blob'}
+              try: entry['content']=raw.decode('utf-8')
+              except UnicodeDecodeError:
+                  entry['sha']=api('git/blobs',{'encoding':'base64','content':base64.b64encode(raw).decode()})['sha']
+              entries.append(entry)
+          tree=api('git/trees',{'base_tree':git('rev-parse',base+'^{tree}'),'tree':entries})['sha']
+          assert tree==git('write-tree'), 'GitHub tree differs from validated source and evidence'
+          now=datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0)
+          date=now.isoformat().replace('+00:00','Z')
+          identity={'name':'github-actions[bot]','email':'41898282+github-actions[bot]@users.noreply.github.com','date':date}
+          msg='Prove and implement consumer-aware cleanup with exact live-use scheduling\n\nKeep the native hybrid representation and historical evidence unchanged. Use proved workspace bounds, exact binary rank and quadratic factorizations, and first/last-use streaming. Include 1272 passing tests, a fresh five-seed 345-run study, all outcomes and timing trade-offs, and independent complete-branch verification. Analytic results are not labelled as learned superiority.'
+          commit=api('git/commits',{'message':msg,'tree':tree,'parents':[base],'author':identity,'committer':identity})
+          sha=commit['sha']
+          header=f'tree {tree}\nparent {base}\nauthor {identity["name"]} <{identity["email"]}> {int(now.timestamp())} +0000\ncommitter {identity["name"]} <{identity["email"]}> {int(now.timestamp())} +0000\n\n'
+          matched=False
+          for tail in ('\n',''):
+              raw=(header+msg+tail).encode()
+              oid=subprocess.check_output(['git','hash-object','-t','commit','-w','--stdin'],input=raw).decode().strip()
+              if oid==sha:
+                  matched=True
+                  break
+          receipt={'commit':sha,'tree':tree,'base':base,'tested_source_tree':'da2c5938bd23fa5484d34617eb9975a615a12352','workflow_run':os.environ['GITHUB_RUN_ID'],'target_branch':'consumer-aware-cleanup-20260928','branch_published':False,'local_commit_bytes_match':matched,'note':'Validated objects only. Final branch reference is created through the authorized OpenAI GitHub integration.'}
+          (out/'PREPARED_COMMIT.json').write_text(json.dumps(receipt,indent=2)+'\n')
+          (out/'COMMIT_OBJECT.json').write_text(json.dumps(commit,indent=2)+'\n')
+          if matched:
+              subprocess.run(['git','update-ref','refs/heads/consumer-aware-cleanup-20260928',sha],check=True)
+              subprocess.run(['git','bundle','create',str(out/'consumer-aware-cleanup.bundle'),'refs/heads/consumer-aware-cleanup-20260928'],check=True)
+              subprocess.run(['git','archive','--format=zip','--output='+str(out/'consumer-aware-cleanup-source.zip'),sha],check=True)
+          print(json.dumps(receipt,indent=2))
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write('Validated commit prepared for publication through the GitHub integration: '+sha+'\n')
+          PY
+      - name: Preserve successful or interrupted experiment and proof records
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p /tmp/consumer-publication
+          if [ -d /tmp/consumer-build/experiments/consumer_cleanup_v1 ]; then cp -a /tmp/consumer-build/experiments/consumer_cleanup_v1 /tmp/consumer-publication/evidence; fi
+          if [ -d /tmp/consumer-build/docs/consumer_cleanup ]; then cp -a /tmp/consumer-build/docs/consumer_cleanup /tmp/consumer-publication/reports; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: consumer-cleanup-publication-validation
+          path: /tmp/consumer-publication
+          retention-days: 30
