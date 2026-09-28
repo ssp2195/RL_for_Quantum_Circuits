@@ -1,0 +1,81 @@
+name: Export verified consumer cleanup Git objects
+on:
+  push:
+    branches: [consumer-cleanup-transfer-20260928]
+    paths: [.github/workflows/export-consumer-cleanup.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      PYTHONHASHSEED: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/download-artifact@v4
+        with:
+          name: consumer-cleanup-publication-validation
+          run-id: 36429861584
+          github-token: ${{ github.token }}
+          path: /tmp/validated-input
+      - name: Restore the exact tested source and preserve its completed experiment
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/consumer-export
+          echo '4ad3173a6865647254a8cdd7c2722f514355da8d37b4d23ffce7341c70683028  /tmp/validated-input/source.patch' | sha256sum -c -
+          git worktree add --detach /tmp/consumer-recovered 84c55c94f4b4c33ca55cbdbb9c7738222d6b32b8
+          cd /tmp/consumer-recovered
+          git apply --check /tmp/validated-input/source.patch
+          git apply /tmp/validated-input/source.patch
+          git add -A
+          test "$(git write-tree)" = da2c5938bd23fa5484d34617eb9975a615a12352
+          cp -a /tmp/validated-input/evidence experiments/consumer_cleanup_v1
+          cp /tmp/validated-input/reports/IMPLEMENTATION_REPORT.md docs/consumer_cleanup/IMPLEMENTATION_REPORT.md
+          python -m pip install -r publication_native/requirements-reproduction.txt
+          python -m pip install -e '.[dev]'
+          python -m hybrid_qcs.cleanup.consumer_runner --stage verify --output-dir experiments/consumer_cleanup_v1 | tee /tmp/consumer-export/recheck.log
+          grep -Eq '1272 passed' /tmp/validated-input/pytest.log
+          git add -A
+          git diff --cached --check
+          test -z "$(git diff --cached --name-only --diff-filter=MDR)"
+      - name: Export exact commit and transfer its objects
+        working-directory: /tmp/consumer-recovered
+        shell: bash
+        run: |
+          set -euo pipefail
+          tree=$(git write-tree)
+          commit=$(printf '%s\n' 'Prove and implement consumer-aware cleanup with exact live-use scheduling' '' 'Preserve the native hybrid representation and all historical code and evidence. Add analytic bound attainment, exact consumer factorization and quadratic compression, and certified first/last-use schedules. Include 1272 passing tests and the unchanged completed 345-run remote study. Keep unfavorable latency and learning comparisons explicit.' | git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit-tree "$tree" -p 84c55c94f4b4c33ca55cbdbb9c7738222d6b32b8)
+          echo "$tree" > /tmp/consumer-export/TREE.txt
+          echo "$commit" > /tmp/consumer-export/COMMIT.txt
+          git update-ref refs/heads/consumer-aware-cleanup-20260928 "$commit"
+          git bundle create /tmp/consumer-export/consumer-aware-cleanup.bundle refs/heads/consumer-aware-cleanup-20260928
+          git archive --format=zip --output=/tmp/consumer-export/consumer-aware-cleanup-source.zip "$commit"
+          git cat-file commit "$commit" > /tmp/consumer-export/COMMIT.raw
+          git diff --cached --raw > /tmp/consumer-export/changed-files.txt
+          # A token may upload Git objects but refuse a ref introducing a workflow.
+          # In either case, the final user-facing ref is created via the OpenAI integration.
+          set +e
+          git push --porcelain origin "$commit:refs/heads/consumer-object-transfer-20260928" > /tmp/consumer-export/object-transfer.log 2>&1
+          status=$?
+          set -e
+          echo "$status" > /tmp/consumer-export/OBJECT_TRANSFER_EXIT.txt
+          cat /tmp/consumer-export/object-transfer.log
+          echo "Verified commit for publication through the OpenAI GitHub integration: $commit" >> "$GITHUB_STEP_SUMMARY"
+          cat /tmp/consumer-export/COMMIT.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: consumer-cleanup-exact-publishable-commit
+          path: /tmp/consumer-export
+          retention-days: 30
