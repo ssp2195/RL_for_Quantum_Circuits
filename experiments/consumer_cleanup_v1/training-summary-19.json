@@ -1,0 +1,53 @@
+{
+  "edge_budget_per_episode": 512,
+  "episode_count": 184,
+  "inner_updates": [
+    96,
+    164,
+    375,
+    583,
+    96,
+    96
+  ],
+  "outer_updates": 1401,
+  "policy_digest": "2e6017aa0170ef1deb86f607c0d5052e8adc4bb5ee91b10ba130a60bc5d0a4d7",
+  "reference_circuits_used_for_training": false,
+  "schedule_completion_is_not_convergence": true,
+  "schema": "cleanup-training-v1",
+  "seed": 19,
+  "stages": [
+    64,
+    96,
+    24
+  ],
+  "test_inputs_used_for_training": false,
+  "test_oracle_digests": [
+    "17e6d81313a9e2864150e007f0ab6ad7ffbea1e37ea61351ef02d276344c8fe7",
+    "28d68758cad3b8ce0c96732812898968a9edceca9d3e4fad415942049cfebd10",
+    "83f1f6f4737f56bb149cba1d05f4052fd0f3b7ed4fb1fdaf27c048eb4ab4d5f8",
+    "c42d5d92d1972c8c92bad18f0e01f6ba3f1c289a7fce96e19c3ce6fbb09a1ca5",
+    "ccf45787e5235787918d74f89ffceb8da07729cbf657acc2074c54f7f0391217"
+  ],
+  "training_oracle_digests": [
+    "1b3e33d976f1ca360837f7ea2f215d4f301ae3ca389a9bf3062154b28ee2f9c6",
+    "1ee02fc2974a480c17b7dbf49c8b6dc4df615bbd4da238bbfb55d79afb6bf509",
+    "27e830dcc0717f3475bf28a8539bc558fc1f6fc87a3e97a513edc10358289f82",
+    "34b558117af20509057bf2c9bd25b564b657edfe2f6b28aab06f3b8e1d31c92f",
+    "517f09ab4c1a66a6d7b61831c5a7da9783397b709483e4d5f5c2769ea7cdee07",
+    "59ee0c3722095fbb742d05efaa7b959dd931d624086dfe2061d32da2d909b180",
+    "5ec399d0f40414eb3ac3e9cef089c5df8cfb54ee7a315adc313559df67588409",
+    "6b66a3a77564e09bdea4edbf552f3c2a50482339e30a8afd008b09c037d6ac29",
+    "859ace0f8872852ce6e83e50f009a872a430752371f764e023cff9abe47319f3",
+    "8c5198e12571665ed660763e2159887944eeeffb931fc357b06168f3ffae1f9d",
+    "a245a32873bb6c19e156592caee5ccd51ae16198bb98312589e846e3cb37bd42",
+    "b1736780818e4e1f4f70f46bf5916dbd271c08693a6be1e46fc91cbcbf4ab291",
+    "b42a38d44f5ddb7a5e3280e7e49d4a8ace8bc08e24e3dd59aed8a9d1e0f31200",
+    "b580d40d77fcc82b863d6c66cc80213c628037412ca5c0e14d62f8ffe6150009",
+    "c23ba267ec192869f9c9a2dbe5423c7e4dc7e5af7e99fb52c1ccdecaff31692f",
+    "c65af50cd98136a1e2df59664302524768e4579ede1d7d3029ea3b5c1ac38e24",
+    "d751d683316420106b99cf83f75101e3fde92df84072424b90a919196ab58977",
+    "dc030bdf1a2b6e3b0dc463f180d3c3481471761fc5870a8effa7c2a45d14ede4",
+    "e0015f6e0e0d5aea54d513936587d019dace0fd6c3f51e8fba6841297a33f802"
+  ],
+  "wall_seconds": 0.880463987000013
+}

@@ -1,0 +1,36 @@
+name: Validate consumer-aware measured cleanup
+on:
+  push:
+    branches: [consumer-aware-cleanup-20260928]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-generation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      PYTHONHASHSEED: '0'
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m pip install -r publication_native/requirements-reproduction.txt && python -m pip install -e '.[dev]'
+      - name: All historical and new post-training generation tests
+        run: python -m pytest -q
+      - name: Independent complete-outcome and certificate replay
+        run: python -m hybrid_qcs.cleanup.consumer_runner --stage verify --output-dir experiments/consumer_cleanup_v1
+      - name: Fresh small replication, separate from the committed full study
+        run: |
+          python -m hybrid_qcs.cleanup.consumer_runner --smoke --output-dir /tmp/consumer-smoke
+          python -m hybrid_qcs.cleanup.consumer_diagnostics --output-dir /tmp/consumer-smoke
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: consumer-cleanup-fresh-validation
+          path: /tmp/consumer-smoke
+          retention-days: 30

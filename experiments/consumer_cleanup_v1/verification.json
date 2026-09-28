@@ -1,0 +1,7 @@
+{
+  "distinct_protocols": 67,
+  "records": 345,
+  "scope": "exact all-outcome symbolic replay and independent all-input truth tables; no generator or policy called",
+  "truth_table_input_outcome_generator_pairs": 2425280,
+  "valid": true
+}

@@ -1,0 +1,1376 @@
+{
+  "problem": {
+    "assumptions": [
+      "full-independent-raw-input-cube",
+      "F_ij=a*b_i*x_j",
+      "helpers=a*(P*b+Q*x+c)",
+      "all-r*m-products-coexist",
+      "quadratic-diagonal-sign-consumer",
+      "one-main-garbage-only-instrument-then-Clifford-feedback",
+      "helpers-preserved-through-main-feedback",
+      "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+      "no-postselection",
+      "no-extra-unaccounted-workspace"
+    ],
+    "consumer": [
+      [
+        "b0",
+        "f6_2"
+      ],
+      [
+        "b2",
+        "f0_0"
+      ],
+      [
+        "b3",
+        "f1_1"
+      ],
+      [
+        "b4",
+        "f2_2"
+      ],
+      [
+        "b6",
+        "f4_0"
+      ],
+      [
+        "b7",
+        "f5_1"
+      ],
+      [
+        "f0_0",
+        "f3_2"
+      ],
+      [
+        "f0_0",
+        "f5_1"
+      ],
+      [
+        "f0_1",
+        "f3_0"
+      ],
+      [
+        "f0_1",
+        "f5_2"
+      ],
+      [
+        "f0_2"
+      ],
+      [
+        "f0_2",
+        "f3_1"
+      ],
+      [
+        "f0_2",
+        "f5_0"
+      ],
+      [
+        "f1_0",
+        "f4_2"
+      ],
+      [
+        "f1_0",
+        "f6_1"
+      ],
+      [
+        "f1_1",
+        "f4_0"
+      ],
+      [
+        "f1_1",
+        "f6_2"
+      ],
+      [
+        "f1_2"
+      ],
+      [
+        "f1_2",
+        "f4_1"
+      ],
+      [
+        "f1_2",
+        "f6_0"
+      ],
+      [
+        "f2_0",
+        "f5_2"
+      ],
+      [
+        "f2_0",
+        "f7_1"
+      ],
+      [
+        "f2_1",
+        "f5_0"
+      ],
+      [
+        "f2_1",
+        "f7_2"
+      ],
+      [
+        "f2_2"
+      ],
+      [
+        "f2_2",
+        "f5_1"
+      ],
+      [
+        "f2_2",
+        "f7_0"
+      ],
+      [
+        "f3_0",
+        "f6_2"
+      ],
+      [
+        "f3_1",
+        "f6_0"
+      ],
+      [
+        "f3_2"
+      ],
+      [
+        "f3_2",
+        "f6_1"
+      ],
+      [
+        "f4_0",
+        "f7_2"
+      ],
+      [
+        "f4_1",
+        "f7_0"
+      ],
+      [
+        "f4_2"
+      ],
+      [
+        "f4_2",
+        "f7_1"
+      ],
+      [
+        "f5_2"
+      ],
+      [
+        "f6_2"
+      ],
+      [
+        "f7_2"
+      ]
+    ],
+    "hardware": {
+      "feedback_ticks": 2,
+      "gate_ticks": 1,
+      "measurement_ticks": 5
+    },
+    "input_domain": "full_cube",
+    "limits": {
+      "max_aux": null,
+      "max_cnot": null,
+      "max_depth": null,
+      "max_gates": null,
+      "max_rounds": null,
+      "max_t": null,
+      "max_t_depth": null,
+      "max_ticks": null
+    },
+    "m": 3,
+    "name": "wide-shared-mask-oracle",
+    "phase_mode": "exact",
+    "r": 8,
+    "schema": "outer-product-cleanup-v1",
+    "split": "test"
+  },
+  "protocol": {
+    "ops": [
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          0,
+          9,
+          36
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          0,
+          10,
+          37
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          0,
+          11,
+          38
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          1,
+          36,
+          12
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          2,
+          37,
+          16
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          3,
+          38,
+          20
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          2,
+          36,
+          15
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          1,
+          37,
+          13
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          4,
+          38,
+          23
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          1,
+          38,
+          14
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          2,
+          38,
+          17
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          5,
+          38,
+          26
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          6,
+          38,
+          29
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          7,
+          38,
+          32
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          8,
+          38,
+          35
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          8,
+          36,
+          33
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          3,
+          36,
+          18
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          4,
+          36,
+          21
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          5,
+          36,
+          24
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          6,
+          36,
+          27
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          7,
+          36,
+          30
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          7,
+          37,
+          31
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          3,
+          37,
+          19
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          4,
+          37,
+          22
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          5,
+          37,
+          25
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          6,
+          37,
+          28
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          8,
+          37,
+          34
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          1,
+          32
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          3,
+          12
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          4,
+          16
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          5,
+          20
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          7,
+          24
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          8,
+          28
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          12,
+          23
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          12,
+          28
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          13,
+          21
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          13,
+          29
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          14,
+          22
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          14,
+          27
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          15,
+          26
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          15,
+          31
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          16,
+          24
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          16,
+          32
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          17,
+          25
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          17,
+          30
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          18,
+          29
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          18,
+          34
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          19,
+          27
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          19,
+          35
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          20,
+          28
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          20,
+          33
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          21,
+          32
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          22,
+          30
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          23,
+          31
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          24,
+          35
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          25,
+          33
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          26,
+          34
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "Z",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          14
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "Z",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          17
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "Z",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          20
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "Z",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          23
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "Z",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          26
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "Z",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          29
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "Z",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          32
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "Z",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          35
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 0,
+        "stage": "measure_products",
+        "wires": [
+          12
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 1,
+        "stage": "measure_products",
+        "wires": [
+          13
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 2,
+        "stage": "measure_products",
+        "wires": [
+          14
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 3,
+        "stage": "measure_products",
+        "wires": [
+          15
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 4,
+        "stage": "measure_products",
+        "wires": [
+          16
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 5,
+        "stage": "measure_products",
+        "wires": [
+          17
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 6,
+        "stage": "measure_products",
+        "wires": [
+          18
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 7,
+        "stage": "measure_products",
+        "wires": [
+          19
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 8,
+        "stage": "measure_products",
+        "wires": [
+          20
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 9,
+        "stage": "measure_products",
+        "wires": [
+          21
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 10,
+        "stage": "measure_products",
+        "wires": [
+          22
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 11,
+        "stage": "measure_products",
+        "wires": [
+          23
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 12,
+        "stage": "measure_products",
+        "wires": [
+          24
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 13,
+        "stage": "measure_products",
+        "wires": [
+          25
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 14,
+        "stage": "measure_products",
+        "wires": [
+          26
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 15,
+        "stage": "measure_products",
+        "wires": [
+          27
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 16,
+        "stage": "measure_products",
+        "wires": [
+          28
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 17,
+        "stage": "measure_products",
+        "wires": [
+          29
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 18,
+        "stage": "measure_products",
+        "wires": [
+          30
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 19,
+        "stage": "measure_products",
+        "wires": [
+          31
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 20,
+        "stage": "measure_products",
+        "wires": [
+          32
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 21,
+        "stage": "measure_products",
+        "wires": [
+          33
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 22,
+        "stage": "measure_products",
+        "wires": [
+          34
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 23,
+        "stage": "measure_products",
+        "wires": [
+          35
+        ]
+      },
+      {
+        "guard": 0,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          1,
+          36
+        ]
+      },
+      {
+        "guard": 1,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          1,
+          37
+        ]
+      },
+      {
+        "guard": 2,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          1,
+          38
+        ]
+      },
+      {
+        "guard": 3,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          2,
+          36
+        ]
+      },
+      {
+        "guard": 4,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          2,
+          37
+        ]
+      },
+      {
+        "guard": 5,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          2,
+          38
+        ]
+      },
+      {
+        "guard": 6,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          3,
+          36
+        ]
+      },
+      {
+        "guard": 7,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          3,
+          37
+        ]
+      },
+      {
+        "guard": 8,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          3,
+          38
+        ]
+      },
+      {
+        "guard": 9,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          4,
+          36
+        ]
+      },
+      {
+        "guard": 10,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          4,
+          37
+        ]
+      },
+      {
+        "guard": 11,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          4,
+          38
+        ]
+      },
+      {
+        "guard": 12,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          5,
+          36
+        ]
+      },
+      {
+        "guard": 13,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          5,
+          37
+        ]
+      },
+      {
+        "guard": 14,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          5,
+          38
+        ]
+      },
+      {
+        "guard": 15,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          6,
+          36
+        ]
+      },
+      {
+        "guard": 16,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          6,
+          37
+        ]
+      },
+      {
+        "guard": 17,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          6,
+          38
+        ]
+      },
+      {
+        "guard": 18,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          7,
+          36
+        ]
+      },
+      {
+        "guard": 19,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          7,
+          37
+        ]
+      },
+      {
+        "guard": 20,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          7,
+          38
+        ]
+      },
+      {
+        "guard": 21,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          8,
+          36
+        ]
+      },
+      {
+        "guard": 22,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          8,
+          37
+        ]
+      },
+      {
+        "guard": 23,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_products",
+        "wires": [
+          8,
+          38
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 24,
+        "stage": "measure_helpers",
+        "wires": [
+          36
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 25,
+        "stage": "measure_helpers",
+        "wires": [
+          37
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 26,
+        "stage": "measure_helpers",
+        "wires": [
+          38
+        ]
+      },
+      {
+        "guard": 24,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_helpers",
+        "wires": [
+          0,
+          9
+        ]
+      },
+      {
+        "guard": 25,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_helpers",
+        "wires": [
+          0,
+          10
+        ]
+      },
+      {
+        "guard": 26,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_helpers",
+        "wires": [
+          0,
+          11
+        ]
+      }
+    ],
+    "primitive": "and4",
+    "problem_digest": "d2d356d96d14fe2d1b9fe33551ff545d0a189c6c243904f225b11d7fbdd8dc14",
+    "provenance": "fixed_side_hierarchy",
+    "schema": "consumer-phase-protocol-v1",
+    "scope": "complete phase oracle; no full-bank materialization requirement",
+    "width": 39
+  }
+}

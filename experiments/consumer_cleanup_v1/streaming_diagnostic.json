@@ -1,0 +1,3109 @@
+{
+  "cases": [
+    {
+      "method": "store_all",
+      "problem": {
+        "assumptions": [
+          "full-independent-raw-input-cube",
+          "F_ij=a*b_i*x_j",
+          "helpers=a*(P*b+Q*x+c)",
+          "all-r*m-products-coexist",
+          "quadratic-diagonal-sign-consumer",
+          "one-main-garbage-only-instrument-then-Clifford-feedback",
+          "helpers-preserved-through-main-feedback",
+          "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+          "no-postselection",
+          "no-extra-unaccounted-workspace"
+        ],
+        "consumer": [
+          [
+            "b1",
+            "f0_0"
+          ],
+          [
+            "b1",
+            "f0_2"
+          ],
+          [
+            "b2",
+            "f0_1"
+          ],
+          [
+            "b2",
+            "f0_3"
+          ],
+          [
+            "b3",
+            "f1_1"
+          ],
+          [
+            "b3",
+            "f1_3"
+          ],
+          [
+            "b3",
+            "f2_0"
+          ],
+          [
+            "b3",
+            "f2_2"
+          ],
+          [
+            "f0_0"
+          ],
+          [
+            "f1_1"
+          ],
+          [
+            "f2_2"
+          ],
+          [
+            "f3_3"
+          ]
+        ],
+        "hardware": {
+          "feedback_ticks": 2,
+          "gate_ticks": 1,
+          "measurement_ticks": 5
+        },
+        "input_domain": "full_cube",
+        "limits": {
+          "max_aux": null,
+          "max_cnot": null,
+          "max_depth": null,
+          "max_gates": null,
+          "max_rounds": null,
+          "max_t": null,
+          "max_t_depth": null,
+          "max_ticks": null
+        },
+        "m": 4,
+        "name": "shared-quadratic-feature-lifetimes",
+        "phase_mode": "exact",
+        "r": 4,
+        "schema": "outer-product-cleanup-v1",
+        "split": "test"
+      },
+      "protocol": {
+        "ops": [
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              1,
+              2,
+              10
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              1,
+              3,
+              11
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              2,
+              4,
+              12
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              3,
+              4,
+              13
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              10,
+              1
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              13,
+              1
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              0,
+              1,
+              9
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "consumer",
+            "wires": [
+              9,
+              5
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 0,
+            "stage": "measure_factor_0",
+            "wires": [
+              9
+            ]
+          },
+          {
+            "guard": 0,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_factor_0",
+            "wires": [
+              0,
+              1
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_0",
+            "wires": [
+              13,
+              1
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_0",
+            "wires": [
+              10,
+              1
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              11,
+              2
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              12,
+              2
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              0,
+              2,
+              9
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "consumer",
+            "wires": [
+              9,
+              6
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 1,
+            "stage": "measure_factor_1",
+            "wires": [
+              9
+            ]
+          },
+          {
+            "guard": 1,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_factor_1",
+            "wires": [
+              0,
+              2
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_1",
+            "wires": [
+              12,
+              2
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_1",
+            "wires": [
+              11,
+              2
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              10,
+              3
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              13,
+              3
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              0,
+              3,
+              9
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "consumer",
+            "wires": [
+              9,
+              7
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 2,
+            "stage": "measure_factor_2",
+            "wires": [
+              9
+            ]
+          },
+          {
+            "guard": 2,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_factor_2",
+            "wires": [
+              0,
+              3
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_2",
+            "wires": [
+              13,
+              3
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_2",
+            "wires": [
+              10,
+              3
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              11,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              12,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              0,
+              4,
+              9
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "consumer",
+            "wires": [
+              9,
+              8
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 3,
+            "stage": "measure_factor_3",
+            "wires": [
+              9
+            ]
+          },
+          {
+            "guard": 3,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_factor_3",
+            "wires": [
+              0,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_3",
+            "wires": [
+              12,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_3",
+            "wires": [
+              11,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 4,
+            "stage": "measure_features_0",
+            "wires": [
+              10
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 5,
+            "stage": "measure_features_0",
+            "wires": [
+              11
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 6,
+            "stage": "measure_features_0",
+            "wires": [
+              12
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 7,
+            "stage": "measure_features_0",
+            "wires": [
+              13
+            ]
+          },
+          {
+            "guard": 4,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_features_0",
+            "wires": [
+              1,
+              2
+            ]
+          },
+          {
+            "guard": 5,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_features_0",
+            "wires": [
+              1,
+              3
+            ]
+          },
+          {
+            "guard": 6,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_features_0",
+            "wires": [
+              2,
+              4
+            ]
+          },
+          {
+            "guard": 7,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_features_0",
+            "wires": [
+              3,
+              4
+            ]
+          }
+        ],
+        "primitive": "and4",
+        "problem_digest": "c99c01c4cced23fb74ebdb135ebf15613461e79dedb0e61f0189fe5c5b9e2871",
+        "provenance": "exact_feature_factors_all",
+        "schema": "consumer-phase-protocol-v1",
+        "scope": "complete phase oracle; no full-bank materialization requirement",
+        "width": 14
+      },
+      "receipt": {
+        "factorization": {
+          "b_features": [
+            2,
+            4,
+            6,
+            8,
+            10,
+            16,
+            20,
+            24
+          ],
+          "factors": [
+            [
+              133,
+              1
+            ],
+            [
+              82,
+              2
+            ],
+            [
+              140,
+              4
+            ],
+            [
+              112,
+              8
+            ]
+          ],
+          "quadratic": [],
+          "rank": 4,
+          "rows": [
+            1,
+            2,
+            5,
+            4,
+            10,
+            8,
+            10,
+            5
+          ],
+          "x_features": [
+            32,
+            64,
+            128,
+            256
+          ]
+        },
+        "feature_computations": 4,
+        "feature_table": [
+          [
+            2,
+            4
+          ],
+          [
+            2,
+            8
+          ],
+          [
+            4,
+            16
+          ],
+          [
+            8,
+            16
+          ]
+        ],
+        "forms": [
+          [
+            {
+              "linear": 2,
+              "products": [
+                [
+                  2,
+                  4
+                ],
+                [
+                  8,
+                  16
+                ]
+              ]
+            },
+            {
+              "linear": 32,
+              "products": []
+            }
+          ],
+          [
+            {
+              "linear": 4,
+              "products": [
+                [
+                  2,
+                  8
+                ],
+                [
+                  4,
+                  16
+                ]
+              ]
+            },
+            {
+              "linear": 64,
+              "products": []
+            }
+          ],
+          [
+            {
+              "linear": 8,
+              "products": [
+                [
+                  2,
+                  4
+                ],
+                [
+                  8,
+                  16
+                ]
+              ]
+            },
+            {
+              "linear": 128,
+              "products": []
+            }
+          ],
+          [
+            {
+              "linear": 16,
+              "products": [
+                [
+                  2,
+                  8
+                ],
+                [
+                  4,
+                  16
+                ]
+              ]
+            },
+            {
+              "linear": 256,
+              "products": []
+            }
+          ]
+        ],
+        "global_oracle_optimality": false,
+        "order": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "predicted_peak": 5,
+        "predicted_t": 32,
+        "quadratic_compression": true,
+        "schedule_certificate": null,
+        "schedule_status": "fixed_order_upper_bound",
+        "schema": "consumer-factor-construction-v1",
+        "storage": "all"
+      },
+      "truth_table": {
+        "input_generator_pairs": 4608,
+        "method": "independent packed truth tables, all raw inputs and outcome generators",
+        "outcome_generators": 8,
+        "raw_inputs": 512,
+        "valid": true
+      },
+      "verification": {
+        "all_inputs_and_outcomes": true,
+        "branch_count": 256,
+        "branch_identity": "K_s J = 2^(-measurements/2) J O_p",
+        "global_oracle_optimality": false,
+        "measurements": 8,
+        "problem_digest": "c99c01c4cced23fb74ebdb135ebf15613461e79dedb0e61f0189fe5c5b9e2871",
+        "protocol_digest": "57e4ed0adbc9c762198bb8936441467d4f25b6b01f507a4e51ee21eab491584d",
+        "resources": {
+          "aux_at_end": 0,
+          "cleanup_t": 0,
+          "cnot": 52,
+          "expected_native_gates": "144",
+          "forward_and": 8,
+          "measurement_rounds": 5,
+          "measurements": 8,
+          "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+          "native_depth": 122,
+          "native_gates": 172,
+          "peak_aux": 5,
+          "physical_qubits": 14,
+          "retained_classical_bits": 8,
+          "t_count": 32,
+          "t_depth": 22,
+          "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+          "worst_case_correction_cz": 8,
+          "worst_case_ticks": 157
+        },
+        "scope": "exact complete phase oracle; no materialization lower bound used",
+        "valid": true
+      }
+    },
+    {
+      "method": "canonical_stream",
+      "problem": {
+        "assumptions": [
+          "full-independent-raw-input-cube",
+          "F_ij=a*b_i*x_j",
+          "helpers=a*(P*b+Q*x+c)",
+          "all-r*m-products-coexist",
+          "quadratic-diagonal-sign-consumer",
+          "one-main-garbage-only-instrument-then-Clifford-feedback",
+          "helpers-preserved-through-main-feedback",
+          "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+          "no-postselection",
+          "no-extra-unaccounted-workspace"
+        ],
+        "consumer": [
+          [
+            "b1",
+            "f0_0"
+          ],
+          [
+            "b1",
+            "f0_2"
+          ],
+          [
+            "b2",
+            "f0_1"
+          ],
+          [
+            "b2",
+            "f0_3"
+          ],
+          [
+            "b3",
+            "f1_1"
+          ],
+          [
+            "b3",
+            "f1_3"
+          ],
+          [
+            "b3",
+            "f2_0"
+          ],
+          [
+            "b3",
+            "f2_2"
+          ],
+          [
+            "f0_0"
+          ],
+          [
+            "f1_1"
+          ],
+          [
+            "f2_2"
+          ],
+          [
+            "f3_3"
+          ]
+        ],
+        "hardware": {
+          "feedback_ticks": 2,
+          "gate_ticks": 1,
+          "measurement_ticks": 5
+        },
+        "input_domain": "full_cube",
+        "limits": {
+          "max_aux": null,
+          "max_cnot": null,
+          "max_depth": null,
+          "max_gates": null,
+          "max_rounds": null,
+          "max_t": null,
+          "max_t_depth": null,
+          "max_ticks": null
+        },
+        "m": 4,
+        "name": "shared-quadratic-feature-lifetimes",
+        "phase_mode": "exact",
+        "r": 4,
+        "schema": "outer-product-cleanup-v1",
+        "split": "test"
+      },
+      "protocol": {
+        "ops": [
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              1,
+              2,
+              10
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              3,
+              4,
+              11
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              10,
+              1
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              11,
+              1
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              0,
+              1,
+              9
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "consumer",
+            "wires": [
+              9,
+              5
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 0,
+            "stage": "measure_factor_0",
+            "wires": [
+              9
+            ]
+          },
+          {
+            "guard": 0,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_factor_0",
+            "wires": [
+              0,
+              1
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_0",
+            "wires": [
+              11,
+              1
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_0",
+            "wires": [
+              10,
+              1
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              1,
+              3,
+              12
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              2,
+              4,
+              13
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              12,
+              2
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              13,
+              2
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              0,
+              2,
+              9
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "consumer",
+            "wires": [
+              9,
+              6
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 1,
+            "stage": "measure_factor_1",
+            "wires": [
+              9
+            ]
+          },
+          {
+            "guard": 1,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_factor_1",
+            "wires": [
+              0,
+              2
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_1",
+            "wires": [
+              13,
+              2
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_1",
+            "wires": [
+              12,
+              2
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              10,
+              3
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              11,
+              3
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              0,
+              3,
+              9
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "consumer",
+            "wires": [
+              9,
+              7
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 2,
+            "stage": "measure_factor_2",
+            "wires": [
+              9
+            ]
+          },
+          {
+            "guard": 2,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_factor_2",
+            "wires": [
+              0,
+              3
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_2",
+            "wires": [
+              11,
+              3
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_2",
+            "wires": [
+              10,
+              3
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 3,
+            "stage": "measure_features_0",
+            "wires": [
+              10
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 4,
+            "stage": "measure_features_0",
+            "wires": [
+              11
+            ]
+          },
+          {
+            "guard": 3,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_features_0",
+            "wires": [
+              1,
+              2
+            ]
+          },
+          {
+            "guard": 4,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_features_0",
+            "wires": [
+              3,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              12,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              13,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              0,
+              4,
+              9
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "consumer",
+            "wires": [
+              9,
+              8
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 5,
+            "stage": "measure_factor_3",
+            "wires": [
+              9
+            ]
+          },
+          {
+            "guard": 5,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_factor_3",
+            "wires": [
+              0,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_3",
+            "wires": [
+              13,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_3",
+            "wires": [
+              12,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 6,
+            "stage": "measure_features_1",
+            "wires": [
+              12
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 7,
+            "stage": "measure_features_1",
+            "wires": [
+              13
+            ]
+          },
+          {
+            "guard": 6,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_features_1",
+            "wires": [
+              1,
+              3
+            ]
+          },
+          {
+            "guard": 7,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_features_1",
+            "wires": [
+              2,
+              4
+            ]
+          }
+        ],
+        "primitive": "and4",
+        "problem_digest": "c99c01c4cced23fb74ebdb135ebf15613461e79dedb0e61f0189fe5c5b9e2871",
+        "provenance": "exact_feature_factors_stream",
+        "schema": "consumer-phase-protocol-v1",
+        "scope": "complete phase oracle; no full-bank materialization requirement",
+        "width": 14
+      },
+      "receipt": {
+        "factorization": {
+          "b_features": [
+            2,
+            4,
+            6,
+            8,
+            10,
+            16,
+            20,
+            24
+          ],
+          "factors": [
+            [
+              133,
+              1
+            ],
+            [
+              82,
+              2
+            ],
+            [
+              140,
+              4
+            ],
+            [
+              112,
+              8
+            ]
+          ],
+          "quadratic": [],
+          "rank": 4,
+          "rows": [
+            1,
+            2,
+            5,
+            4,
+            10,
+            8,
+            10,
+            5
+          ],
+          "x_features": [
+            32,
+            64,
+            128,
+            256
+          ]
+        },
+        "feature_computations": 4,
+        "feature_table": [
+          [
+            2,
+            4
+          ],
+          [
+            2,
+            8
+          ],
+          [
+            4,
+            16
+          ],
+          [
+            8,
+            16
+          ]
+        ],
+        "forms": [
+          [
+            {
+              "linear": 2,
+              "products": [
+                [
+                  2,
+                  4
+                ],
+                [
+                  8,
+                  16
+                ]
+              ]
+            },
+            {
+              "linear": 32,
+              "products": []
+            }
+          ],
+          [
+            {
+              "linear": 4,
+              "products": [
+                [
+                  2,
+                  8
+                ],
+                [
+                  4,
+                  16
+                ]
+              ]
+            },
+            {
+              "linear": 64,
+              "products": []
+            }
+          ],
+          [
+            {
+              "linear": 8,
+              "products": [
+                [
+                  2,
+                  4
+                ],
+                [
+                  8,
+                  16
+                ]
+              ]
+            },
+            {
+              "linear": 128,
+              "products": []
+            }
+          ],
+          [
+            {
+              "linear": 16,
+              "products": [
+                [
+                  2,
+                  8
+                ],
+                [
+                  4,
+                  16
+                ]
+              ]
+            },
+            {
+              "linear": 256,
+              "products": []
+            }
+          ]
+        ],
+        "global_oracle_optimality": false,
+        "order": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "predicted_peak": 5,
+        "predicted_t": 32,
+        "quadratic_compression": true,
+        "schedule_certificate": null,
+        "schedule_status": "fixed_order_upper_bound",
+        "schema": "consumer-factor-construction-v1",
+        "storage": "stream"
+      },
+      "truth_table": {
+        "input_generator_pairs": 4608,
+        "method": "independent packed truth tables, all raw inputs and outcome generators",
+        "outcome_generators": 8,
+        "raw_inputs": 512,
+        "valid": true
+      },
+      "verification": {
+        "all_inputs_and_outcomes": true,
+        "branch_count": 256,
+        "branch_identity": "K_s J = 2^(-measurements/2) J O_p",
+        "global_oracle_optimality": false,
+        "measurements": 8,
+        "problem_digest": "c99c01c4cced23fb74ebdb135ebf15613461e79dedb0e61f0189fe5c5b9e2871",
+        "protocol_digest": "cc86371cc9a62698d3da9dced87edb923f91f9cc48d54b02b96798d42c8f87ca",
+        "resources": {
+          "aux_at_end": 0,
+          "cleanup_t": 0,
+          "cnot": 52,
+          "expected_native_gates": "144",
+          "forward_and": 8,
+          "measurement_rounds": 6,
+          "measurements": 8,
+          "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+          "native_depth": 128,
+          "native_gates": 172,
+          "peak_aux": 5,
+          "physical_qubits": 14,
+          "retained_classical_bits": 8,
+          "t_count": 32,
+          "t_depth": 22,
+          "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+          "worst_case_correction_cz": 8,
+          "worst_case_ticks": 170
+        },
+        "scope": "exact complete phase oracle; no materialization lower bound used",
+        "valid": true
+      }
+    },
+    {
+      "method": "minimum_live_stream",
+      "problem": {
+        "assumptions": [
+          "full-independent-raw-input-cube",
+          "F_ij=a*b_i*x_j",
+          "helpers=a*(P*b+Q*x+c)",
+          "all-r*m-products-coexist",
+          "quadratic-diagonal-sign-consumer",
+          "one-main-garbage-only-instrument-then-Clifford-feedback",
+          "helpers-preserved-through-main-feedback",
+          "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+          "no-postselection",
+          "no-extra-unaccounted-workspace"
+        ],
+        "consumer": [
+          [
+            "b1",
+            "f0_0"
+          ],
+          [
+            "b1",
+            "f0_2"
+          ],
+          [
+            "b2",
+            "f0_1"
+          ],
+          [
+            "b2",
+            "f0_3"
+          ],
+          [
+            "b3",
+            "f1_1"
+          ],
+          [
+            "b3",
+            "f1_3"
+          ],
+          [
+            "b3",
+            "f2_0"
+          ],
+          [
+            "b3",
+            "f2_2"
+          ],
+          [
+            "f0_0"
+          ],
+          [
+            "f1_1"
+          ],
+          [
+            "f2_2"
+          ],
+          [
+            "f3_3"
+          ]
+        ],
+        "hardware": {
+          "feedback_ticks": 2,
+          "gate_ticks": 1,
+          "measurement_ticks": 5
+        },
+        "input_domain": "full_cube",
+        "limits": {
+          "max_aux": null,
+          "max_cnot": null,
+          "max_depth": null,
+          "max_gates": null,
+          "max_rounds": null,
+          "max_t": null,
+          "max_t_depth": null,
+          "max_ticks": null
+        },
+        "m": 4,
+        "name": "shared-quadratic-feature-lifetimes",
+        "phase_mode": "exact",
+        "r": 4,
+        "schema": "outer-product-cleanup-v1",
+        "split": "test"
+      },
+      "protocol": {
+        "ops": [
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              1,
+              2,
+              10
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              3,
+              4,
+              11
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              10,
+              1
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              11,
+              1
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              0,
+              1,
+              9
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "consumer",
+            "wires": [
+              9,
+              5
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 0,
+            "stage": "measure_factor_0",
+            "wires": [
+              9
+            ]
+          },
+          {
+            "guard": 0,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_factor_0",
+            "wires": [
+              0,
+              1
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_0",
+            "wires": [
+              11,
+              1
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_0",
+            "wires": [
+              10,
+              1
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              10,
+              3
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              11,
+              3
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              0,
+              3,
+              9
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "consumer",
+            "wires": [
+              9,
+              7
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 1,
+            "stage": "measure_factor_1",
+            "wires": [
+              9
+            ]
+          },
+          {
+            "guard": 1,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_factor_1",
+            "wires": [
+              0,
+              3
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_1",
+            "wires": [
+              11,
+              3
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_1",
+            "wires": [
+              10,
+              3
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 2,
+            "stage": "measure_features_0",
+            "wires": [
+              10
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 3,
+            "stage": "measure_features_0",
+            "wires": [
+              11
+            ]
+          },
+          {
+            "guard": 2,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_features_0",
+            "wires": [
+              1,
+              2
+            ]
+          },
+          {
+            "guard": 3,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_features_0",
+            "wires": [
+              3,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              1,
+              3,
+              10
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              2,
+              4,
+              11
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              10,
+              2
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              11,
+              2
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              0,
+              2,
+              9
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "consumer",
+            "wires": [
+              9,
+              6
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 4,
+            "stage": "measure_factor_2",
+            "wires": [
+              9
+            ]
+          },
+          {
+            "guard": 4,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_factor_2",
+            "wires": [
+              0,
+              2
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_2",
+            "wires": [
+              11,
+              2
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_2",
+            "wires": [
+              10,
+              2
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              10,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              11,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              0,
+              4,
+              9
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "consumer",
+            "wires": [
+              9,
+              8
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 5,
+            "stage": "measure_factor_3",
+            "wires": [
+              9
+            ]
+          },
+          {
+            "guard": 5,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_factor_3",
+            "wires": [
+              0,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_3",
+            "wires": [
+              11,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_3",
+            "wires": [
+              10,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 6,
+            "stage": "measure_features_1",
+            "wires": [
+              10
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 7,
+            "stage": "measure_features_1",
+            "wires": [
+              11
+            ]
+          },
+          {
+            "guard": 6,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_features_1",
+            "wires": [
+              1,
+              3
+            ]
+          },
+          {
+            "guard": 7,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_features_1",
+            "wires": [
+              2,
+              4
+            ]
+          }
+        ],
+        "primitive": "and4",
+        "problem_digest": "c99c01c4cced23fb74ebdb135ebf15613461e79dedb0e61f0189fe5c5b9e2871",
+        "provenance": "exact_feature_factors_stream",
+        "schema": "consumer-phase-protocol-v1",
+        "scope": "complete phase oracle; no full-bank materialization requirement",
+        "width": 12
+      },
+      "receipt": {
+        "factorization": {
+          "b_features": [
+            2,
+            4,
+            6,
+            8,
+            10,
+            16,
+            20,
+            24
+          ],
+          "factors": [
+            [
+              133,
+              1
+            ],
+            [
+              82,
+              2
+            ],
+            [
+              140,
+              4
+            ],
+            [
+              112,
+              8
+            ]
+          ],
+          "quadratic": [],
+          "rank": 4,
+          "rows": [
+            1,
+            2,
+            5,
+            4,
+            10,
+            8,
+            10,
+            5
+          ],
+          "x_features": [
+            32,
+            64,
+            128,
+            256
+          ]
+        },
+        "feature_computations": 4,
+        "feature_table": [
+          [
+            2,
+            4
+          ],
+          [
+            2,
+            8
+          ],
+          [
+            4,
+            16
+          ],
+          [
+            8,
+            16
+          ]
+        ],
+        "forms": [
+          [
+            {
+              "linear": 2,
+              "products": [
+                [
+                  2,
+                  4
+                ],
+                [
+                  8,
+                  16
+                ]
+              ]
+            },
+            {
+              "linear": 32,
+              "products": []
+            }
+          ],
+          [
+            {
+              "linear": 4,
+              "products": [
+                [
+                  2,
+                  8
+                ],
+                [
+                  4,
+                  16
+                ]
+              ]
+            },
+            {
+              "linear": 64,
+              "products": []
+            }
+          ],
+          [
+            {
+              "linear": 8,
+              "products": [
+                [
+                  2,
+                  4
+                ],
+                [
+                  8,
+                  16
+                ]
+              ]
+            },
+            {
+              "linear": 128,
+              "products": []
+            }
+          ],
+          [
+            {
+              "linear": 16,
+              "products": [
+                [
+                  2,
+                  8
+                ],
+                [
+                  4,
+                  16
+                ]
+              ]
+            },
+            {
+              "linear": 256,
+              "products": []
+            }
+          ]
+        ],
+        "global_oracle_optimality": false,
+        "order": [
+          0,
+          2,
+          1,
+          3
+        ],
+        "predicted_peak": 3,
+        "predicted_t": 32,
+        "quadratic_compression": true,
+        "schedule_certificate": {
+          "global_oracle_optimality": false,
+          "order": [
+            0,
+            2,
+            1,
+            3
+          ],
+          "peak": 3,
+          "scope": "fixed rank factors, atomic factors, no feature recomputation",
+          "states": 16,
+          "supports": [
+            [
+              0,
+              3
+            ],
+            [
+              1,
+              2
+            ],
+            [
+              0,
+              3
+            ],
+            [
+              1,
+              2
+            ]
+          ],
+          "values": [
+            3,
+            3,
+            3,
+            5,
+            3,
+            3,
+            5,
+            3,
+            3,
+            5,
+            3,
+            3,
+            5,
+            3,
+            3,
+            0
+          ]
+        },
+        "schedule_status": "proved_fixed_factor_no_recomputation_peak",
+        "schema": "consumer-factor-construction-v1",
+        "storage": "stream"
+      },
+      "truth_table": {
+        "input_generator_pairs": 4608,
+        "method": "independent packed truth tables, all raw inputs and outcome generators",
+        "outcome_generators": 8,
+        "raw_inputs": 512,
+        "valid": true
+      },
+      "verification": {
+        "all_inputs_and_outcomes": true,
+        "branch_count": 256,
+        "branch_identity": "K_s J = 2^(-measurements/2) J O_p",
+        "global_oracle_optimality": false,
+        "measurements": 8,
+        "problem_digest": "c99c01c4cced23fb74ebdb135ebf15613461e79dedb0e61f0189fe5c5b9e2871",
+        "protocol_digest": "5a4aa8b84cf9f0a08e1ff0ebff28bce9101ded58ab610f6bd6db8d007b631ea3",
+        "resources": {
+          "aux_at_end": 0,
+          "cleanup_t": 0,
+          "cnot": 52,
+          "expected_native_gates": "144",
+          "forward_and": 8,
+          "measurement_rounds": 6,
+          "measurements": 8,
+          "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+          "native_depth": 128,
+          "native_gates": 172,
+          "peak_aux": 3,
+          "physical_qubits": 12,
+          "retained_classical_bits": 8,
+          "t_count": 32,
+          "t_depth": 22,
+          "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+          "worst_case_correction_cz": 8,
+          "worst_case_ticks": 170
+        },
+        "scope": "exact complete phase oracle; no materialization lower bound used",
+        "valid": true
+      }
+    },
+    {
+      "method": "recompute",
+      "problem": {
+        "assumptions": [
+          "full-independent-raw-input-cube",
+          "F_ij=a*b_i*x_j",
+          "helpers=a*(P*b+Q*x+c)",
+          "all-r*m-products-coexist",
+          "quadratic-diagonal-sign-consumer",
+          "one-main-garbage-only-instrument-then-Clifford-feedback",
+          "helpers-preserved-through-main-feedback",
+          "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+          "no-postselection",
+          "no-extra-unaccounted-workspace"
+        ],
+        "consumer": [
+          [
+            "b1",
+            "f0_0"
+          ],
+          [
+            "b1",
+            "f0_2"
+          ],
+          [
+            "b2",
+            "f0_1"
+          ],
+          [
+            "b2",
+            "f0_3"
+          ],
+          [
+            "b3",
+            "f1_1"
+          ],
+          [
+            "b3",
+            "f1_3"
+          ],
+          [
+            "b3",
+            "f2_0"
+          ],
+          [
+            "b3",
+            "f2_2"
+          ],
+          [
+            "f0_0"
+          ],
+          [
+            "f1_1"
+          ],
+          [
+            "f2_2"
+          ],
+          [
+            "f3_3"
+          ]
+        ],
+        "hardware": {
+          "feedback_ticks": 2,
+          "gate_ticks": 1,
+          "measurement_ticks": 5
+        },
+        "input_domain": "full_cube",
+        "limits": {
+          "max_aux": null,
+          "max_cnot": null,
+          "max_depth": null,
+          "max_gates": null,
+          "max_rounds": null,
+          "max_t": null,
+          "max_t_depth": null,
+          "max_ticks": null
+        },
+        "m": 4,
+        "name": "shared-quadratic-feature-lifetimes",
+        "phase_mode": "exact",
+        "r": 4,
+        "schema": "outer-product-cleanup-v1",
+        "split": "test"
+      },
+      "protocol": {
+        "ops": [
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              1,
+              2,
+              10
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              3,
+              4,
+              11
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              10,
+              1
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              11,
+              1
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              0,
+              1,
+              9
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "consumer",
+            "wires": [
+              9,
+              5
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 0,
+            "stage": "measure_factor_0",
+            "wires": [
+              9
+            ]
+          },
+          {
+            "guard": 0,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_factor_0",
+            "wires": [
+              0,
+              1
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_0",
+            "wires": [
+              11,
+              1
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_0",
+            "wires": [
+              10,
+              1
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 1,
+            "stage": "measure_features_0",
+            "wires": [
+              10
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 2,
+            "stage": "measure_features_0",
+            "wires": [
+              11
+            ]
+          },
+          {
+            "guard": 1,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_features_0",
+            "wires": [
+              1,
+              2
+            ]
+          },
+          {
+            "guard": 2,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_features_0",
+            "wires": [
+              3,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              1,
+              3,
+              10
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              2,
+              4,
+              11
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              10,
+              2
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              11,
+              2
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              0,
+              2,
+              9
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "consumer",
+            "wires": [
+              9,
+              6
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 3,
+            "stage": "measure_factor_1",
+            "wires": [
+              9
+            ]
+          },
+          {
+            "guard": 3,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_factor_1",
+            "wires": [
+              0,
+              2
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_1",
+            "wires": [
+              11,
+              2
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_1",
+            "wires": [
+              10,
+              2
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 4,
+            "stage": "measure_features_1",
+            "wires": [
+              10
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 5,
+            "stage": "measure_features_1",
+            "wires": [
+              11
+            ]
+          },
+          {
+            "guard": 4,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_features_1",
+            "wires": [
+              1,
+              3
+            ]
+          },
+          {
+            "guard": 5,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_features_1",
+            "wires": [
+              2,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              1,
+              2,
+              10
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              3,
+              4,
+              11
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              10,
+              3
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              11,
+              3
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              0,
+              3,
+              9
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "consumer",
+            "wires": [
+              9,
+              7
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 6,
+            "stage": "measure_factor_2",
+            "wires": [
+              9
+            ]
+          },
+          {
+            "guard": 6,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_factor_2",
+            "wires": [
+              0,
+              3
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_2",
+            "wires": [
+              11,
+              3
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_2",
+            "wires": [
+              10,
+              3
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 7,
+            "stage": "measure_features_2",
+            "wires": [
+              10
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 8,
+            "stage": "measure_features_2",
+            "wires": [
+              11
+            ]
+          },
+          {
+            "guard": 7,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_features_2",
+            "wires": [
+              1,
+              2
+            ]
+          },
+          {
+            "guard": 8,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_features_2",
+            "wires": [
+              3,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              1,
+              3,
+              10
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              2,
+              4,
+              11
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              10,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              11,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "AND",
+            "outcome": null,
+            "stage": "prepare",
+            "wires": [
+              0,
+              4,
+              9
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "consumer",
+            "wires": [
+              9,
+              8
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 9,
+            "stage": "measure_factor_3",
+            "wires": [
+              9
+            ]
+          },
+          {
+            "guard": 9,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_factor_3",
+            "wires": [
+              0,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_3",
+            "wires": [
+              11,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "CX",
+            "outcome": null,
+            "stage": "restore_factor_3",
+            "wires": [
+              10,
+              4
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 10,
+            "stage": "measure_features_3",
+            "wires": [
+              10
+            ]
+          },
+          {
+            "guard": null,
+            "kind": "MX",
+            "outcome": 11,
+            "stage": "measure_features_3",
+            "wires": [
+              11
+            ]
+          },
+          {
+            "guard": 10,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_features_3",
+            "wires": [
+              1,
+              3
+            ]
+          },
+          {
+            "guard": 11,
+            "kind": "CZ",
+            "outcome": null,
+            "stage": "correct_features_3",
+            "wires": [
+              2,
+              4
+            ]
+          }
+        ],
+        "primitive": "and4",
+        "problem_digest": "c99c01c4cced23fb74ebdb135ebf15613461e79dedb0e61f0189fe5c5b9e2871",
+        "provenance": "exact_feature_factors_recompute",
+        "schema": "consumer-phase-protocol-v1",
+        "scope": "complete phase oracle; no full-bank materialization requirement",
+        "width": 12
+      },
+      "receipt": {
+        "factorization": {
+          "b_features": [
+            2,
+            4,
+            6,
+            8,
+            10,
+            16,
+            20,
+            24
+          ],
+          "factors": [
+            [
+              133,
+              1
+            ],
+            [
+              82,
+              2
+            ],
+            [
+              140,
+              4
+            ],
+            [
+              112,
+              8
+            ]
+          ],
+          "quadratic": [],
+          "rank": 4,
+          "rows": [
+            1,
+            2,
+            5,
+            4,
+            10,
+            8,
+            10,
+            5
+          ],
+          "x_features": [
+            32,
+            64,
+            128,
+            256
+          ]
+        },
+        "feature_computations": 8,
+        "feature_table": [
+          [
+            2,
+            4
+          ],
+          [
+            2,
+            8
+          ],
+          [
+            4,
+            16
+          ],
+          [
+            8,
+            16
+          ]
+        ],
+        "forms": [
+          [
+            {
+              "linear": 2,
+              "products": [
+                [
+                  2,
+                  4
+                ],
+                [
+                  8,
+                  16
+                ]
+              ]
+            },
+            {
+              "linear": 32,
+              "products": []
+            }
+          ],
+          [
+            {
+              "linear": 4,
+              "products": [
+                [
+                  2,
+                  8
+                ],
+                [
+                  4,
+                  16
+                ]
+              ]
+            },
+            {
+              "linear": 64,
+              "products": []
+            }
+          ],
+          [
+            {
+              "linear": 8,
+              "products": [
+                [
+                  2,
+                  4
+                ],
+                [
+                  8,
+                  16
+                ]
+              ]
+            },
+            {
+              "linear": 128,
+              "products": []
+            }
+          ],
+          [
+            {
+              "linear": 16,
+              "products": [
+                [
+                  2,
+                  8
+                ],
+                [
+                  4,
+                  16
+                ]
+              ]
+            },
+            {
+              "linear": 256,
+              "products": []
+            }
+          ]
+        ],
+        "global_oracle_optimality": false,
+        "order": [
+          0,
+          1,
+          2,
+          3
+        ],
+        "predicted_peak": 3,
+        "predicted_t": 48,
+        "quadratic_compression": true,
+        "schedule_certificate": null,
+        "schedule_status": "fixed_order_upper_bound",
+        "schema": "consumer-factor-construction-v1",
+        "storage": "recompute"
+      },
+      "truth_table": {
+        "input_generator_pairs": 6656,
+        "method": "independent packed truth tables, all raw inputs and outcome generators",
+        "outcome_generators": 12,
+        "raw_inputs": 512,
+        "valid": true
+      },
+      "verification": {
+        "all_inputs_and_outcomes": true,
+        "branch_count": 4096,
+        "branch_identity": "K_s J = 2^(-measurements/2) J O_p",
+        "global_oracle_optimality": false,
+        "measurements": 12,
+        "problem_digest": "c99c01c4cced23fb74ebdb135ebf15613461e79dedb0e61f0189fe5c5b9e2871",
+        "protocol_digest": "29d4862e4021c65a0529b9c38804cbee9ad2b91c6b1ada6d59b5b180ac50ac7c",
+        "resources": {
+          "aux_at_end": 0,
+          "cleanup_t": 0,
+          "cnot": 68,
+          "expected_native_gates": "202",
+          "forward_and": 12,
+          "measurement_rounds": 8,
+          "measurements": 12,
+          "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+          "native_depth": 164,
+          "native_gates": 244,
+          "peak_aux": 3,
+          "physical_qubits": 12,
+          "retained_classical_bits": 12,
+          "t_count": 48,
+          "t_depth": 28,
+          "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+          "worst_case_correction_cz": 12,
+          "worst_case_ticks": 220
+        },
+        "scope": "exact complete phase oracle; no materialization lower bound used",
+        "valid": true
+      }
+    }
+  ],
+  "scope": "constructed mechanism example, not held-out performance evidence",
+  "tight_cap_selection": "rank_stream"
+}
