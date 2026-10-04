@@ -1,0 +1,11 @@
+{
+  "schema_version":1,
+  "benchmark":"enabled-three-feature-coupling-source.v",
+  "params":{"cut_size":5,"max_solver_n":6,"area_flow_rounds":6,"exact_rounds":6,"alpha":0.500000,"beta":0.100000,"multi_output":false,"clean_ancilla":true,"toffoli":false},
+  "mapper":{"baseline_and_gates":9,"baseline_t_count":63,"mapped_t_count":31,"mapped_cnot_count":72,"mapped_qubit_count":7,"runtime_ms":12.221539},
+  "cut_enum":{"total_cuts":68,"trivial_cuts":12,"bilinear_cuts":55,"multi_output_cuts":0,"merged_cuts":61,"avg_cuts_per_node":5.230769,"time_build_cuts_ms":0.092909,"cuts_by_output_count":{"2":9,"3":1,"7":1,"12":1,"22":1}},
+  "solver_cache":{"size":19,"hits":7,"misses":19,"hit_rate":0.269231},
+  "parity_solver":{"total_calls":0,"cache_lookups":0,"cache_hits":0,"cache_misses":0,"cache_hit_rate":0.000000,"total_time_ms":0.000000,"astar_time_ms":0.000000,"gray_synth_time_ms":0.000000},
+  "affine":{"initial_cnot_count":0,"final_cnot_count":0,"blocks_processed":0,"states_explored":0,"timeouts":0,"total_time_ms":0.000000},
+  "derived":{"self_cut_nodes":0,"mapped_and_nodes":9,"self_cut_ratio":0.000000,"cut_size_histogram":{"2":9},"num_outputs_histogram":{"1":9},"degree_histogram":{"2":9}}
+}

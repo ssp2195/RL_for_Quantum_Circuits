@@ -1,0 +1,11 @@
+{
+  "schema_version":1,
+  "benchmark":"two-channel-feature-ring-anf.v",
+  "params":{"cut_size":5,"max_solver_n":6,"area_flow_rounds":6,"exact_rounds":6,"alpha":0.500000,"beta":0.100000,"multi_output":false,"clean_ancilla":true,"toffoli":false},
+  "mapper":{"baseline_and_gates":5,"baseline_t_count":35,"mapped_t_count":20,"mapped_cnot_count":40,"mapped_qubit_count":5,"runtime_ms":7.221658},
+  "cut_enum":{"total_cuts":40,"trivial_cuts":7,"bilinear_cuts":27,"multi_output_cuts":0,"merged_cuts":31,"avg_cuts_per_node":5.000000,"time_build_cuts_ms":0.049044,"cuts_by_output_count":{"2":5,"3":1,"7":1,"12":1}},
+  "solver_cache":{"size":11,"hits":5,"misses":11,"hit_rate":0.312500},
+  "parity_solver":{"total_calls":0,"cache_lookups":0,"cache_hits":0,"cache_misses":0,"cache_hit_rate":0.000000,"total_time_ms":0.000000,"astar_time_ms":0.000000,"gray_synth_time_ms":0.000000},
+  "affine":{"initial_cnot_count":0,"final_cnot_count":0,"blocks_processed":0,"states_explored":0,"timeouts":0,"total_time_ms":0.000000},
+  "derived":{"self_cut_nodes":0,"mapped_and_nodes":5,"self_cut_ratio":0.000000,"cut_size_histogram":{"2":5},"num_outputs_histogram":{"1":5},"degree_histogram":{"2":5}}
+}

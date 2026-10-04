@@ -1,0 +1,11 @@
+{
+  "schema_version":1,
+  "benchmark":"three-channel-cross-feature-bank-davio.v",
+  "params":{"cut_size":5,"max_solver_n":6,"area_flow_rounds":6,"exact_rounds":6,"alpha":0.500000,"beta":0.100000,"multi_output":false,"clean_ancilla":true,"toffoli":false},
+  "mapper":{"baseline_and_gates":20,"baseline_t_count":140,"mapped_t_count":79,"mapped_cnot_count":168,"mapped_qubit_count":19,"runtime_ms":33.446583},
+  "cut_enum":{"total_cuts":251,"trivial_cuts":37,"bilinear_cuts":368,"multi_output_cuts":0,"merged_cuts":235,"avg_cuts_per_node":5.976190,"time_build_cuts_ms":0.388574,"cuts_by_output_count":{"2":8,"3":13,"4":7,"5":3,"7":1,"10":2,"11":1,"13":1,"14":3,"16":2,"17":1}},
+  "solver_cache":{"size":53,"hits":19,"misses":53,"hit_rate":0.263889},
+  "parity_solver":{"total_calls":0,"cache_lookups":0,"cache_hits":0,"cache_misses":0,"cache_hit_rate":0.000000,"total_time_ms":0.000000,"astar_time_ms":0.000000,"gray_synth_time_ms":0.000000},
+  "affine":{"initial_cnot_count":0,"final_cnot_count":0,"blocks_processed":0,"states_explored":0,"timeouts":0,"total_time_ms":0.000000},
+  "derived":{"self_cut_nodes":0,"mapped_and_nodes":20,"self_cut_ratio":0.000000,"cut_size_histogram":{"2":20},"num_outputs_histogram":{"1":20},"degree_histogram":{"2":20}}
+}

@@ -1,0 +1,6 @@
+{
+  "optimized": "6 11 34\nA 4 13\nA 8 12\nX 14 16\nA 6 18\nA 4 16\nX 20 22\nX 24 6\nA 10 26\nA 5 16\nX 28 30\nA 2 32\n",
+  "source": "6 15 42\nX 1 4\nA 12 14\nA 8 16\nA 8 12\nA 4 20\nA 8 12\nX 1 24\nX 1 12\nA 4 28\nX 26 30\nA 6 32\nX 22 34\nA 10 36\nX 18 38\nA 2 40\n",
+  "source_form": "davio",
+  "stderr": ""
+}

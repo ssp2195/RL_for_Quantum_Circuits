@@ -1,0 +1,17 @@
+{
+  "methods": [
+    "source",
+    "anf",
+    "davio"
+  ],
+  "repetitions": 1,
+  "scope": "five development targets; complete coherent evaluator-adjoint wrapper; no hardware or measurement-matched superiority claim",
+  "solver": [
+    "-n",
+    "6",
+    "--cut-size",
+    "5",
+    "--clean-ancilla"
+  ],
+  "upstream_commit": "bffe54c38b6bfd689a04e0d7d5afdbd949bdac3a"
+}

@@ -1,0 +1,3244 @@
+[
+  {
+    "form": "source",
+    "mapping_seconds": 0.01409798800000317,
+    "name": "enabled-three-feature-coupling",
+    "problem": {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0"
+        ],
+        [
+          "f0_0",
+          "f1_0"
+        ],
+        [
+          "f0_0",
+          "f2_0"
+        ],
+        [
+          "f1_0",
+          "f2_0"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 1,
+      "name": "enabled-three-feature-coupling",
+      "phase_mode": "exact",
+      "r": 3,
+      "schema": "outer-product-cleanup-v1",
+      "split": "test"
+    },
+    "reported_upstream_stats": {
+      "affine": {
+        "blocks_processed": 0,
+        "final_cnot_count": 0,
+        "initial_cnot_count": 0,
+        "states_explored": 0,
+        "timeouts": 0,
+        "total_time_ms": 0.0
+      },
+      "benchmark": "enabled-three-feature-coupling-source.v",
+      "cut_enum": {
+        "avg_cuts_per_node": 5.230769,
+        "bilinear_cuts": 55,
+        "cuts_by_output_count": {
+          "12": 1,
+          "2": 9,
+          "22": 1,
+          "3": 1,
+          "7": 1
+        },
+        "merged_cuts": 61,
+        "multi_output_cuts": 0,
+        "time_build_cuts_ms": 0.092909,
+        "total_cuts": 68,
+        "trivial_cuts": 12
+      },
+      "derived": {
+        "cut_size_histogram": {
+          "2": 9
+        },
+        "degree_histogram": {
+          "2": 9
+        },
+        "mapped_and_nodes": 9,
+        "num_outputs_histogram": {
+          "1": 9
+        },
+        "self_cut_nodes": 0,
+        "self_cut_ratio": 0.0
+      },
+      "mapper": {
+        "baseline_and_gates": 9,
+        "baseline_t_count": 63,
+        "mapped_cnot_count": 72,
+        "mapped_qubit_count": 7,
+        "mapped_t_count": 31,
+        "runtime_ms": 12.221539
+      },
+      "params": {
+        "alpha": 0.5,
+        "area_flow_rounds": 6,
+        "beta": 0.1,
+        "clean_ancilla": true,
+        "cut_size": 5,
+        "exact_rounds": 6,
+        "max_solver_n": 6,
+        "multi_output": false,
+        "toffoli": false
+      },
+      "parity_solver": {
+        "astar_time_ms": 0.0,
+        "cache_hit_rate": 0.0,
+        "cache_hits": 0,
+        "cache_lookups": 0,
+        "cache_misses": 0,
+        "gray_synth_time_ms": 0.0,
+        "total_calls": 0,
+        "total_time_ms": 0.0
+      },
+      "schema_version": 1,
+      "solver_cache": {
+        "hit_rate": 0.269231,
+        "hits": 7,
+        "misses": 19,
+        "size": 19
+      }
+    },
+    "stderr": "",
+    "stdout": "",
+    "valid": true,
+    "verification": {
+      "basis_inputs": 32,
+      "max_sparse_support": 2,
+      "scope": "exact evaluator output eigenspace on all inputs; U^dag Z_output U gives exact phase and clean return by linearity",
+      "valid": true
+    },
+    "verification_seconds": 0.005775315999983377,
+    "wrapper_resources": {
+      "cnot": 148,
+      "measurement_rounds": 0,
+      "native_depth": 178,
+      "native_gates": 266,
+      "peak_aux": 8,
+      "physical_qubits": 13,
+      "t_count": 62,
+      "t_depth": 42,
+      "workspace_scope": "allocated auxiliary register of complete reversible wrapper",
+      "worst_case_ticks": 178
+    }
+  },
+  {
+    "form": "anf",
+    "mapping_seconds": 0.015490950000014436,
+    "name": "enabled-three-feature-coupling",
+    "problem": {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0"
+        ],
+        [
+          "f0_0",
+          "f1_0"
+        ],
+        [
+          "f0_0",
+          "f2_0"
+        ],
+        [
+          "f1_0",
+          "f2_0"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 1,
+      "name": "enabled-three-feature-coupling",
+      "phase_mode": "exact",
+      "r": 3,
+      "schema": "outer-product-cleanup-v1",
+      "split": "test"
+    },
+    "reported_upstream_stats": {
+      "affine": {
+        "blocks_processed": 0,
+        "final_cnot_count": 0,
+        "initial_cnot_count": 0,
+        "states_explored": 0,
+        "timeouts": 0,
+        "total_time_ms": 0.0
+      },
+      "benchmark": "enabled-three-feature-coupling-anf.v",
+      "cut_enum": {
+        "avg_cuts_per_node": 4.6,
+        "bilinear_cuts": 63,
+        "cuts_by_output_count": {
+          "15": 1,
+          "16": 1,
+          "2": 11,
+          "3": 1,
+          "7": 1
+        },
+        "merged_cuts": 62,
+        "multi_output_cuts": 0,
+        "time_build_cuts_ms": 0.089274,
+        "total_cuts": 69,
+        "trivial_cuts": 14
+      },
+      "derived": {
+        "cut_size_histogram": {
+          "2": 11
+        },
+        "degree_histogram": {
+          "2": 11
+        },
+        "mapped_and_nodes": 11,
+        "num_outputs_histogram": {
+          "1": 11
+        },
+        "self_cut_nodes": 0,
+        "self_cut_ratio": 0.0
+      },
+      "mapper": {
+        "baseline_and_gates": 11,
+        "baseline_t_count": 77,
+        "mapped_cnot_count": 88,
+        "mapped_qubit_count": 11,
+        "mapped_t_count": 44,
+        "runtime_ms": 14.353892
+      },
+      "params": {
+        "alpha": 0.5,
+        "area_flow_rounds": 6,
+        "beta": 0.1,
+        "clean_ancilla": true,
+        "cut_size": 5,
+        "exact_rounds": 6,
+        "max_solver_n": 6,
+        "multi_output": false,
+        "toffoli": false
+      },
+      "parity_solver": {
+        "astar_time_ms": 0.0,
+        "cache_hit_rate": 0.0,
+        "cache_hits": 0,
+        "cache_lookups": 0,
+        "cache_misses": 0,
+        "gray_synth_time_ms": 0.0,
+        "total_calls": 0,
+        "total_time_ms": 0.0
+      },
+      "schema_version": 1,
+      "solver_cache": {
+        "hit_rate": 0.323529,
+        "hits": 11,
+        "misses": 23,
+        "size": 23
+      }
+    },
+    "stderr": "",
+    "stdout": "",
+    "valid": true,
+    "verification": {
+      "basis_inputs": 32,
+      "max_sparse_support": 2,
+      "scope": "exact evaluator output eigenspace on all inputs; U^dag Z_output U gives exact phase and clean return by linearity",
+      "valid": true
+    },
+    "verification_seconds": 0.007596090999982152,
+    "wrapper_resources": {
+      "cnot": 184,
+      "measurement_rounds": 0,
+      "native_depth": 160,
+      "native_gates": 340,
+      "peak_aux": 12,
+      "physical_qubits": 17,
+      "t_count": 88,
+      "t_depth": 42,
+      "workspace_scope": "allocated auxiliary register of complete reversible wrapper",
+      "worst_case_ticks": 160
+    }
+  },
+  {
+    "form": "davio",
+    "mapping_seconds": 0.007773357000019132,
+    "name": "enabled-three-feature-coupling",
+    "problem": {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0"
+        ],
+        [
+          "f0_0",
+          "f1_0"
+        ],
+        [
+          "f0_0",
+          "f2_0"
+        ],
+        [
+          "f1_0",
+          "f2_0"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 1,
+      "name": "enabled-three-feature-coupling",
+      "phase_mode": "exact",
+      "r": 3,
+      "schema": "outer-product-cleanup-v1",
+      "split": "test"
+    },
+    "reported_upstream_stats": {
+      "affine": {
+        "blocks_processed": 0,
+        "final_cnot_count": 0,
+        "initial_cnot_count": 0,
+        "states_explored": 0,
+        "timeouts": 0,
+        "total_time_ms": 0.0
+      },
+      "benchmark": "enabled-three-feature-coupling-davio.v",
+      "cut_enum": {
+        "avg_cuts_per_node": 4.428571,
+        "bilinear_cuts": 18,
+        "cuts_by_output_count": {
+          "2": 3,
+          "3": 2,
+          "4": 1,
+          "9": 1
+        },
+        "merged_cuts": 24,
+        "multi_output_cuts": 0,
+        "time_build_cuts_ms": 0.040832,
+        "total_cuts": 31,
+        "trivial_cuts": 6
+      },
+      "derived": {
+        "cut_size_histogram": {
+          "2": 4
+        },
+        "degree_histogram": {
+          "2": 4
+        },
+        "mapped_and_nodes": 4,
+        "num_outputs_histogram": {
+          "1": 4
+        },
+        "self_cut_nodes": 0,
+        "self_cut_ratio": 0.0
+      },
+      "mapper": {
+        "baseline_and_gates": 4,
+        "baseline_t_count": 28,
+        "mapped_cnot_count": 32,
+        "mapped_qubit_count": 4,
+        "mapped_t_count": 16,
+        "runtime_ms": 6.690781
+      },
+      "params": {
+        "alpha": 0.5,
+        "area_flow_rounds": 6,
+        "beta": 0.1,
+        "clean_ancilla": true,
+        "cut_size": 5,
+        "exact_rounds": 6,
+        "max_solver_n": 6,
+        "multi_output": false,
+        "toffoli": false
+      },
+      "parity_solver": {
+        "astar_time_ms": 0.0,
+        "cache_hit_rate": 0.0,
+        "cache_hits": 0,
+        "cache_lookups": 0,
+        "cache_misses": 0,
+        "gray_synth_time_ms": 0.0,
+        "total_calls": 0,
+        "total_time_ms": 0.0
+      },
+      "schema_version": 1,
+      "solver_cache": {
+        "hit_rate": 0.285714,
+        "hits": 4,
+        "misses": 10,
+        "size": 10
+      }
+    },
+    "stderr": "",
+    "stdout": "",
+    "valid": true,
+    "verification": {
+      "basis_inputs": 32,
+      "max_sparse_support": 2,
+      "scope": "exact evaluator output eigenspace on all inputs; U^dag Z_output U gives exact phase and clean return by linearity",
+      "valid": true
+    },
+    "verification_seconds": 0.0031952600000408893,
+    "wrapper_resources": {
+      "cnot": 72,
+      "measurement_rounds": 0,
+      "native_depth": 114,
+      "native_gates": 130,
+      "peak_aux": 5,
+      "physical_qubits": 10,
+      "t_count": 32,
+      "t_depth": 30,
+      "workspace_scope": "allocated auxiliary register of complete reversible wrapper",
+      "worst_case_ticks": 114
+    }
+  },
+  {
+    "form": "source",
+    "mapping_seconds": 0.010829798999964169,
+    "name": "two-channel-feature-ring",
+    "problem": {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "a",
+          "x1"
+        ],
+        [
+          "b1",
+          "f3_1"
+        ],
+        [
+          "b3",
+          "f1_1"
+        ],
+        [
+          "f0_0",
+          "f2_1"
+        ],
+        [
+          "f0_1",
+          "f2_0"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_0",
+          "f3_1"
+        ],
+        [
+          "f1_1",
+          "f3_0"
+        ],
+        [
+          "f2_1"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "two-channel-feature-ring",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "test"
+    },
+    "reported_upstream_stats": {
+      "affine": {
+        "blocks_processed": 0,
+        "final_cnot_count": 0,
+        "initial_cnot_count": 0,
+        "states_explored": 0,
+        "timeouts": 0,
+        "total_time_ms": 0.0
+      },
+      "benchmark": "two-channel-feature-ring-source.v",
+      "cut_enum": {
+        "avg_cuts_per_node": 5.142857,
+        "bilinear_cuts": 191,
+        "cuts_by_output_count": {
+          "11": 1,
+          "12": 3,
+          "13": 1,
+          "14": 2,
+          "2": 19,
+          "3": 1,
+          "7": 1
+        },
+        "merged_cuts": 135,
+        "multi_output_cuts": 0,
+        "time_build_cuts_ms": 0.192479,
+        "total_cuts": 144,
+        "trivial_cuts": 27
+      },
+      "derived": {
+        "cut_size_histogram": {
+          "2": 19
+        },
+        "degree_histogram": {
+          "2": 19
+        },
+        "mapped_and_nodes": 19,
+        "num_outputs_histogram": {
+          "1": 19
+        },
+        "self_cut_nodes": 0,
+        "self_cut_ratio": 0.0
+      },
+      "mapper": {
+        "baseline_and_gates": 19,
+        "baseline_t_count": 133,
+        "mapped_cnot_count": 152,
+        "mapped_qubit_count": 19,
+        "mapped_t_count": 76,
+        "runtime_ms": 9.729957
+      },
+      "params": {
+        "alpha": 0.5,
+        "area_flow_rounds": 6,
+        "beta": 0.1,
+        "clean_ancilla": true,
+        "cut_size": 5,
+        "exact_rounds": 6,
+        "max_solver_n": 6,
+        "multi_output": false,
+        "toffoli": false
+      },
+      "parity_solver": {
+        "astar_time_ms": 0.0,
+        "cache_hit_rate": 0.0,
+        "cache_hits": 0,
+        "cache_lookups": 0,
+        "cache_misses": 0,
+        "gray_synth_time_ms": 0.0,
+        "total_calls": 0,
+        "total_time_ms": 0.0
+      },
+      "schema_version": 1,
+      "solver_cache": {
+        "hit_rate": 0.59375,
+        "hits": 19,
+        "misses": 13,
+        "size": 13
+      }
+    },
+    "stderr": "",
+    "stdout": "",
+    "valid": true,
+    "verification": {
+      "basis_inputs": 128,
+      "max_sparse_support": 2,
+      "scope": "exact evaluator output eigenspace on all inputs; U^dag Z_output U gives exact phase and clean return by linearity",
+      "valid": true
+    },
+    "verification_seconds": 0.050349314000015966,
+    "wrapper_resources": {
+      "cnot": 322,
+      "measurement_rounds": 0,
+      "native_depth": 208,
+      "native_gates": 590,
+      "peak_aux": 20,
+      "physical_qubits": 27,
+      "t_count": 152,
+      "t_depth": 54,
+      "workspace_scope": "allocated auxiliary register of complete reversible wrapper",
+      "worst_case_ticks": 208
+    }
+  },
+  {
+    "form": "anf",
+    "mapping_seconds": 0.008357483999986925,
+    "name": "two-channel-feature-ring",
+    "problem": {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "a",
+          "x1"
+        ],
+        [
+          "b1",
+          "f3_1"
+        ],
+        [
+          "b3",
+          "f1_1"
+        ],
+        [
+          "f0_0",
+          "f2_1"
+        ],
+        [
+          "f0_1",
+          "f2_0"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_0",
+          "f3_1"
+        ],
+        [
+          "f1_1",
+          "f3_0"
+        ],
+        [
+          "f2_1"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "two-channel-feature-ring",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "test"
+    },
+    "reported_upstream_stats": {
+      "affine": {
+        "blocks_processed": 0,
+        "final_cnot_count": 0,
+        "initial_cnot_count": 0,
+        "states_explored": 0,
+        "timeouts": 0,
+        "total_time_ms": 0.0
+      },
+      "benchmark": "two-channel-feature-ring-anf.v",
+      "cut_enum": {
+        "avg_cuts_per_node": 5.0,
+        "bilinear_cuts": 27,
+        "cuts_by_output_count": {
+          "12": 1,
+          "2": 5,
+          "3": 1,
+          "7": 1
+        },
+        "merged_cuts": 31,
+        "multi_output_cuts": 0,
+        "time_build_cuts_ms": 0.049044,
+        "total_cuts": 40,
+        "trivial_cuts": 7
+      },
+      "derived": {
+        "cut_size_histogram": {
+          "2": 5
+        },
+        "degree_histogram": {
+          "2": 5
+        },
+        "mapped_and_nodes": 5,
+        "num_outputs_histogram": {
+          "1": 5
+        },
+        "self_cut_nodes": 0,
+        "self_cut_ratio": 0.0
+      },
+      "mapper": {
+        "baseline_and_gates": 5,
+        "baseline_t_count": 35,
+        "mapped_cnot_count": 40,
+        "mapped_qubit_count": 5,
+        "mapped_t_count": 20,
+        "runtime_ms": 7.221658
+      },
+      "params": {
+        "alpha": 0.5,
+        "area_flow_rounds": 6,
+        "beta": 0.1,
+        "clean_ancilla": true,
+        "cut_size": 5,
+        "exact_rounds": 6,
+        "max_solver_n": 6,
+        "multi_output": false,
+        "toffoli": false
+      },
+      "parity_solver": {
+        "astar_time_ms": 0.0,
+        "cache_hit_rate": 0.0,
+        "cache_hits": 0,
+        "cache_lookups": 0,
+        "cache_misses": 0,
+        "gray_synth_time_ms": 0.0,
+        "total_calls": 0,
+        "total_time_ms": 0.0
+      },
+      "schema_version": 1,
+      "solver_cache": {
+        "hit_rate": 0.3125,
+        "hits": 5,
+        "misses": 11,
+        "size": 11
+      }
+    },
+    "stderr": "",
+    "stdout": "",
+    "valid": true,
+    "verification": {
+      "basis_inputs": 128,
+      "max_sparse_support": 2,
+      "scope": "exact evaluator output eigenspace on all inputs; U^dag Z_output U gives exact phase and clean return by linearity",
+      "valid": true
+    },
+    "verification_seconds": 0.015726764000021376,
+    "wrapper_resources": {
+      "cnot": 86,
+      "measurement_rounds": 0,
+      "native_depth": 136,
+      "native_gates": 158,
+      "peak_aux": 6,
+      "physical_qubits": 13,
+      "t_count": 40,
+      "t_depth": 36,
+      "workspace_scope": "allocated auxiliary register of complete reversible wrapper",
+      "worst_case_ticks": 136
+    }
+  },
+  {
+    "form": "davio",
+    "mapping_seconds": 0.006217750000018896,
+    "name": "two-channel-feature-ring",
+    "problem": {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "a",
+          "x1"
+        ],
+        [
+          "b1",
+          "f3_1"
+        ],
+        [
+          "b3",
+          "f1_1"
+        ],
+        [
+          "f0_0",
+          "f2_1"
+        ],
+        [
+          "f0_1",
+          "f2_0"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_0",
+          "f3_1"
+        ],
+        [
+          "f1_1",
+          "f3_0"
+        ],
+        [
+          "f2_1"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "two-channel-feature-ring",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "test"
+    },
+    "reported_upstream_stats": {
+      "affine": {
+        "blocks_processed": 0,
+        "final_cnot_count": 0,
+        "initial_cnot_count": 0,
+        "states_explored": 0,
+        "timeouts": 0,
+        "total_time_ms": 0.0
+      },
+      "benchmark": "two-channel-feature-ring-davio.v",
+      "cut_enum": {
+        "avg_cuts_per_node": 5.0,
+        "bilinear_cuts": 12,
+        "cuts_by_output_count": {
+          "2": 2,
+          "3": 2,
+          "7": 1
+        },
+        "merged_cuts": 16,
+        "multi_output_cuts": 0,
+        "time_build_cuts_ms": 0.031287,
+        "total_cuts": 25,
+        "trivial_cuts": 4
+      },
+      "derived": {
+        "cut_size_histogram": {
+          "2": 3
+        },
+        "degree_histogram": {
+          "2": 3
+        },
+        "mapped_and_nodes": 3,
+        "num_outputs_histogram": {
+          "1": 3
+        },
+        "self_cut_nodes": 0,
+        "self_cut_ratio": 0.0
+      },
+      "mapper": {
+        "baseline_and_gates": 3,
+        "baseline_t_count": 21,
+        "mapped_cnot_count": 24,
+        "mapped_qubit_count": 3,
+        "mapped_t_count": 12,
+        "runtime_ms": 5.155184
+      },
+      "params": {
+        "alpha": 0.5,
+        "area_flow_rounds": 6,
+        "beta": 0.1,
+        "clean_ancilla": true,
+        "cut_size": 5,
+        "exact_rounds": 6,
+        "max_solver_n": 6,
+        "multi_output": false,
+        "toffoli": false
+      },
+      "parity_solver": {
+        "astar_time_ms": 0.0,
+        "cache_hit_rate": 0.0,
+        "cache_hits": 0,
+        "cache_lookups": 0,
+        "cache_misses": 0,
+        "gray_synth_time_ms": 0.0,
+        "total_calls": 0,
+        "total_time_ms": 0.0
+      },
+      "schema_version": 1,
+      "solver_cache": {
+        "hit_rate": 0.272727,
+        "hits": 3,
+        "misses": 8,
+        "size": 8
+      }
+    },
+    "stderr": "",
+    "stdout": "",
+    "valid": true,
+    "verification": {
+      "basis_inputs": 128,
+      "max_sparse_support": 2,
+      "scope": "exact evaluator output eigenspace on all inputs; U^dag Z_output U gives exact phase and clean return by linearity",
+      "valid": true
+    },
+    "verification_seconds": 0.011072071999990385,
+    "wrapper_resources": {
+      "cnot": 54,
+      "measurement_rounds": 0,
+      "native_depth": 64,
+      "native_gates": 98,
+      "peak_aux": 4,
+      "physical_qubits": 11,
+      "t_count": 24,
+      "t_depth": 16,
+      "workspace_scope": "allocated auxiliary register of complete reversible wrapper",
+      "worst_case_ticks": 64
+    }
+  },
+  {
+    "form": "source",
+    "mapping_seconds": 0.013244305999990047,
+    "name": "mixed-five-row-predicate",
+    "problem": {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "b0",
+          "f3_0"
+        ],
+        [
+          "b3",
+          "f1_0"
+        ],
+        [
+          "f0_0",
+          "f2_1"
+        ],
+        [
+          "f0_0",
+          "f3_1"
+        ],
+        [
+          "f0_1"
+        ],
+        [
+          "f0_1",
+          "f2_0"
+        ],
+        [
+          "f0_1",
+          "f3_0"
+        ],
+        [
+          "f1_0",
+          "f3_1"
+        ],
+        [
+          "f1_0",
+          "f4_1"
+        ],
+        [
+          "f1_1",
+          "f3_0"
+        ],
+        [
+          "f1_1",
+          "f4_0"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f2_0",
+          "f4_1"
+        ],
+        [
+          "f2_1",
+          "f4_0"
+        ],
+        [
+          "f3_1"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "mixed-five-row-predicate",
+      "phase_mode": "exact",
+      "r": 5,
+      "schema": "outer-product-cleanup-v1",
+      "split": "test"
+    },
+    "reported_upstream_stats": {
+      "affine": {
+        "blocks_processed": 0,
+        "final_cnot_count": 0,
+        "initial_cnot_count": 0,
+        "states_explored": 0,
+        "timeouts": 0,
+        "total_time_ms": 0.0
+      },
+      "benchmark": "mixed-five-row-predicate-source.v",
+      "cut_enum": {
+        "avg_cuts_per_node": 5.928571,
+        "bilinear_cuts": 375,
+        "cuts_by_output_count": {
+          "11": 1,
+          "13": 7,
+          "14": 3,
+          "16": 2,
+          "2": 27,
+          "3": 1,
+          "7": 1
+        },
+        "merged_cuts": 239,
+        "multi_output_cuts": 0,
+        "time_build_cuts_ms": 0.317767,
+        "total_cuts": 249,
+        "trivial_cuts": 41
+      },
+      "derived": {
+        "cut_size_histogram": {
+          "2": 27
+        },
+        "degree_histogram": {
+          "2": 27
+        },
+        "mapped_and_nodes": 27,
+        "num_outputs_histogram": {
+          "1": 27
+        },
+        "self_cut_nodes": 0,
+        "self_cut_ratio": 0.0
+      },
+      "mapper": {
+        "baseline_and_gates": 27,
+        "baseline_t_count": 189,
+        "mapped_cnot_count": 216,
+        "mapped_qubit_count": 27,
+        "mapped_t_count": 108,
+        "runtime_ms": 12.112304
+      },
+      "params": {
+        "alpha": 0.5,
+        "area_flow_rounds": 6,
+        "beta": 0.1,
+        "clean_ancilla": true,
+        "cut_size": 5,
+        "exact_rounds": 6,
+        "max_solver_n": 6,
+        "multi_output": false,
+        "toffoli": false
+      },
+      "parity_solver": {
+        "astar_time_ms": 0.0,
+        "cache_hit_rate": 0.0,
+        "cache_hits": 0,
+        "cache_lookups": 0,
+        "cache_misses": 0,
+        "gray_synth_time_ms": 0.0,
+        "total_calls": 0,
+        "total_time_ms": 0.0
+      },
+      "schema_version": 1,
+      "solver_cache": {
+        "hit_rate": 0.627907,
+        "hits": 27,
+        "misses": 16,
+        "size": 16
+      }
+    },
+    "stderr": "",
+    "stdout": "",
+    "valid": true,
+    "verification": {
+      "basis_inputs": 256,
+      "max_sparse_support": 2,
+      "scope": "exact evaluator output eigenspace on all inputs; U^dag Z_output U gives exact phase and clean return by linearity",
+      "valid": true
+    },
+    "verification_seconds": 0.14322502999999642,
+    "wrapper_resources": {
+      "cnot": 462,
+      "measurement_rounds": 0,
+      "native_depth": 282,
+      "native_gates": 842,
+      "peak_aux": 28,
+      "physical_qubits": 36,
+      "t_count": 216,
+      "t_depth": 70,
+      "workspace_scope": "allocated auxiliary register of complete reversible wrapper",
+      "worst_case_ticks": 282
+    }
+  },
+  {
+    "form": "anf",
+    "mapping_seconds": 0.015549408000026688,
+    "name": "mixed-five-row-predicate",
+    "problem": {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "b0",
+          "f3_0"
+        ],
+        [
+          "b3",
+          "f1_0"
+        ],
+        [
+          "f0_0",
+          "f2_1"
+        ],
+        [
+          "f0_0",
+          "f3_1"
+        ],
+        [
+          "f0_1"
+        ],
+        [
+          "f0_1",
+          "f2_0"
+        ],
+        [
+          "f0_1",
+          "f3_0"
+        ],
+        [
+          "f1_0",
+          "f3_1"
+        ],
+        [
+          "f1_0",
+          "f4_1"
+        ],
+        [
+          "f1_1",
+          "f3_0"
+        ],
+        [
+          "f1_1",
+          "f4_0"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f2_0",
+          "f4_1"
+        ],
+        [
+          "f2_1",
+          "f4_0"
+        ],
+        [
+          "f3_1"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "mixed-five-row-predicate",
+      "phase_mode": "exact",
+      "r": 5,
+      "schema": "outer-product-cleanup-v1",
+      "split": "test"
+    },
+    "reported_upstream_stats": {
+      "affine": {
+        "blocks_processed": 0,
+        "final_cnot_count": 0,
+        "initial_cnot_count": 0,
+        "states_explored": 0,
+        "timeouts": 0,
+        "total_time_ms": 0.0
+      },
+      "benchmark": "mixed-five-row-predicate-anf.v",
+      "cut_enum": {
+        "avg_cuts_per_node": 4.941176,
+        "bilinear_cuts": 90,
+        "cuts_by_output_count": {
+          "13": 2,
+          "15": 1,
+          "2": 12,
+          "3": 1,
+          "7": 1
+        },
+        "merged_cuts": 74,
+        "multi_output_cuts": 0,
+        "time_build_cuts_ms": 0.112429,
+        "total_cuts": 84,
+        "trivial_cuts": 16
+      },
+      "derived": {
+        "cut_size_histogram": {
+          "2": 12
+        },
+        "degree_histogram": {
+          "2": 12
+        },
+        "mapped_and_nodes": 12,
+        "num_outputs_histogram": {
+          "1": 12
+        },
+        "self_cut_nodes": 0,
+        "self_cut_ratio": 0.0
+      },
+      "mapper": {
+        "baseline_and_gates": 12,
+        "baseline_t_count": 84,
+        "mapped_cnot_count": 96,
+        "mapped_qubit_count": 12,
+        "mapped_t_count": 48,
+        "runtime_ms": 14.435094
+      },
+      "params": {
+        "alpha": 0.5,
+        "area_flow_rounds": 6,
+        "beta": 0.1,
+        "clean_ancilla": true,
+        "cut_size": 5,
+        "exact_rounds": 6,
+        "max_solver_n": 6,
+        "multi_output": false,
+        "toffoli": false
+      },
+      "parity_solver": {
+        "astar_time_ms": 0.0,
+        "cache_hit_rate": 0.0,
+        "cache_hits": 0,
+        "cache_lookups": 0,
+        "cache_misses": 0,
+        "gray_synth_time_ms": 0.0,
+        "total_calls": 0,
+        "total_time_ms": 0.0
+      },
+      "schema_version": 1,
+      "solver_cache": {
+        "hit_rate": 0.352941,
+        "hits": 12,
+        "misses": 22,
+        "size": 22
+      }
+    },
+    "stderr": "",
+    "stdout": "",
+    "valid": true,
+    "verification": {
+      "basis_inputs": 256,
+      "max_sparse_support": 2,
+      "scope": "exact evaluator output eigenspace on all inputs; U^dag Z_output U gives exact phase and clean return by linearity",
+      "valid": true
+    },
+    "verification_seconds": 0.06717085299999326,
+    "wrapper_resources": {
+      "cnot": 202,
+      "measurement_rounds": 0,
+      "native_depth": 184,
+      "native_gates": 372,
+      "peak_aux": 13,
+      "physical_qubits": 21,
+      "t_count": 96,
+      "t_depth": 48,
+      "workspace_scope": "allocated auxiliary register of complete reversible wrapper",
+      "worst_case_ticks": 184
+    }
+  },
+  {
+    "form": "davio",
+    "mapping_seconds": 0.010393192000037743,
+    "name": "mixed-five-row-predicate",
+    "problem": {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "b0",
+          "f3_0"
+        ],
+        [
+          "b3",
+          "f1_0"
+        ],
+        [
+          "f0_0",
+          "f2_1"
+        ],
+        [
+          "f0_0",
+          "f3_1"
+        ],
+        [
+          "f0_1"
+        ],
+        [
+          "f0_1",
+          "f2_0"
+        ],
+        [
+          "f0_1",
+          "f3_0"
+        ],
+        [
+          "f1_0",
+          "f3_1"
+        ],
+        [
+          "f1_0",
+          "f4_1"
+        ],
+        [
+          "f1_1",
+          "f3_0"
+        ],
+        [
+          "f1_1",
+          "f4_0"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f2_0",
+          "f4_1"
+        ],
+        [
+          "f2_1",
+          "f4_0"
+        ],
+        [
+          "f3_1"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "mixed-five-row-predicate",
+      "phase_mode": "exact",
+      "r": 5,
+      "schema": "outer-product-cleanup-v1",
+      "split": "test"
+    },
+    "reported_upstream_stats": {
+      "affine": {
+        "blocks_processed": 0,
+        "final_cnot_count": 0,
+        "initial_cnot_count": 0,
+        "states_explored": 0,
+        "timeouts": 0,
+        "total_time_ms": 0.0
+      },
+      "benchmark": "mixed-five-row-predicate-davio.v",
+      "cut_enum": {
+        "avg_cuts_per_node": 5.222222,
+        "bilinear_cuts": 32,
+        "cuts_by_output_count": {
+          "13": 1,
+          "2": 3,
+          "3": 2,
+          "4": 2,
+          "5": 1
+        },
+        "merged_cuts": 38,
+        "multi_output_cuts": 0,
+        "time_build_cuts_ms": 0.057796,
+        "total_cuts": 47,
+        "trivial_cuts": 9
+      },
+      "derived": {
+        "cut_size_histogram": {
+          "2": 5
+        },
+        "degree_histogram": {
+          "2": 5
+        },
+        "mapped_and_nodes": 5,
+        "num_outputs_histogram": {
+          "1": 5
+        },
+        "self_cut_nodes": 0,
+        "self_cut_ratio": 0.0
+      },
+      "mapper": {
+        "baseline_and_gates": 5,
+        "baseline_t_count": 35,
+        "mapped_cnot_count": 40,
+        "mapped_qubit_count": 5,
+        "mapped_t_count": 20,
+        "runtime_ms": 9.30021
+      },
+      "params": {
+        "alpha": 0.5,
+        "area_flow_rounds": 6,
+        "beta": 0.1,
+        "clean_ancilla": true,
+        "cut_size": 5,
+        "exact_rounds": 6,
+        "max_solver_n": 6,
+        "multi_output": false,
+        "toffoli": false
+      },
+      "parity_solver": {
+        "astar_time_ms": 0.0,
+        "cache_hit_rate": 0.0,
+        "cache_hits": 0,
+        "cache_lookups": 0,
+        "cache_misses": 0,
+        "gray_synth_time_ms": 0.0,
+        "total_calls": 0,
+        "total_time_ms": 0.0
+      },
+      "schema_version": 1,
+      "solver_cache": {
+        "hit_rate": 0.25,
+        "hits": 5,
+        "misses": 15,
+        "size": 15
+      }
+    },
+    "stderr": "",
+    "stdout": "",
+    "valid": true,
+    "verification": {
+      "basis_inputs": 256,
+      "max_sparse_support": 2,
+      "scope": "exact evaluator output eigenspace on all inputs; U^dag Z_output U gives exact phase and clean return by linearity",
+      "valid": true
+    },
+    "verification_seconds": 0.03295693699999447,
+    "wrapper_resources": {
+      "cnot": 88,
+      "measurement_rounds": 0,
+      "native_depth": 114,
+      "native_gates": 160,
+      "peak_aux": 5,
+      "physical_qubits": 13,
+      "t_count": 40,
+      "t_depth": 30,
+      "workspace_scope": "allocated auxiliary register of complete reversible wrapper",
+      "worst_case_ticks": 114
+    }
+  },
+  {
+    "form": "source",
+    "mapping_seconds": 0.01658534400002054,
+    "name": "three-channel-cross-feature-bank",
+    "problem": {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "a",
+          "x0"
+        ],
+        [
+          "b0",
+          "f4_1"
+        ],
+        [
+          "b1",
+          "f5_2"
+        ],
+        [
+          "b2",
+          "f0_1"
+        ],
+        [
+          "b3",
+          "f1_2"
+        ],
+        [
+          "b5",
+          "f3_0"
+        ],
+        [
+          "f0_0"
+        ],
+        [
+          "f0_0",
+          "f2_2"
+        ],
+        [
+          "f0_0",
+          "f4_1"
+        ],
+        [
+          "f0_1",
+          "f2_0"
+        ],
+        [
+          "f0_1",
+          "f4_2"
+        ],
+        [
+          "f0_2",
+          "f2_1"
+        ],
+        [
+          "f0_2",
+          "f4_0"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_0",
+          "f3_2"
+        ],
+        [
+          "f1_0",
+          "f5_1"
+        ],
+        [
+          "f1_1",
+          "f3_0"
+        ],
+        [
+          "f1_1",
+          "f5_2"
+        ],
+        [
+          "f1_2",
+          "f3_1"
+        ],
+        [
+          "f1_2",
+          "f5_0"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f2_0",
+          "f4_2"
+        ],
+        [
+          "f2_1",
+          "f4_0"
+        ],
+        [
+          "f2_2",
+          "f4_1"
+        ],
+        [
+          "f3_0"
+        ],
+        [
+          "f3_0",
+          "f5_2"
+        ],
+        [
+          "f3_1",
+          "f5_0"
+        ],
+        [
+          "f3_2",
+          "f5_1"
+        ],
+        [
+          "f4_0"
+        ],
+        [
+          "f5_0"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "three-channel-cross-feature-bank",
+      "phase_mode": "exact",
+      "r": 6,
+      "schema": "outer-product-cleanup-v1",
+      "split": "test"
+    },
+    "reported_upstream_stats": {
+      "affine": {
+        "blocks_processed": 0,
+        "final_cnot_count": 0,
+        "initial_cnot_count": 0,
+        "states_explored": 0,
+        "timeouts": 0,
+        "total_time_ms": 0.0
+      },
+      "benchmark": "three-channel-cross-feature-bank-source.v",
+      "cut_enum": {
+        "avg_cuts_per_node": 6.307692,
+        "bilinear_cuts": 792,
+        "cuts_by_output_count": {
+          "11": 1,
+          "12": 6,
+          "13": 10,
+          "14": 7,
+          "16": 4,
+          "2": 48,
+          "3": 1,
+          "7": 1
+        },
+        "merged_cuts": 480,
+        "multi_output_cuts": 0,
+        "time_build_cuts_ms": 0.607402,
+        "total_cuts": 492,
+        "trivial_cuts": 77
+      },
+      "derived": {
+        "cut_size_histogram": {
+          "2": 48
+        },
+        "degree_histogram": {
+          "2": 48
+        },
+        "mapped_and_nodes": 48,
+        "num_outputs_histogram": {
+          "1": 48
+        },
+        "self_cut_nodes": 0,
+        "self_cut_ratio": 0.0
+      },
+      "mapper": {
+        "baseline_and_gates": 48,
+        "baseline_t_count": 336,
+        "mapped_cnot_count": 384,
+        "mapped_qubit_count": 48,
+        "mapped_t_count": 192,
+        "runtime_ms": 15.36456
+      },
+      "params": {
+        "alpha": 0.5,
+        "area_flow_rounds": 6,
+        "beta": 0.1,
+        "clean_ancilla": true,
+        "cut_size": 5,
+        "exact_rounds": 6,
+        "max_solver_n": 6,
+        "multi_output": false,
+        "toffoli": false
+      },
+      "parity_solver": {
+        "astar_time_ms": 0.0,
+        "cache_hit_rate": 0.0,
+        "cache_hits": 0,
+        "cache_lookups": 0,
+        "cache_misses": 0,
+        "gray_synth_time_ms": 0.0,
+        "total_calls": 0,
+        "total_time_ms": 0.0
+      },
+      "schema_version": 1,
+      "solver_cache": {
+        "hit_rate": 0.738462,
+        "hits": 48,
+        "misses": 17,
+        "size": 17
+      }
+    },
+    "stderr": "",
+    "stdout": "",
+    "valid": true,
+    "verification": {
+      "basis_inputs": 1024,
+      "max_sparse_support": 2,
+      "scope": "exact evaluator output eigenspace on all inputs; U^dag Z_output U gives exact phase and clean return by linearity",
+      "valid": true
+    },
+    "verification_seconds": 1.036878841000032,
+    "wrapper_resources": {
+      "cnot": 828,
+      "measurement_rounds": 0,
+      "native_depth": 354,
+      "native_gates": 1502,
+      "peak_aux": 49,
+      "physical_qubits": 59,
+      "t_count": 384,
+      "t_depth": 82,
+      "workspace_scope": "allocated auxiliary register of complete reversible wrapper",
+      "worst_case_ticks": 354
+    }
+  },
+  {
+    "form": "anf",
+    "mapping_seconds": 0.025131121000015355,
+    "name": "three-channel-cross-feature-bank",
+    "problem": {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "a",
+          "x0"
+        ],
+        [
+          "b0",
+          "f4_1"
+        ],
+        [
+          "b1",
+          "f5_2"
+        ],
+        [
+          "b2",
+          "f0_1"
+        ],
+        [
+          "b3",
+          "f1_2"
+        ],
+        [
+          "b5",
+          "f3_0"
+        ],
+        [
+          "f0_0"
+        ],
+        [
+          "f0_0",
+          "f2_2"
+        ],
+        [
+          "f0_0",
+          "f4_1"
+        ],
+        [
+          "f0_1",
+          "f2_0"
+        ],
+        [
+          "f0_1",
+          "f4_2"
+        ],
+        [
+          "f0_2",
+          "f2_1"
+        ],
+        [
+          "f0_2",
+          "f4_0"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_0",
+          "f3_2"
+        ],
+        [
+          "f1_0",
+          "f5_1"
+        ],
+        [
+          "f1_1",
+          "f3_0"
+        ],
+        [
+          "f1_1",
+          "f5_2"
+        ],
+        [
+          "f1_2",
+          "f3_1"
+        ],
+        [
+          "f1_2",
+          "f5_0"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f2_0",
+          "f4_2"
+        ],
+        [
+          "f2_1",
+          "f4_0"
+        ],
+        [
+          "f2_2",
+          "f4_1"
+        ],
+        [
+          "f3_0"
+        ],
+        [
+          "f3_0",
+          "f5_2"
+        ],
+        [
+          "f3_1",
+          "f5_0"
+        ],
+        [
+          "f3_2",
+          "f5_1"
+        ],
+        [
+          "f4_0"
+        ],
+        [
+          "f5_0"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "three-channel-cross-feature-bank",
+      "phase_mode": "exact",
+      "r": 6,
+      "schema": "outer-product-cleanup-v1",
+      "split": "test"
+    },
+    "reported_upstream_stats": {
+      "affine": {
+        "blocks_processed": 0,
+        "final_cnot_count": 0,
+        "initial_cnot_count": 0,
+        "states_explored": 0,
+        "timeouts": 0,
+        "total_time_ms": 0.0
+      },
+      "benchmark": "three-channel-cross-feature-bank-anf.v",
+      "cut_enum": {
+        "avg_cuts_per_node": 5.046154,
+        "bilinear_cuts": 960,
+        "cuts_by_output_count": {
+          "13": 4,
+          "15": 1,
+          "16": 23,
+          "2": 100,
+          "3": 1,
+          "7": 1
+        },
+        "merged_cuts": 644,
+        "multi_output_cuts": 0,
+        "time_build_cuts_ms": 0.704208,
+        "total_cuts": 656,
+        "trivial_cuts": 129
+      },
+      "derived": {
+        "cut_size_histogram": {
+          "2": 100
+        },
+        "degree_histogram": {
+          "2": 100
+        },
+        "mapped_and_nodes": 100,
+        "num_outputs_histogram": {
+          "1": 100
+        },
+        "self_cut_nodes": 0,
+        "self_cut_ratio": 0.0
+      },
+      "mapper": {
+        "baseline_and_gates": 100,
+        "baseline_t_count": 700,
+        "mapped_cnot_count": 800,
+        "mapped_qubit_count": 100,
+        "mapped_t_count": 400,
+        "runtime_ms": 23.750027
+      },
+      "params": {
+        "alpha": 0.5,
+        "area_flow_rounds": 6,
+        "beta": 0.1,
+        "clean_ancilla": true,
+        "cut_size": 5,
+        "exact_rounds": 6,
+        "max_solver_n": 6,
+        "multi_output": false,
+        "toffoli": false
+      },
+      "parity_solver": {
+        "astar_time_ms": 0.0,
+        "cache_hit_rate": 0.0,
+        "cache_hits": 0,
+        "cache_lookups": 0,
+        "cache_misses": 0,
+        "gray_synth_time_ms": 0.0,
+        "total_calls": 0,
+        "total_time_ms": 0.0
+      },
+      "schema_version": 1,
+      "solver_cache": {
+        "hit_rate": 0.806452,
+        "hits": 100,
+        "misses": 24,
+        "size": 24
+      }
+    },
+    "stderr": "",
+    "stdout": "",
+    "valid": true,
+    "verification": {
+      "basis_inputs": 1024,
+      "max_sparse_support": 2,
+      "scope": "exact evaluator output eigenspace on all inputs; U^dag Z_output U gives exact phase and clean return by linearity",
+      "valid": true
+    },
+    "verification_seconds": 2.140063942999973,
+    "wrapper_resources": {
+      "cnot": 1660,
+      "measurement_rounds": 0,
+      "native_depth": 818,
+      "native_gates": 3062,
+      "peak_aux": 101,
+      "physical_qubits": 111,
+      "t_count": 800,
+      "t_depth": 208,
+      "workspace_scope": "allocated auxiliary register of complete reversible wrapper",
+      "worst_case_ticks": 818
+    }
+  },
+  {
+    "form": "davio",
+    "mapping_seconds": 0.03473970600003895,
+    "name": "three-channel-cross-feature-bank",
+    "problem": {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "a",
+          "x0"
+        ],
+        [
+          "b0",
+          "f4_1"
+        ],
+        [
+          "b1",
+          "f5_2"
+        ],
+        [
+          "b2",
+          "f0_1"
+        ],
+        [
+          "b3",
+          "f1_2"
+        ],
+        [
+          "b5",
+          "f3_0"
+        ],
+        [
+          "f0_0"
+        ],
+        [
+          "f0_0",
+          "f2_2"
+        ],
+        [
+          "f0_0",
+          "f4_1"
+        ],
+        [
+          "f0_1",
+          "f2_0"
+        ],
+        [
+          "f0_1",
+          "f4_2"
+        ],
+        [
+          "f0_2",
+          "f2_1"
+        ],
+        [
+          "f0_2",
+          "f4_0"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_0",
+          "f3_2"
+        ],
+        [
+          "f1_0",
+          "f5_1"
+        ],
+        [
+          "f1_1",
+          "f3_0"
+        ],
+        [
+          "f1_1",
+          "f5_2"
+        ],
+        [
+          "f1_2",
+          "f3_1"
+        ],
+        [
+          "f1_2",
+          "f5_0"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f2_0",
+          "f4_2"
+        ],
+        [
+          "f2_1",
+          "f4_0"
+        ],
+        [
+          "f2_2",
+          "f4_1"
+        ],
+        [
+          "f3_0"
+        ],
+        [
+          "f3_0",
+          "f5_2"
+        ],
+        [
+          "f3_1",
+          "f5_0"
+        ],
+        [
+          "f3_2",
+          "f5_1"
+        ],
+        [
+          "f4_0"
+        ],
+        [
+          "f5_0"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "three-channel-cross-feature-bank",
+      "phase_mode": "exact",
+      "r": 6,
+      "schema": "outer-product-cleanup-v1",
+      "split": "test"
+    },
+    "reported_upstream_stats": {
+      "affine": {
+        "blocks_processed": 0,
+        "final_cnot_count": 0,
+        "initial_cnot_count": 0,
+        "states_explored": 0,
+        "timeouts": 0,
+        "total_time_ms": 0.0
+      },
+      "benchmark": "three-channel-cross-feature-bank-davio.v",
+      "cut_enum": {
+        "avg_cuts_per_node": 5.97619,
+        "bilinear_cuts": 368,
+        "cuts_by_output_count": {
+          "10": 2,
+          "11": 1,
+          "13": 1,
+          "14": 3,
+          "16": 2,
+          "17": 1,
+          "2": 8,
+          "3": 13,
+          "4": 7,
+          "5": 3,
+          "7": 1
+        },
+        "merged_cuts": 235,
+        "multi_output_cuts": 0,
+        "time_build_cuts_ms": 0.388574,
+        "total_cuts": 251,
+        "trivial_cuts": 37
+      },
+      "derived": {
+        "cut_size_histogram": {
+          "2": 20
+        },
+        "degree_histogram": {
+          "2": 20
+        },
+        "mapped_and_nodes": 20,
+        "num_outputs_histogram": {
+          "1": 20
+        },
+        "self_cut_nodes": 0,
+        "self_cut_ratio": 0.0
+      },
+      "mapper": {
+        "baseline_and_gates": 20,
+        "baseline_t_count": 140,
+        "mapped_cnot_count": 168,
+        "mapped_qubit_count": 19,
+        "mapped_t_count": 79,
+        "runtime_ms": 33.446583
+      },
+      "params": {
+        "alpha": 0.5,
+        "area_flow_rounds": 6,
+        "beta": 0.1,
+        "clean_ancilla": true,
+        "cut_size": 5,
+        "exact_rounds": 6,
+        "max_solver_n": 6,
+        "multi_output": false,
+        "toffoli": false
+      },
+      "parity_solver": {
+        "astar_time_ms": 0.0,
+        "cache_hit_rate": 0.0,
+        "cache_hits": 0,
+        "cache_lookups": 0,
+        "cache_misses": 0,
+        "gray_synth_time_ms": 0.0,
+        "total_calls": 0,
+        "total_time_ms": 0.0
+      },
+      "schema_version": 1,
+      "solver_cache": {
+        "hit_rate": 0.263889,
+        "hits": 19,
+        "misses": 53,
+        "size": 53
+      }
+    },
+    "stderr": "",
+    "stdout": "",
+    "valid": true,
+    "verification": {
+      "basis_inputs": 1024,
+      "max_sparse_support": 2,
+      "scope": "exact evaluator output eigenspace on all inputs; U^dag Z_output U gives exact phase and clean return by linearity",
+      "valid": true
+    },
+    "verification_seconds": 0.4617933639999592,
+    "wrapper_resources": {
+      "cnot": 398,
+      "measurement_rounds": 0,
+      "native_depth": 418,
+      "native_gates": 684,
+      "peak_aux": 24,
+      "physical_qubits": 34,
+      "t_count": 158,
+      "t_depth": 100,
+      "workspace_scope": "allocated auxiliary register of complete reversible wrapper",
+      "worst_case_ticks": 418
+    }
+  },
+  {
+    "form": "source",
+    "mapping_seconds": 0.021117242000002534,
+    "name": "wide-shared-mask-oracle",
+    "problem": {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "b0",
+          "f6_2"
+        ],
+        [
+          "b2",
+          "f0_0"
+        ],
+        [
+          "b3",
+          "f1_1"
+        ],
+        [
+          "b4",
+          "f2_2"
+        ],
+        [
+          "b6",
+          "f4_0"
+        ],
+        [
+          "b7",
+          "f5_1"
+        ],
+        [
+          "f0_0",
+          "f3_2"
+        ],
+        [
+          "f0_0",
+          "f5_1"
+        ],
+        [
+          "f0_1",
+          "f3_0"
+        ],
+        [
+          "f0_1",
+          "f5_2"
+        ],
+        [
+          "f0_2"
+        ],
+        [
+          "f0_2",
+          "f3_1"
+        ],
+        [
+          "f0_2",
+          "f5_0"
+        ],
+        [
+          "f1_0",
+          "f4_2"
+        ],
+        [
+          "f1_0",
+          "f6_1"
+        ],
+        [
+          "f1_1",
+          "f4_0"
+        ],
+        [
+          "f1_1",
+          "f6_2"
+        ],
+        [
+          "f1_2"
+        ],
+        [
+          "f1_2",
+          "f4_1"
+        ],
+        [
+          "f1_2",
+          "f6_0"
+        ],
+        [
+          "f2_0",
+          "f5_2"
+        ],
+        [
+          "f2_0",
+          "f7_1"
+        ],
+        [
+          "f2_1",
+          "f5_0"
+        ],
+        [
+          "f2_1",
+          "f7_2"
+        ],
+        [
+          "f2_2"
+        ],
+        [
+          "f2_2",
+          "f5_1"
+        ],
+        [
+          "f2_2",
+          "f7_0"
+        ],
+        [
+          "f3_0",
+          "f6_2"
+        ],
+        [
+          "f3_1",
+          "f6_0"
+        ],
+        [
+          "f3_2"
+        ],
+        [
+          "f3_2",
+          "f6_1"
+        ],
+        [
+          "f4_0",
+          "f7_2"
+        ],
+        [
+          "f4_1",
+          "f7_0"
+        ],
+        [
+          "f4_2"
+        ],
+        [
+          "f4_2",
+          "f7_1"
+        ],
+        [
+          "f5_2"
+        ],
+        [
+          "f6_2"
+        ],
+        [
+          "f7_2"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "wide-shared-mask-oracle",
+      "phase_mode": "exact",
+      "r": 8,
+      "schema": "outer-product-cleanup-v1",
+      "split": "test"
+    },
+    "reported_upstream_stats": {
+      "affine": {
+        "blocks_processed": 0,
+        "final_cnot_count": 0,
+        "initial_cnot_count": 0,
+        "states_explored": 0,
+        "timeouts": 0,
+        "total_time_ms": 0.0
+      },
+      "benchmark": "wide-shared-mask-oracle-source.v",
+      "cut_enum": {
+        "avg_cuts_per_node": 6.38,
+        "bilinear_cuts": 1034,
+        "cuts_by_output_count": {
+          "11": 1,
+          "12": 7,
+          "13": 12,
+          "14": 7,
+          "15": 2,
+          "16": 7,
+          "2": 62,
+          "3": 1,
+          "7": 1
+        },
+        "merged_cuts": 624,
+        "multi_output_cuts": 0,
+        "time_build_cuts_ms": 0.827022,
+        "total_cuts": 638,
+        "trivial_cuts": 99
+      },
+      "derived": {
+        "cut_size_histogram": {
+          "2": 62
+        },
+        "degree_histogram": {
+          "2": 62
+        },
+        "mapped_and_nodes": 62,
+        "num_outputs_histogram": {
+          "1": 62
+        },
+        "self_cut_nodes": 0,
+        "self_cut_ratio": 0.0
+      },
+      "mapper": {
+        "baseline_and_gates": 62,
+        "baseline_t_count": 434,
+        "mapped_cnot_count": 498,
+        "mapped_qubit_count": 60,
+        "mapped_t_count": 247,
+        "runtime_ms": 19.72454
+      },
+      "params": {
+        "alpha": 0.5,
+        "area_flow_rounds": 6,
+        "beta": 0.1,
+        "clean_ancilla": true,
+        "cut_size": 5,
+        "exact_rounds": 6,
+        "max_solver_n": 6,
+        "multi_output": false,
+        "toffoli": false
+      },
+      "parity_solver": {
+        "astar_time_ms": 0.0,
+        "cache_hit_rate": 0.0,
+        "cache_hits": 0,
+        "cache_lookups": 0,
+        "cache_misses": 0,
+        "gray_synth_time_ms": 0.0,
+        "total_calls": 0,
+        "total_time_ms": 0.0
+      },
+      "schema_version": 1,
+      "solver_cache": {
+        "hit_rate": 0.740741,
+        "hits": 60,
+        "misses": 21,
+        "size": 21
+      }
+    },
+    "stderr": "",
+    "stdout": "",
+    "valid": true,
+    "verification": {
+      "basis_inputs": 4096,
+      "max_sparse_support": 2,
+      "scope": "exact evaluator output eigenspace on all inputs; U^dag Z_output U gives exact phase and clean return by linearity",
+      "valid": true
+    },
+    "verification_seconds": 5.37239740199999,
+    "wrapper_resources": {
+      "cnot": 1068,
+      "measurement_rounds": 0,
+      "native_depth": 434,
+      "native_gates": 1932,
+      "peak_aux": 61,
+      "physical_qubits": 73,
+      "t_count": 494,
+      "t_depth": 98,
+      "workspace_scope": "allocated auxiliary register of complete reversible wrapper",
+      "worst_case_ticks": 434
+    }
+  },
+  {
+    "form": "anf",
+    "mapping_seconds": 0.02788552999999183,
+    "name": "wide-shared-mask-oracle",
+    "problem": {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "b0",
+          "f6_2"
+        ],
+        [
+          "b2",
+          "f0_0"
+        ],
+        [
+          "b3",
+          "f1_1"
+        ],
+        [
+          "b4",
+          "f2_2"
+        ],
+        [
+          "b6",
+          "f4_0"
+        ],
+        [
+          "b7",
+          "f5_1"
+        ],
+        [
+          "f0_0",
+          "f3_2"
+        ],
+        [
+          "f0_0",
+          "f5_1"
+        ],
+        [
+          "f0_1",
+          "f3_0"
+        ],
+        [
+          "f0_1",
+          "f5_2"
+        ],
+        [
+          "f0_2"
+        ],
+        [
+          "f0_2",
+          "f3_1"
+        ],
+        [
+          "f0_2",
+          "f5_0"
+        ],
+        [
+          "f1_0",
+          "f4_2"
+        ],
+        [
+          "f1_0",
+          "f6_1"
+        ],
+        [
+          "f1_1",
+          "f4_0"
+        ],
+        [
+          "f1_1",
+          "f6_2"
+        ],
+        [
+          "f1_2"
+        ],
+        [
+          "f1_2",
+          "f4_1"
+        ],
+        [
+          "f1_2",
+          "f6_0"
+        ],
+        [
+          "f2_0",
+          "f5_2"
+        ],
+        [
+          "f2_0",
+          "f7_1"
+        ],
+        [
+          "f2_1",
+          "f5_0"
+        ],
+        [
+          "f2_1",
+          "f7_2"
+        ],
+        [
+          "f2_2"
+        ],
+        [
+          "f2_2",
+          "f5_1"
+        ],
+        [
+          "f2_2",
+          "f7_0"
+        ],
+        [
+          "f3_0",
+          "f6_2"
+        ],
+        [
+          "f3_1",
+          "f6_0"
+        ],
+        [
+          "f3_2"
+        ],
+        [
+          "f3_2",
+          "f6_1"
+        ],
+        [
+          "f4_0",
+          "f7_2"
+        ],
+        [
+          "f4_1",
+          "f7_0"
+        ],
+        [
+          "f4_2"
+        ],
+        [
+          "f4_2",
+          "f7_1"
+        ],
+        [
+          "f5_2"
+        ],
+        [
+          "f6_2"
+        ],
+        [
+          "f7_2"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "wide-shared-mask-oracle",
+      "phase_mode": "exact",
+      "r": 8,
+      "schema": "outer-product-cleanup-v1",
+      "split": "test"
+    },
+    "reported_upstream_stats": {
+      "affine": {
+        "blocks_processed": 0,
+        "final_cnot_count": 0,
+        "initial_cnot_count": 0,
+        "states_explored": 0,
+        "timeouts": 0,
+        "total_time_ms": 0.0
+      },
+      "benchmark": "wide-shared-mask-oracle-anf.v",
+      "cut_enum": {
+        "avg_cuts_per_node": 5.035714,
+        "bilinear_cuts": 1246,
+        "cuts_by_output_count": {
+          "12": 1,
+          "13": 3,
+          "16": 32,
+          "2": 130,
+          "3": 1,
+          "7": 1
+        },
+        "merged_cuts": 832,
+        "multi_output_cuts": 0,
+        "time_build_cuts_ms": 0.908044,
+        "total_cuts": 846,
+        "trivial_cuts": 167
+      },
+      "derived": {
+        "cut_size_histogram": {
+          "2": 130
+        },
+        "degree_histogram": {
+          "2": 130
+        },
+        "mapped_and_nodes": 130,
+        "num_outputs_histogram": {
+          "1": 130
+        },
+        "self_cut_nodes": 0,
+        "self_cut_ratio": 0.0
+      },
+      "mapper": {
+        "baseline_and_gates": 130,
+        "baseline_t_count": 910,
+        "mapped_cnot_count": 1040,
+        "mapped_qubit_count": 130,
+        "mapped_t_count": 520,
+        "runtime_ms": 25.727519
+      },
+      "params": {
+        "alpha": 0.5,
+        "area_flow_rounds": 6,
+        "beta": 0.1,
+        "clean_ancilla": true,
+        "cut_size": 5,
+        "exact_rounds": 6,
+        "max_solver_n": 6,
+        "multi_output": false,
+        "toffoli": false
+      },
+      "parity_solver": {
+        "astar_time_ms": 0.0,
+        "cache_hit_rate": 0.0,
+        "cache_hits": 0,
+        "cache_lookups": 0,
+        "cache_misses": 0,
+        "gray_synth_time_ms": 0.0,
+        "total_calls": 0,
+        "total_time_ms": 0.0
+      },
+      "schema_version": 1,
+      "solver_cache": {
+        "hit_rate": 0.860927,
+        "hits": 130,
+        "misses": 21,
+        "size": 21
+      }
+    },
+    "stderr": "",
+    "stdout": "",
+    "valid": true,
+    "verification": {
+      "basis_inputs": 4096,
+      "max_sparse_support": 2,
+      "scope": "exact evaluator output eigenspace on all inputs; U^dag Z_output U gives exact phase and clean return by linearity",
+      "valid": true
+    },
+    "verification_seconds": 11.068169979000004,
+    "wrapper_resources": {
+      "cnot": 2156,
+      "measurement_rounds": 0,
+      "native_depth": 1038,
+      "native_gates": 3978,
+      "peak_aux": 131,
+      "physical_qubits": 143,
+      "t_count": 1040,
+      "t_depth": 264,
+      "workspace_scope": "allocated auxiliary register of complete reversible wrapper",
+      "worst_case_ticks": 1038
+    }
+  },
+  {
+    "form": "davio",
+    "mapping_seconds": 0.03035621099996888,
+    "name": "wide-shared-mask-oracle",
+    "problem": {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "b0",
+          "f6_2"
+        ],
+        [
+          "b2",
+          "f0_0"
+        ],
+        [
+          "b3",
+          "f1_1"
+        ],
+        [
+          "b4",
+          "f2_2"
+        ],
+        [
+          "b6",
+          "f4_0"
+        ],
+        [
+          "b7",
+          "f5_1"
+        ],
+        [
+          "f0_0",
+          "f3_2"
+        ],
+        [
+          "f0_0",
+          "f5_1"
+        ],
+        [
+          "f0_1",
+          "f3_0"
+        ],
+        [
+          "f0_1",
+          "f5_2"
+        ],
+        [
+          "f0_2"
+        ],
+        [
+          "f0_2",
+          "f3_1"
+        ],
+        [
+          "f0_2",
+          "f5_0"
+        ],
+        [
+          "f1_0",
+          "f4_2"
+        ],
+        [
+          "f1_0",
+          "f6_1"
+        ],
+        [
+          "f1_1",
+          "f4_0"
+        ],
+        [
+          "f1_1",
+          "f6_2"
+        ],
+        [
+          "f1_2"
+        ],
+        [
+          "f1_2",
+          "f4_1"
+        ],
+        [
+          "f1_2",
+          "f6_0"
+        ],
+        [
+          "f2_0",
+          "f5_2"
+        ],
+        [
+          "f2_0",
+          "f7_1"
+        ],
+        [
+          "f2_1",
+          "f5_0"
+        ],
+        [
+          "f2_1",
+          "f7_2"
+        ],
+        [
+          "f2_2"
+        ],
+        [
+          "f2_2",
+          "f5_1"
+        ],
+        [
+          "f2_2",
+          "f7_0"
+        ],
+        [
+          "f3_0",
+          "f6_2"
+        ],
+        [
+          "f3_1",
+          "f6_0"
+        ],
+        [
+          "f3_2"
+        ],
+        [
+          "f3_2",
+          "f6_1"
+        ],
+        [
+          "f4_0",
+          "f7_2"
+        ],
+        [
+          "f4_1",
+          "f7_0"
+        ],
+        [
+          "f4_2"
+        ],
+        [
+          "f4_2",
+          "f7_1"
+        ],
+        [
+          "f5_2"
+        ],
+        [
+          "f6_2"
+        ],
+        [
+          "f7_2"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "wide-shared-mask-oracle",
+      "phase_mode": "exact",
+      "r": 8,
+      "schema": "outer-product-cleanup-v1",
+      "split": "test"
+    },
+    "reported_upstream_stats": {
+      "affine": {
+        "blocks_processed": 0,
+        "final_cnot_count": 0,
+        "initial_cnot_count": 0,
+        "states_explored": 0,
+        "timeouts": 0,
+        "total_time_ms": 0.0
+      },
+      "benchmark": "wide-shared-mask-oracle-davio.v",
+      "cut_enum": {
+        "avg_cuts_per_node": 6.195122,
+        "bilinear_cuts": 457,
+        "cuts_by_output_count": {
+          "10": 2,
+          "13": 2,
+          "14": 1,
+          "15": 3,
+          "16": 1,
+          "18": 1,
+          "2": 12,
+          "3": 7,
+          "4": 3,
+          "5": 9
+        },
+        "merged_cuts": 239,
+        "multi_output_cuts": 0,
+        "time_build_cuts_ms": 0.443046,
+        "total_cuts": 254,
+        "trivial_cuts": 39
+      },
+      "derived": {
+        "cut_size_histogram": {
+          "2": 18
+        },
+        "degree_histogram": {
+          "2": 18
+        },
+        "mapped_and_nodes": 18,
+        "num_outputs_histogram": {
+          "1": 18
+        },
+        "self_cut_nodes": 0,
+        "self_cut_ratio": 0.0
+      },
+      "mapper": {
+        "baseline_and_gates": 18,
+        "baseline_t_count": 126,
+        "mapped_cnot_count": 144,
+        "mapped_qubit_count": 18,
+        "mapped_t_count": 72,
+        "runtime_ms": 28.567394
+      },
+      "params": {
+        "alpha": 0.5,
+        "area_flow_rounds": 6,
+        "beta": 0.1,
+        "clean_ancilla": true,
+        "cut_size": 5,
+        "exact_rounds": 6,
+        "max_solver_n": 6,
+        "multi_output": false,
+        "toffoli": false
+      },
+      "parity_solver": {
+        "astar_time_ms": 0.0,
+        "cache_hit_rate": 0.0,
+        "cache_hits": 0,
+        "cache_lookups": 0,
+        "cache_misses": 0,
+        "gray_synth_time_ms": 0.0,
+        "total_calls": 0,
+        "total_time_ms": 0.0
+      },
+      "schema_version": 1,
+      "solver_cache": {
+        "hit_rate": 0.290323,
+        "hits": 18,
+        "misses": 44,
+        "size": 44
+      }
+    },
+    "stderr": "",
+    "stdout": "",
+    "valid": true,
+    "verification": {
+      "basis_inputs": 4096,
+      "max_sparse_support": 2,
+      "scope": "exact evaluator output eigenspace on all inputs; U^dag Z_output U gives exact phase and clean return by linearity",
+      "valid": true
+    },
+    "verification_seconds": 1.7611871759999644,
+    "wrapper_resources": {
+      "cnot": 344,
+      "measurement_rounds": 0,
+      "native_depth": 222,
+      "native_gates": 598,
+      "peak_aux": 22,
+      "physical_qubits": 34,
+      "t_count": 144,
+      "t_depth": 58,
+      "workspace_scope": "allocated auxiliary register of complete reversible wrapper",
+      "worst_case_ticks": 222
+    }
+  }
+]

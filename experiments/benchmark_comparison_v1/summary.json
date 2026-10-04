@@ -1,0 +1,2267 @@
+{
+  "by_method": {
+    "current_menu": {
+      "median_ms": 8.38066900001877,
+      "runs": 123,
+      "valid": 123
+    },
+    "mockturtle_measured": {
+      "median_ms": 78.07407199999261,
+      "runs": 123,
+      "valid": 123
+    }
+  },
+  "comparisons": {
+    "extension": {
+      "cnot": {
+        "baseline_better": 9,
+        "current_better": 22,
+        "equal": 5
+      },
+      "measurement_rounds": {
+        "baseline_better": 32,
+        "current_better": 0,
+        "equal": 4
+      },
+      "native_depth": {
+        "baseline_better": 32,
+        "current_better": 2,
+        "equal": 2
+      },
+      "native_gates": {
+        "baseline_better": 20,
+        "current_better": 14,
+        "equal": 2
+      },
+      "peak_aux": {
+        "baseline_better": 0,
+        "current_better": 30,
+        "equal": 6
+      },
+      "t_count": {
+        "baseline_better": 18,
+        "current_better": 5,
+        "equal": 13
+      },
+      "worst_case_ticks": {
+        "baseline_better": 32,
+        "current_better": 2,
+        "equal": 2
+      }
+    },
+    "original": {
+      "cnot": {
+        "baseline_better": 0,
+        "current_better": 4,
+        "equal": 1
+      },
+      "measurement_rounds": {
+        "baseline_better": 5,
+        "current_better": 0,
+        "equal": 0
+      },
+      "native_depth": {
+        "baseline_better": 4,
+        "current_better": 1,
+        "equal": 0
+      },
+      "native_gates": {
+        "baseline_better": 1,
+        "current_better": 3,
+        "equal": 1
+      },
+      "peak_aux": {
+        "baseline_better": 0,
+        "current_better": 4,
+        "equal": 1
+      },
+      "t_count": {
+        "baseline_better": 0,
+        "current_better": 3,
+        "equal": 2
+      },
+      "worst_case_ticks": {
+        "baseline_better": 5,
+        "current_better": 0,
+        "equal": 0
+      }
+    }
+  },
+  "problems": [
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 21,
+        "expected_native_gates": "44",
+        "forward_and": 2,
+        "measurement_rounds": 1,
+        "measurements": 2,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 29,
+        "native_gates": 51,
+        "peak_aux": 2,
+        "physical_qubits": 7,
+        "retained_classical_bits": 2,
+        "t_count": 8,
+        "t_depth": 4,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 2,
+        "worst_case_ticks": 36
+      },
+      "baseline_method": {
+        "network_digest": "9b742282d61a1bf0aa76477628f38ac2bf7a073ff2a3bcd93a53cc14f7c008ea",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "original",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 21,
+        "expected_native_gates": "44",
+        "forward_and": 2,
+        "measurement_rounds": 2,
+        "measurements": 2,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 44,
+        "native_gates": 51,
+        "peak_aux": 2,
+        "physical_qubits": 7,
+        "retained_classical_bits": 2,
+        "t_count": 8,
+        "t_depth": 7,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 2,
+        "worst_case_ticks": 58
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_all"
+      },
+      "name": "enabled-three-feature-coupling"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 9,
+        "expected_native_gates": "43/2",
+        "forward_and": 1,
+        "measurement_rounds": 1,
+        "measurements": 1,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 23,
+        "native_gates": 25,
+        "peak_aux": 1,
+        "physical_qubits": 7,
+        "retained_classical_bits": 1,
+        "t_count": 4,
+        "t_depth": 4,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 1,
+        "worst_case_ticks": 30
+      },
+      "baseline_method": {
+        "network_digest": "e28748ac6564d8c4556c0f39bc3f58cc2466dc42e2343bc61aaca729abfbdda5",
+        "parallel_cleanup": true,
+        "source_form": "source"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 7,
+        "expected_native_gates": "39/2",
+        "forward_and": 1,
+        "measurement_rounds": 1,
+        "measurements": 1,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 22,
+        "native_gates": 23,
+        "peak_aux": 1,
+        "physical_qubits": 7,
+        "retained_classical_bits": 1,
+        "t_count": 4,
+        "t_depth": 4,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 1,
+        "worst_case_ticks": 29
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_all"
+      },
+      "name": "extension-bilinear-00"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 15,
+        "expected_native_gates": "55/2",
+        "forward_and": 1,
+        "measurement_rounds": 1,
+        "measurements": 1,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 27,
+        "native_gates": 31,
+        "peak_aux": 1,
+        "physical_qubits": 8,
+        "retained_classical_bits": 1,
+        "t_count": 4,
+        "t_depth": 4,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 1,
+        "worst_case_ticks": 34
+      },
+      "baseline_method": {
+        "network_digest": "d5943250fdb531671a6cc25f0bc50afeee6d7fc12f2935b9c5e7c0364a6b73e9",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 13,
+        "expected_native_gates": "51/2",
+        "forward_and": 1,
+        "measurement_rounds": 1,
+        "measurements": 1,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 25,
+        "native_gates": 29,
+        "peak_aux": 1,
+        "physical_qubits": 8,
+        "retained_classical_bits": 1,
+        "t_count": 4,
+        "t_depth": 4,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 1,
+        "worst_case_ticks": 32
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_all"
+      },
+      "name": "extension-bilinear-01"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 25,
+        "expected_native_gates": "81",
+        "forward_and": 4,
+        "measurement_rounds": 1,
+        "measurements": 4,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 37,
+        "native_gates": 95,
+        "peak_aux": 4,
+        "physical_qubits": 12,
+        "retained_classical_bits": 4,
+        "t_count": 16,
+        "t_depth": 4,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 4,
+        "worst_case_ticks": 44
+      },
+      "baseline_method": {
+        "network_digest": "1f0baba5dfd175300d1638a91124b26c28e26c481b3c2075e6e589517cab510e",
+        "parallel_cleanup": true,
+        "source_form": "source"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 25,
+        "expected_native_gates": "125/2",
+        "forward_and": 3,
+        "measurement_rounds": 3,
+        "measurements": 3,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 67,
+        "native_gates": 73,
+        "peak_aux": 1,
+        "physical_qubits": 9,
+        "retained_classical_bits": 3,
+        "t_count": 12,
+        "t_depth": 12,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 3,
+        "worst_case_ticks": 88
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_all"
+      },
+      "name": "extension-bilinear-02"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 30,
+        "expected_native_gates": "197/2",
+        "forward_and": 5,
+        "measurement_rounds": 1,
+        "measurements": 5,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 40,
+        "native_gates": 116,
+        "peak_aux": 5,
+        "physical_qubits": 14,
+        "retained_classical_bits": 5,
+        "t_count": 20,
+        "t_depth": 4,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 5,
+        "worst_case_ticks": 47
+      },
+      "baseline_method": {
+        "network_digest": "dbc8ac72bb4f435247b0314de539dab402de63b52568479fd3f1acd1e3ea22b0",
+        "parallel_cleanup": true,
+        "source_form": "source"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 27,
+        "expected_native_gates": "129/2",
+        "forward_and": 3,
+        "measurement_rounds": 3,
+        "measurements": 3,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 68,
+        "native_gates": 75,
+        "peak_aux": 1,
+        "physical_qubits": 10,
+        "retained_classical_bits": 3,
+        "t_count": 12,
+        "t_depth": 12,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 3,
+        "worst_case_ticks": 89
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_all"
+      },
+      "name": "extension-bilinear-03"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 5,
+        "expected_native_gates": "35/2",
+        "forward_and": 1,
+        "measurement_rounds": 1,
+        "measurements": 1,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 21,
+        "native_gates": 21,
+        "peak_aux": 1,
+        "physical_qubits": 7,
+        "retained_classical_bits": 1,
+        "t_count": 4,
+        "t_depth": 4,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 1,
+        "worst_case_ticks": 28
+      },
+      "baseline_method": {
+        "network_digest": "f31e88700529ab5377a4952ea78b5257e9e0fedbcd4b19494ab8c1228c7da905",
+        "parallel_cleanup": true,
+        "source_form": "source"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 5,
+        "expected_native_gates": "35/2",
+        "forward_and": 1,
+        "measurement_rounds": 1,
+        "measurements": 1,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 21,
+        "native_gates": 21,
+        "peak_aux": 1,
+        "physical_qubits": 7,
+        "retained_classical_bits": 1,
+        "t_count": 4,
+        "t_depth": 4,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 1,
+        "worst_case_ticks": 28
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "bank_free_monomials"
+      },
+      "name": "extension-bilinear-04"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 5,
+        "expected_native_gates": "35/2",
+        "forward_and": 1,
+        "measurement_rounds": 1,
+        "measurements": 1,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 21,
+        "native_gates": 21,
+        "peak_aux": 1,
+        "physical_qubits": 8,
+        "retained_classical_bits": 1,
+        "t_count": 4,
+        "t_depth": 4,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 1,
+        "worst_case_ticks": 28
+      },
+      "baseline_method": {
+        "network_digest": "b0afa11d5b0161f71e931c070de8d1864b7334b4a964aaf1c54c4b57776a68fd",
+        "parallel_cleanup": true,
+        "source_form": "source"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 5,
+        "expected_native_gates": "35/2",
+        "forward_and": 1,
+        "measurement_rounds": 1,
+        "measurements": 1,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 21,
+        "native_gates": 21,
+        "peak_aux": 1,
+        "physical_qubits": 8,
+        "retained_classical_bits": 1,
+        "t_count": 4,
+        "t_depth": 4,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 1,
+        "worst_case_ticks": 28
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "bank_free_monomials"
+      },
+      "name": "extension-bilinear-05"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 29,
+        "expected_native_gates": "125/2",
+        "forward_and": 3,
+        "measurement_rounds": 1,
+        "measurements": 3,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 37,
+        "native_gates": 73,
+        "peak_aux": 3,
+        "physical_qubits": 11,
+        "retained_classical_bits": 3,
+        "t_count": 12,
+        "t_depth": 6,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 3,
+        "worst_case_ticks": 44
+      },
+      "baseline_method": {
+        "network_digest": "47b12ce665cfa483e3f98db4d0662c3dfc142c2c1af10bcee2b315a9195d8a23",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 21,
+        "expected_native_gates": "117/2",
+        "forward_and": 3,
+        "measurement_rounds": 3,
+        "measurements": 3,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 66,
+        "native_gates": 69,
+        "peak_aux": 1,
+        "physical_qubits": 9,
+        "retained_classical_bits": 3,
+        "t_count": 12,
+        "t_depth": 12,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 3,
+        "worst_case_ticks": 87
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_all"
+      },
+      "name": "extension-bilinear-06"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 41,
+        "expected_native_gates": "149/2",
+        "forward_and": 3,
+        "measurement_rounds": 1,
+        "measurements": 3,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 58,
+        "native_gates": 85,
+        "peak_aux": 3,
+        "physical_qubits": 12,
+        "retained_classical_bits": 3,
+        "t_count": 12,
+        "t_depth": 7,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 3,
+        "worst_case_ticks": 65
+      },
+      "baseline_method": {
+        "network_digest": "7c19e49833a133841bb949e01a9d39cb3dcb42742ca949691fa0673b5a323f5f",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 27,
+        "expected_native_gates": "129/2",
+        "forward_and": 3,
+        "measurement_rounds": 3,
+        "measurements": 3,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 71,
+        "native_gates": 75,
+        "peak_aux": 1,
+        "physical_qubits": 10,
+        "retained_classical_bits": 3,
+        "t_count": 12,
+        "t_depth": 12,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 3,
+        "worst_case_ticks": 92
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_all"
+      },
+      "name": "extension-bilinear-07"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 11,
+        "expected_native_gates": "34",
+        "forward_and": 2,
+        "measurement_rounds": 1,
+        "measurements": 2,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 23,
+        "native_gates": 41,
+        "peak_aux": 2,
+        "physical_qubits": 8,
+        "retained_classical_bits": 2,
+        "t_count": 8,
+        "t_depth": 4,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 2,
+        "worst_case_ticks": 30
+      },
+      "baseline_method": {
+        "network_digest": "742ca9270b4f2aa595881135da559bdabf0cf0b41ebab14ca7e218b683e6e5ac",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 10,
+        "expected_native_gates": "35",
+        "forward_and": 2,
+        "measurement_rounds": 2,
+        "measurements": 2,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 42,
+        "native_gates": 42,
+        "peak_aux": 1,
+        "physical_qubits": 7,
+        "retained_classical_bits": 2,
+        "t_count": 8,
+        "t_depth": 8,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 2,
+        "worst_case_ticks": 56
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "bank_free_monomials"
+      },
+      "name": "extension-bilinear-08"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 14,
+        "expected_native_gates": "39",
+        "forward_and": 2,
+        "measurement_rounds": 1,
+        "measurements": 2,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 24,
+        "native_gates": 46,
+        "peak_aux": 2,
+        "physical_qubits": 9,
+        "retained_classical_bits": 2,
+        "t_count": 8,
+        "t_depth": 4,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 2,
+        "worst_case_ticks": 31
+      },
+      "baseline_method": {
+        "network_digest": "09686d8ae5e1f718655af026ceed8a44ba3e7cfe58e2c098377d9e7fa17bf7dd",
+        "parallel_cleanup": true,
+        "source_form": "source"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 12,
+        "expected_native_gates": "37",
+        "forward_and": 2,
+        "measurement_rounds": 2,
+        "measurements": 2,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 43,
+        "native_gates": 44,
+        "peak_aux": 1,
+        "physical_qubits": 8,
+        "retained_classical_bits": 2,
+        "t_count": 8,
+        "t_depth": 8,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 2,
+        "worst_case_ticks": 57
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_all"
+      },
+      "name": "extension-bilinear-09"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 25,
+        "expected_native_gates": "81",
+        "forward_and": 4,
+        "measurement_rounds": 1,
+        "measurements": 4,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 37,
+        "native_gates": 95,
+        "peak_aux": 4,
+        "physical_qubits": 12,
+        "retained_classical_bits": 4,
+        "t_count": 16,
+        "t_depth": 4,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 4,
+        "worst_case_ticks": 44
+      },
+      "baseline_method": {
+        "network_digest": "26f8e86818f5886c17aa6698c89bcf0631b3386798574bffa894e6823eac6c3b",
+        "parallel_cleanup": true,
+        "source_form": "source"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 25,
+        "expected_native_gates": "125/2",
+        "forward_and": 3,
+        "measurement_rounds": 3,
+        "measurements": 3,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 69,
+        "native_gates": 73,
+        "peak_aux": 1,
+        "physical_qubits": 9,
+        "retained_classical_bits": 3,
+        "t_count": 12,
+        "t_depth": 12,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 3,
+        "worst_case_ticks": 90
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_all"
+      },
+      "name": "extension-bilinear-10"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 29,
+        "expected_native_gates": "125/2",
+        "forward_and": 3,
+        "measurement_rounds": 1,
+        "measurements": 3,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 42,
+        "native_gates": 73,
+        "peak_aux": 3,
+        "physical_qubits": 12,
+        "retained_classical_bits": 3,
+        "t_count": 12,
+        "t_depth": 6,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 3,
+        "worst_case_ticks": 49
+      },
+      "baseline_method": {
+        "network_digest": "c053c3a14eb64b6d08e0fc5c27aa69d6b7f3b232371d0c46e9be59e0dfb93558",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 27,
+        "expected_native_gates": "129/2",
+        "forward_and": 3,
+        "measurement_rounds": 3,
+        "measurements": 3,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 67,
+        "native_gates": 75,
+        "peak_aux": 1,
+        "physical_qubits": 10,
+        "retained_classical_bits": 3,
+        "t_count": 12,
+        "t_depth": 12,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 3,
+        "worst_case_ticks": 88
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_all"
+      },
+      "name": "extension-bilinear-11"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 52,
+        "expected_native_gates": "217/2",
+        "forward_and": 5,
+        "measurement_rounds": 4,
+        "measurements": 5,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 99,
+        "native_gates": 126,
+        "peak_aux": 5,
+        "physical_qubits": 11,
+        "retained_classical_bits": 5,
+        "t_count": 20,
+        "t_depth": 15,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 5,
+        "worst_case_ticks": 127
+      },
+      "baseline_method": {
+        "network_digest": "b2083983ad4f2c7740c009a8da43900495d1ddcb275b3a8da9057d9b09315f94",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 42,
+        "expected_native_gates": "113",
+        "forward_and": 6,
+        "measurement_rounds": 5,
+        "measurements": 6,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 105,
+        "native_gates": 134,
+        "peak_aux": 3,
+        "physical_qubits": 9,
+        "retained_classical_bits": 6,
+        "t_count": 24,
+        "t_depth": 18,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 6,
+        "worst_case_ticks": 140
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_stream"
+      },
+      "name": "extension-mixed-00"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 54,
+        "expected_native_gates": "123",
+        "forward_and": 6,
+        "measurement_rounds": 3,
+        "measurements": 6,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 86,
+        "native_gates": 144,
+        "peak_aux": 6,
+        "physical_qubits": 13,
+        "retained_classical_bits": 6,
+        "t_count": 24,
+        "t_depth": 14,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 6,
+        "worst_case_ticks": 107
+      },
+      "baseline_method": {
+        "network_digest": "e8f95a1654c74e56ccf94dd863204244ca302cc40388fba62d8faba71572b8bf",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 56,
+        "expected_native_gates": "152",
+        "forward_and": 8,
+        "measurement_rounds": 6,
+        "measurements": 8,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 136,
+        "native_gates": 180,
+        "peak_aux": 4,
+        "physical_qubits": 11,
+        "retained_classical_bits": 8,
+        "t_count": 32,
+        "t_depth": 23,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 8,
+        "worst_case_ticks": 178
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_stream"
+      },
+      "name": "extension-mixed-01"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 113,
+        "expected_native_gates": "245",
+        "forward_and": 12,
+        "measurement_rounds": 5,
+        "measurements": 12,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 167,
+        "native_gates": 287,
+        "peak_aux": 12,
+        "physical_qubits": 20,
+        "retained_classical_bits": 12,
+        "t_count": 48,
+        "t_depth": 23,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 12,
+        "worst_case_ticks": 202
+      },
+      "baseline_method": {
+        "network_digest": "d386d45cb41c1a969934d7d8078024e8328c6a76910593f040b31a9005ebff78",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 92,
+        "expected_native_gates": "447/2",
+        "forward_and": 11,
+        "measurement_rounds": 10,
+        "measurements": 11,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 198,
+        "native_gates": 262,
+        "peak_aux": 3,
+        "physical_qubits": 11,
+        "retained_classical_bits": 11,
+        "t_count": 44,
+        "t_depth": 32,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 11,
+        "worst_case_ticks": 268
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_stream"
+      },
+      "name": "extension-mixed-02"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 115,
+        "expected_native_gates": "519/2",
+        "forward_and": 13,
+        "measurement_rounds": 3,
+        "measurements": 13,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 130,
+        "native_gates": 305,
+        "peak_aux": 13,
+        "physical_qubits": 22,
+        "retained_classical_bits": 13,
+        "t_count": 52,
+        "t_depth": 21,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 13,
+        "worst_case_ticks": 151
+      },
+      "baseline_method": {
+        "network_digest": "66e4ba37ef2cdfea5f3ebfdcbd0cad2b748d7188c493c98ca4e4dfde94cb1cbf",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 103,
+        "expected_native_gates": "599/2",
+        "forward_and": 17,
+        "measurement_rounds": 12,
+        "measurements": 17,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 241,
+        "native_gates": 359,
+        "peak_aux": 4,
+        "physical_qubits": 13,
+        "retained_classical_bits": 17,
+        "t_count": 68,
+        "t_depth": 42,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 17,
+        "worst_case_ticks": 325
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_recompute"
+      },
+      "name": "extension-mixed-03"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 21,
+        "expected_native_gates": "73",
+        "forward_and": 4,
+        "measurement_rounds": 2,
+        "measurements": 4,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 41,
+        "native_gates": 87,
+        "peak_aux": 4,
+        "physical_qubits": 10,
+        "retained_classical_bits": 4,
+        "t_count": 16,
+        "t_depth": 7,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 4,
+        "worst_case_ticks": 55
+      },
+      "baseline_method": {
+        "network_digest": "2d59f1d059eb55127cd1db6718e1bfbd66bd11e55569069eb17d166c78c33be8",
+        "parallel_cleanup": true,
+        "source_form": "anf"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 23,
+        "expected_native_gates": "71",
+        "forward_and": 4,
+        "measurement_rounds": 3,
+        "measurements": 4,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 58,
+        "native_gates": 85,
+        "peak_aux": 3,
+        "physical_qubits": 9,
+        "retained_classical_bits": 4,
+        "t_count": 16,
+        "t_depth": 9,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 4,
+        "worst_case_ticks": 79
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_all"
+      },
+      "name": "extension-mixed-04"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 58,
+        "expected_native_gates": "129",
+        "forward_and": 6,
+        "measurement_rounds": 3,
+        "measurements": 6,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 89,
+        "native_gates": 150,
+        "peak_aux": 6,
+        "physical_qubits": 13,
+        "retained_classical_bits": 6,
+        "t_count": 24,
+        "t_depth": 14,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 6,
+        "worst_case_ticks": 110
+      },
+      "baseline_method": {
+        "network_digest": "f7e665899cc0d7e3b677dfd4f0803c5ca92dc5335d11646270e03ba3861a210a",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 42,
+        "expected_native_gates": "117",
+        "forward_and": 6,
+        "measurement_rounds": 5,
+        "measurements": 6,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 105,
+        "native_gates": 138,
+        "peak_aux": 3,
+        "physical_qubits": 10,
+        "retained_classical_bits": 6,
+        "t_count": 24,
+        "t_depth": 18,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 6,
+        "worst_case_ticks": 140
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_stream"
+      },
+      "name": "extension-mixed-05"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 72,
+        "expected_native_gates": "345/2",
+        "forward_and": 9,
+        "measurement_rounds": 3,
+        "measurements": 9,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 126,
+        "native_gates": 204,
+        "peak_aux": 9,
+        "physical_qubits": 17,
+        "retained_classical_bits": 9,
+        "t_count": 36,
+        "t_depth": 23,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 9,
+        "worst_case_ticks": 147
+      },
+      "baseline_method": {
+        "network_digest": "51cc365654499e9e9cc0d478ca8b0bde5c0071b9551ed8d0ad64e93d1a422fbe",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 72,
+        "expected_native_gates": "214",
+        "forward_and": 12,
+        "measurement_rounds": 9,
+        "measurements": 12,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 187,
+        "native_gates": 256,
+        "peak_aux": 3,
+        "physical_qubits": 11,
+        "retained_classical_bits": 12,
+        "t_count": 48,
+        "t_depth": 32,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 12,
+        "worst_case_ticks": 250
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_stream"
+      },
+      "name": "extension-mixed-06"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 127,
+        "expected_native_gates": "539/2",
+        "forward_and": 13,
+        "measurement_rounds": 3,
+        "measurements": 13,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 144,
+        "native_gates": 315,
+        "peak_aux": 13,
+        "physical_qubits": 22,
+        "retained_classical_bits": 13,
+        "t_count": 52,
+        "t_depth": 23,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 13,
+        "worst_case_ticks": 165
+      },
+      "baseline_method": {
+        "network_digest": "afd149ac21c990584e062738b7206c9548d978e6df7000d7758728ac59a155c5",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 105,
+        "expected_native_gates": "561/2",
+        "forward_and": 15,
+        "measurement_rounds": 12,
+        "measurements": 15,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 242,
+        "native_gates": 333,
+        "peak_aux": 4,
+        "physical_qubits": 13,
+        "retained_classical_bits": 15,
+        "t_count": 60,
+        "t_depth": 39,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 15,
+        "worst_case_ticks": 326
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_stream"
+      },
+      "name": "extension-mixed-07"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 42,
+        "expected_native_gates": "88",
+        "forward_and": 4,
+        "measurement_rounds": 3,
+        "measurements": 4,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 77,
+        "native_gates": 102,
+        "peak_aux": 4,
+        "physical_qubits": 10,
+        "retained_classical_bits": 4,
+        "t_count": 16,
+        "t_depth": 10,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 4,
+        "worst_case_ticks": 98
+      },
+      "baseline_method": {
+        "network_digest": "17680166edf6e0671aef26290d07a2b4d17fbfd254ae5ba00d96cdcb627f1cda",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 34,
+        "expected_native_gates": "197/2",
+        "forward_and": 5,
+        "measurement_rounds": 4,
+        "measurements": 5,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 84,
+        "native_gates": 116,
+        "peak_aux": 3,
+        "physical_qubits": 9,
+        "retained_classical_bits": 5,
+        "t_count": 20,
+        "t_depth": 13,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 5,
+        "worst_case_ticks": 112
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_all"
+      },
+      "name": "extension-mixed-08"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 83,
+        "expected_native_gates": "325/2",
+        "forward_and": 7,
+        "measurement_rounds": 3,
+        "measurements": 7,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 127,
+        "native_gates": 187,
+        "peak_aux": 7,
+        "physical_qubits": 14,
+        "retained_classical_bits": 7,
+        "t_count": 28,
+        "t_depth": 19,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 7,
+        "worst_case_ticks": 148
+      },
+      "baseline_method": {
+        "network_digest": "6bfc8e425ac7cc09f72c9bd7502274232bdc700cccc1ba83b7bab009f31fb1b4",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 74,
+        "expected_native_gates": "361/2",
+        "forward_and": 9,
+        "measurement_rounds": 6,
+        "measurements": 9,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 142,
+        "native_gates": 212,
+        "peak_aux": 4,
+        "physical_qubits": 11,
+        "retained_classical_bits": 9,
+        "t_count": 36,
+        "t_depth": 22,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 9,
+        "worst_case_ticks": 184
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_recompute"
+      },
+      "name": "extension-mixed-09"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 81,
+        "expected_native_gates": "321/2",
+        "forward_and": 7,
+        "measurement_rounds": 2,
+        "measurements": 7,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 109,
+        "native_gates": 185,
+        "peak_aux": 7,
+        "physical_qubits": 15,
+        "retained_classical_bits": 7,
+        "t_count": 28,
+        "t_depth": 17,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 7,
+        "worst_case_ticks": 123
+      },
+      "baseline_method": {
+        "network_digest": "26c3c4b810df010e7157dec3ecb7c3cabef66beaa356003c4146224dee8008d7",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 67,
+        "expected_native_gates": "165",
+        "forward_and": 8,
+        "measurement_rounds": 7,
+        "measurements": 8,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 149,
+        "native_gates": 193,
+        "peak_aux": 3,
+        "physical_qubits": 11,
+        "retained_classical_bits": 8,
+        "t_count": 32,
+        "t_depth": 25,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 8,
+        "worst_case_ticks": 198
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_stream"
+      },
+      "name": "extension-mixed-10"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 81,
+        "expected_native_gates": "150",
+        "forward_and": 6,
+        "measurement_rounds": 3,
+        "measurements": 6,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 117,
+        "native_gates": 171,
+        "peak_aux": 6,
+        "physical_qubits": 15,
+        "retained_classical_bits": 6,
+        "t_count": 24,
+        "t_depth": 17,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 6,
+        "worst_case_ticks": 138
+      },
+      "baseline_method": {
+        "network_digest": "7d2429c2bf8cfdde983b852068d07b010369f42aabdde741beacee033cc7dc9e",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 80,
+        "expected_native_gates": "201",
+        "forward_and": 10,
+        "measurement_rounds": 9,
+        "measurements": 10,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 180,
+        "native_gates": 236,
+        "peak_aux": 3,
+        "physical_qubits": 12,
+        "retained_classical_bits": 10,
+        "t_count": 40,
+        "t_depth": 29,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 10,
+        "worst_case_ticks": 243
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_recompute"
+      },
+      "name": "extension-mixed-11"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 17,
+        "expected_native_gates": "105/2",
+        "forward_and": 3,
+        "measurement_rounds": 2,
+        "measurements": 3,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 41,
+        "native_gates": 63,
+        "peak_aux": 3,
+        "physical_qubits": 9,
+        "retained_classical_bits": 3,
+        "t_count": 12,
+        "t_depth": 7,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 3,
+        "worst_case_ticks": 55
+      },
+      "baseline_method": {
+        "network_digest": "7151973e4c7c88cb99ee1d51963e668d4934cfa705dcb9a459f330b4bd124a49",
+        "parallel_cleanup": true,
+        "source_form": "source"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 30,
+        "expected_native_gates": "173/2",
+        "forward_and": 5,
+        "measurement_rounds": 4,
+        "measurements": 5,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 78,
+        "native_gates": 104,
+        "peak_aux": 3,
+        "physical_qubits": 9,
+        "retained_classical_bits": 5,
+        "t_count": 20,
+        "t_depth": 14,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 5,
+        "worst_case_ticks": 106
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_stream"
+      },
+      "name": "extension-quadratic_feature-00"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 51,
+        "expected_native_gates": "116",
+        "forward_and": 6,
+        "measurement_rounds": 3,
+        "measurements": 6,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 90,
+        "native_gates": 137,
+        "peak_aux": 6,
+        "physical_qubits": 13,
+        "retained_classical_bits": 6,
+        "t_count": 24,
+        "t_depth": 14,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 6,
+        "worst_case_ticks": 111
+      },
+      "baseline_method": {
+        "network_digest": "b0fb297b1e79549588c4f9f0e353499c9acf0ebce5954134fadc14b83aa84576",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 43,
+        "expected_native_gates": "245/2",
+        "forward_and": 7,
+        "measurement_rounds": 5,
+        "measurements": 7,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 101,
+        "native_gates": 147,
+        "peak_aux": 4,
+        "physical_qubits": 11,
+        "retained_classical_bits": 7,
+        "t_count": 28,
+        "t_depth": 18,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 7,
+        "worst_case_ticks": 136
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_recompute"
+      },
+      "name": "extension-quadratic_feature-01"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 73,
+        "expected_native_gates": "159",
+        "forward_and": 8,
+        "measurement_rounds": 3,
+        "measurements": 8,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 109,
+        "native_gates": 187,
+        "peak_aux": 8,
+        "physical_qubits": 16,
+        "retained_classical_bits": 8,
+        "t_count": 32,
+        "t_depth": 17,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 8,
+        "worst_case_ticks": 130
+      },
+      "baseline_method": {
+        "network_digest": "00244425539d1d155939029428ab83793d2773954f9361dbab09005e15d58178",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 79,
+        "expected_native_gates": "215",
+        "forward_and": 12,
+        "measurement_rounds": 10,
+        "measurements": 12,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 190,
+        "native_gates": 257,
+        "peak_aux": 3,
+        "physical_qubits": 11,
+        "retained_classical_bits": 12,
+        "t_count": 48,
+        "t_depth": 32,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 12,
+        "worst_case_ticks": 260
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_stream"
+      },
+      "name": "extension-quadratic_feature-02"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 89,
+        "expected_native_gates": "196",
+        "forward_and": 10,
+        "measurement_rounds": 3,
+        "measurements": 10,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 125,
+        "native_gates": 231,
+        "peak_aux": 10,
+        "physical_qubits": 19,
+        "retained_classical_bits": 10,
+        "t_count": 40,
+        "t_depth": 19,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 10,
+        "worst_case_ticks": 146
+      },
+      "baseline_method": {
+        "network_digest": "0827d61005411f21efa91f49fee74c782dcaa146e9e636106a81ef1d14862120",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 102,
+        "expected_native_gates": "543/2",
+        "forward_and": 15,
+        "measurement_rounds": 12,
+        "measurements": 15,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 231,
+        "native_gates": 324,
+        "peak_aux": 3,
+        "physical_qubits": 12,
+        "retained_classical_bits": 15,
+        "t_count": 60,
+        "t_depth": 39,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 15,
+        "worst_case_ticks": 315
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_stream"
+      },
+      "name": "extension-quadratic_feature-03"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 23,
+        "expected_native_gates": "113/2",
+        "forward_and": 3,
+        "measurement_rounds": 3,
+        "measurements": 3,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 60,
+        "native_gates": 67,
+        "peak_aux": 3,
+        "physical_qubits": 9,
+        "retained_classical_bits": 3,
+        "t_count": 12,
+        "t_depth": 10,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 3,
+        "worst_case_ticks": 81
+      },
+      "baseline_method": {
+        "network_digest": "c4bd2e8889c43189bab3552b2ee8bd9d6c6dea3984186416e468724fb463c876",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 25,
+        "expected_native_gates": "167/2",
+        "forward_and": 5,
+        "measurement_rounds": 4,
+        "measurements": 5,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 76,
+        "native_gates": 101,
+        "peak_aux": 3,
+        "physical_qubits": 9,
+        "retained_classical_bits": 5,
+        "t_count": 20,
+        "t_depth": 13,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 5,
+        "worst_case_ticks": 104
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_all"
+      },
+      "name": "extension-quadratic_feature-04"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 67,
+        "expected_native_gates": "153",
+        "forward_and": 8,
+        "measurement_rounds": 3,
+        "measurements": 8,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 116,
+        "native_gates": 181,
+        "peak_aux": 8,
+        "physical_qubits": 15,
+        "retained_classical_bits": 8,
+        "t_count": 32,
+        "t_depth": 21,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 8,
+        "worst_case_ticks": 137
+      },
+      "baseline_method": {
+        "network_digest": "629c623f8b10c3654868b3de311bc5220fd58d462929e15efa447b729848acae",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 47,
+        "expected_native_gates": "253/2",
+        "forward_and": 7,
+        "measurement_rounds": 6,
+        "measurements": 7,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 122,
+        "native_gates": 151,
+        "peak_aux": 3,
+        "physical_qubits": 10,
+        "retained_classical_bits": 7,
+        "t_count": 28,
+        "t_depth": 21,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 7,
+        "worst_case_ticks": 164
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_recompute"
+      },
+      "name": "extension-quadratic_feature-05"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 45,
+        "expected_native_gates": "323/2",
+        "forward_and": 9,
+        "measurement_rounds": 2,
+        "measurements": 9,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 59,
+        "native_gates": 193,
+        "peak_aux": 9,
+        "physical_qubits": 17,
+        "retained_classical_bits": 9,
+        "t_count": 36,
+        "t_depth": 9,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 9,
+        "worst_case_ticks": 73
+      },
+      "baseline_method": {
+        "network_digest": "5c2c27b15b8b735cdfb0358193a717cd11f3f7f7b98654d811ea48509ac3b47e",
+        "parallel_cleanup": true,
+        "source_form": "source"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 67,
+        "expected_native_gates": "385/2",
+        "forward_and": 11,
+        "measurement_rounds": 8,
+        "measurements": 11,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 165,
+        "native_gates": 231,
+        "peak_aux": 4,
+        "physical_qubits": 12,
+        "retained_classical_bits": 11,
+        "t_count": 44,
+        "t_depth": 29,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 11,
+        "worst_case_ticks": 221
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_stream"
+      },
+      "name": "extension-quadratic_feature-06"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 109,
+        "expected_native_gates": "237",
+        "forward_and": 12,
+        "measurement_rounds": 3,
+        "measurements": 12,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 119,
+        "native_gates": 279,
+        "peak_aux": 12,
+        "physical_qubits": 21,
+        "retained_classical_bits": 12,
+        "t_count": 48,
+        "t_depth": 19,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 12,
+        "worst_case_ticks": 140
+      },
+      "baseline_method": {
+        "network_digest": "ea4e051082926516e22c3c4a1c984bd092f934b47e16aee5a8bf617a0e4601c5",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 83,
+        "expected_native_gates": "219",
+        "forward_and": 12,
+        "measurement_rounds": 8,
+        "measurements": 12,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 182,
+        "native_gates": 261,
+        "peak_aux": 4,
+        "physical_qubits": 13,
+        "retained_classical_bits": 12,
+        "t_count": 48,
+        "t_depth": 32,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 12,
+        "worst_case_ticks": 238
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_stream"
+      },
+      "name": "extension-quadratic_feature-07"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 29,
+        "expected_native_gates": "104",
+        "forward_and": 6,
+        "measurement_rounds": 3,
+        "measurements": 6,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 57,
+        "native_gates": 125,
+        "peak_aux": 6,
+        "physical_qubits": 12,
+        "retained_classical_bits": 6,
+        "t_count": 24,
+        "t_depth": 10,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 6,
+        "worst_case_ticks": 78
+      },
+      "baseline_method": {
+        "network_digest": "960ed8af2a9ca5d3ffe9394ed1b46d85626a903f30af1cbdf9e697949cd5a81e",
+        "parallel_cleanup": true,
+        "source_form": "source"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 45,
+        "expected_native_gates": "249/2",
+        "forward_and": 7,
+        "measurement_rounds": 6,
+        "measurements": 7,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 121,
+        "native_gates": 149,
+        "peak_aux": 3,
+        "physical_qubits": 9,
+        "retained_classical_bits": 7,
+        "t_count": 28,
+        "t_depth": 21,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 7,
+        "worst_case_ticks": 163
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_recompute"
+      },
+      "name": "extension-quadratic_feature-08"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 47,
+        "expected_native_gates": "245/2",
+        "forward_and": 7,
+        "measurement_rounds": 3,
+        "measurements": 7,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 91,
+        "native_gates": 147,
+        "peak_aux": 7,
+        "physical_qubits": 14,
+        "retained_classical_bits": 7,
+        "t_count": 28,
+        "t_depth": 16,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 7,
+        "worst_case_ticks": 112
+      },
+      "baseline_method": {
+        "network_digest": "45ca628e8d1f1b47b1e0db41d70e5c8dde8790395f6ffae3d00b36873424ac72",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 41,
+        "expected_native_gates": "241/2",
+        "forward_and": 7,
+        "measurement_rounds": 6,
+        "measurements": 7,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 117,
+        "native_gates": 145,
+        "peak_aux": 3,
+        "physical_qubits": 10,
+        "retained_classical_bits": 7,
+        "t_count": 28,
+        "t_depth": 21,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 7,
+        "worst_case_ticks": 159
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_recompute"
+      },
+      "name": "extension-quadratic_feature-09"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 59,
+        "expected_native_gates": "269/2",
+        "forward_and": 7,
+        "measurement_rounds": 3,
+        "measurements": 7,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 106,
+        "native_gates": 159,
+        "peak_aux": 7,
+        "physical_qubits": 15,
+        "retained_classical_bits": 7,
+        "t_count": 28,
+        "t_depth": 19,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 7,
+        "worst_case_ticks": 127
+      },
+      "baseline_method": {
+        "network_digest": "75395ef77b4a4045af61f7f768aa840082f5e5190d40de8254542ec9425ee8bd",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 54,
+        "expected_native_gates": "313/2",
+        "forward_and": 9,
+        "measurement_rounds": 7,
+        "measurements": 9,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 128,
+        "native_gates": 188,
+        "peak_aux": 4,
+        "physical_qubits": 12,
+        "retained_classical_bits": 9,
+        "t_count": 36,
+        "t_depth": 21,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 9,
+        "worst_case_ticks": 177
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_stream"
+      },
+      "name": "extension-quadratic_feature-10"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 97,
+        "expected_native_gates": "429/2",
+        "forward_and": 11,
+        "measurement_rounds": 3,
+        "measurements": 11,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 146,
+        "native_gates": 253,
+        "peak_aux": 11,
+        "physical_qubits": 20,
+        "retained_classical_bits": 11,
+        "t_count": 44,
+        "t_depth": 23,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 11,
+        "worst_case_ticks": 167
+      },
+      "baseline_method": {
+        "network_digest": "3576fb2a58cf53cd4824f2134afff4f97bdafcc6019be15cad979bf9c34212b3",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "extension",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 106,
+        "expected_native_gates": "265",
+        "forward_and": 14,
+        "measurement_rounds": 11,
+        "measurements": 14,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 226,
+        "native_gates": 314,
+        "peak_aux": 3,
+        "physical_qubits": 12,
+        "retained_classical_bits": 14,
+        "t_count": 56,
+        "t_depth": 39,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 14,
+        "worst_case_ticks": 303
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_stream"
+      },
+      "name": "extension-quadratic_feature-11"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 29,
+        "expected_native_gates": "73",
+        "forward_and": 4,
+        "measurement_rounds": 2,
+        "measurements": 4,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 54,
+        "native_gates": 87,
+        "peak_aux": 4,
+        "physical_qubits": 12,
+        "retained_classical_bits": 4,
+        "t_count": 16,
+        "t_depth": 9,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 4,
+        "worst_case_ticks": 68
+      },
+      "baseline_method": {
+        "network_digest": "c07c4b4a1e468bfff5088381021c2d6573821dbf0e9950ea3d69c0052153ed60",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "original",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 22,
+        "expected_native_gates": "115/2",
+        "forward_and": 3,
+        "measurement_rounds": 3,
+        "measurements": 3,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 58,
+        "native_gates": 68,
+        "peak_aux": 2,
+        "physical_qubits": 10,
+        "retained_classical_bits": 3,
+        "t_count": 12,
+        "t_depth": 10,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 3,
+        "worst_case_ticks": 79
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_all"
+      },
+      "name": "mixed-five-row-predicate"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 151,
+        "expected_native_gates": "579/2",
+        "forward_and": 13,
+        "measurement_rounds": 3,
+        "measurements": 13,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 166,
+        "native_gates": 335,
+        "peak_aux": 13,
+        "physical_qubits": 23,
+        "retained_classical_bits": 13,
+        "t_count": 52,
+        "t_depth": 24,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 13,
+        "worst_case_ticks": 187
+      },
+      "baseline_method": {
+        "network_digest": "31480dcf76e619ae546061b1821678d6a8327f5e696c03d95f8d7ffa53998f72",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "original",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 83,
+        "expected_native_gates": "375/2",
+        "forward_and": 9,
+        "measurement_rounds": 7,
+        "measurements": 9,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 164,
+        "native_gates": 219,
+        "peak_aux": 4,
+        "physical_qubits": 14,
+        "retained_classical_bits": 9,
+        "t_count": 36,
+        "t_depth": 28,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 9,
+        "worst_case_ticks": 213
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_stream"
+      },
+      "name": "three-channel-cross-feature-bank"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 13,
+        "expected_native_gates": "36",
+        "forward_and": 2,
+        "measurement_rounds": 1,
+        "measurements": 2,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 25,
+        "native_gates": 43,
+        "peak_aux": 2,
+        "physical_qubits": 9,
+        "retained_classical_bits": 2,
+        "t_count": 8,
+        "t_depth": 4,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 2,
+        "worst_case_ticks": 32
+      },
+      "baseline_method": {
+        "network_digest": "4fc118e639f279e3f8890e7acfebca3e39e11270e1c1de710b181cc0fcc06667",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "original",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 11,
+        "expected_native_gates": "38",
+        "forward_and": 2,
+        "measurement_rounds": 2,
+        "measurements": 2,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 45,
+        "native_gates": 45,
+        "peak_aux": 1,
+        "physical_qubits": 8,
+        "retained_classical_bits": 2,
+        "t_count": 8,
+        "t_depth": 8,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 2,
+        "worst_case_ticks": 59
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "bank_free_monomials"
+      },
+      "name": "two-channel-feature-ring"
+    },
+    {
+      "baseline": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 169,
+        "expected_native_gates": "339",
+        "forward_and": 16,
+        "measurement_rounds": 3,
+        "measurements": 16,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 165,
+        "native_gates": 395,
+        "peak_aux": 16,
+        "physical_qubits": 28,
+        "retained_classical_bits": 16,
+        "t_count": 64,
+        "t_depth": 21,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 16,
+        "worst_case_ticks": 186
+      },
+      "baseline_method": {
+        "network_digest": "ce5083420225cdbac238829bf0f3457c2241d6ff410bd8ef894169eb6c6f6551",
+        "parallel_cleanup": true,
+        "source_form": "davio"
+      },
+      "cohort": "original",
+      "current": {
+        "aux_at_end": 0,
+        "cleanup_t": 0,
+        "cnot": 120,
+        "expected_native_gates": "275",
+        "forward_and": 14,
+        "measurement_rounds": 8,
+        "measurements": 14,
+        "native_count_scope": "all branches: worst case; includes measurement H and conditional-X reset lowering",
+        "native_depth": 192,
+        "native_gates": 324,
+        "peak_aux": 5,
+        "physical_qubits": 17,
+        "retained_classical_bits": 14,
+        "t_count": 56,
+        "t_depth": 31,
+        "timing_scope": "all-to-all, explicit stage barriers; abstract ticks, not hardware measurements",
+        "worst_case_correction_cz": 14,
+        "worst_case_ticks": 248
+      },
+      "current_method": {
+        "menu_complete": true,
+        "selected_method": "rank_recompute"
+      },
+      "name": "wide-shared-mask-oracle"
+    }
+  ],
+  "records": 246,
+  "valid": 246
+}

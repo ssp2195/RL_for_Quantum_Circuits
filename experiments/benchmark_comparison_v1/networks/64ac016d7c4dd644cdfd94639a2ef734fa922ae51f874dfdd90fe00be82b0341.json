@@ -1,0 +1,6 @@
+{
+  "optimized": "8 18 52\nA 4 12\nA 8 14\nX 20 10\nX 18 22\nA 16 24\nX 26 16\nA 10 14\nA 12 31\nX 28 32\nA 6 34\nX 30 20\nA 16 38\nX 40 12\nA 4 42\nA 12 22\nX 44 46\nX 36 48\nA 2 50\n",
+  "source": "8 22 60\nA 8 14\nX 10 18\nA 12 20\nX 10 8\nA 16 24\nA 14 26\nX 12 28\nA 4 30\nX 22 32\nA 10 14\nX 1 36\nA 12 38\nX 1 10\nA 8 14\nX 42 44\nA 4 12\nX 46 48\nA 16 50\nX 40 52\nA 6 54\nX 34 56\nA 2 58\n",
+  "source_form": "davio",
+  "stderr": ""
+}

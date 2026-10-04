@@ -1,0 +1,317 @@
+{
+  "problem": {
+    "assumptions": [
+      "full-independent-raw-input-cube",
+      "F_ij=a*b_i*x_j",
+      "helpers=a*(P*b+Q*x+c)",
+      "all-r*m-products-coexist",
+      "quadratic-diagonal-sign-consumer",
+      "one-main-garbage-only-instrument-then-Clifford-feedback",
+      "helpers-preserved-through-main-feedback",
+      "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+      "no-postselection",
+      "no-extra-unaccounted-workspace"
+    ],
+    "consumer": [
+      [
+        "f0_0"
+      ],
+      [
+        "f1_0"
+      ],
+      [
+        "f1_1"
+      ],
+      [
+        "f1_2"
+      ],
+      [
+        "f2_0"
+      ],
+      [
+        "f2_1"
+      ],
+      [
+        "f3_1"
+      ],
+      [
+        "f3_2"
+      ],
+      [
+        "f4_2"
+      ]
+    ],
+    "hardware": {
+      "feedback_ticks": 2,
+      "gate_ticks": 1,
+      "measurement_ticks": 5
+    },
+    "input_domain": "full_cube",
+    "limits": {
+      "max_aux": null,
+      "max_cnot": null,
+      "max_depth": null,
+      "max_gates": null,
+      "max_rounds": null,
+      "max_t": null,
+      "max_t_depth": null,
+      "max_ticks": null
+    },
+    "m": 3,
+    "name": "extension-bilinear-03",
+    "phase_mode": "exact",
+    "r": 5,
+    "schema": "outer-product-cleanup-v1",
+    "split": "comparison"
+  },
+  "protocol": {
+    "ops": [
+      {
+        "guard": null,
+        "kind": "CX",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          2,
+          1
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CX",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          3,
+          1
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          0,
+          1,
+          9
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          9,
+          6
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 0,
+        "stage": "measure_factor_0",
+        "wires": [
+          9
+        ]
+      },
+      {
+        "guard": 0,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_factor_0",
+        "wires": [
+          0,
+          1
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CX",
+        "outcome": null,
+        "stage": "restore_factor_0",
+        "wires": [
+          3,
+          1
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CX",
+        "outcome": null,
+        "stage": "restore_factor_0",
+        "wires": [
+          2,
+          1
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CX",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          3,
+          2
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CX",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          4,
+          2
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CX",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          8,
+          7
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          0,
+          2,
+          9
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          9,
+          7
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 1,
+        "stage": "measure_factor_1",
+        "wires": [
+          9
+        ]
+      },
+      {
+        "guard": 1,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_factor_1",
+        "wires": [
+          0,
+          2
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CX",
+        "outcome": null,
+        "stage": "restore_factor_1",
+        "wires": [
+          8,
+          7
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CX",
+        "outcome": null,
+        "stage": "restore_factor_1",
+        "wires": [
+          4,
+          2
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CX",
+        "outcome": null,
+        "stage": "restore_factor_1",
+        "wires": [
+          3,
+          2
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CX",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          5,
+          3
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "AND",
+        "outcome": null,
+        "stage": "prepare",
+        "wires": [
+          0,
+          3,
+          9
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "consumer",
+        "wires": [
+          9,
+          8
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "MX",
+        "outcome": 2,
+        "stage": "measure_factor_2",
+        "wires": [
+          9
+        ]
+      },
+      {
+        "guard": 2,
+        "kind": "CZ",
+        "outcome": null,
+        "stage": "correct_factor_2",
+        "wires": [
+          0,
+          3
+        ]
+      },
+      {
+        "guard": null,
+        "kind": "CX",
+        "outcome": null,
+        "stage": "restore_factor_2",
+        "wires": [
+          5,
+          3
+        ]
+      }
+    ],
+    "primitive": "and4",
+    "problem_digest": "87ac225727a589c012cc365099787ec9f52d9db051db6f08e7815986dded3b18",
+    "provenance": "exact_feature_factors_all",
+    "schema": "consumer-phase-protocol-v1",
+    "scope": "complete phase oracle; no full-bank materialization requirement",
+    "width": 10
+  }
+}

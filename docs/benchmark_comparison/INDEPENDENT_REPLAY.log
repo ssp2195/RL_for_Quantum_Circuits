@@ -1,0 +1,14 @@
+{
+  "valid": true,
+  "records": 246,
+  "distinct_protocols": 82,
+  "input_outcome_generator_pairs": 312704,
+  "scope": "exact symbolic all-branch replay plus independent truth-table phase checks; no generator or policy called"
+}
+{
+  "valid": true,
+  "records": 15,
+  "accepted": 15,
+  "exact_basis_inputs": 16608,
+  "scope": "exact all-input evaluator eigenspace plus literal inverse-wrapper verification; no external mapper called"
+}

@@ -1,0 +1,57 @@
+OPENQASM 2.0;
+include "qelib1.inc";
+// n_inputs: 7
+// input_qubits: 0,1,2,3,4,5,6
+// n_outputs: 1
+// output_qubits: 7
+qreg q[11];
+creg c[1];
+
+h q[8];
+cx q[5],q[2];
+cx q[8],q[2];
+t q[2];
+cx q[8],q[2];
+cx q[5],q[2];
+cx q[8],q[5];
+tdg q[5];
+cx q[8],q[5];
+cx q[8],q[2];
+tdg q[2];
+cx q[8],q[2];
+t q[8];
+h q[8];
+sdg q[8];
+cx q[3],q[10];
+h q[9];
+cx q[10],q[6];
+cx q[9],q[6];
+t q[6];
+cx q[9],q[6];
+cx q[10],q[6];
+cx q[9],q[10];
+tdg q[10];
+cx q[9],q[10];
+cx q[9],q[6];
+tdg q[6];
+cx q[9],q[6];
+t q[9];
+h q[9];
+sdg q[9];
+cx q[6],q[9];
+cx q[9],q[8];
+h q[7];
+cx q[8],q[0];
+cx q[7],q[0];
+t q[0];
+cx q[7],q[0];
+cx q[8],q[0];
+cx q[7],q[8];
+tdg q[8];
+cx q[7],q[8];
+cx q[7],q[0];
+tdg q[0];
+cx q[7],q[0];
+t q[7];
+h q[7];
+sdg q[7];

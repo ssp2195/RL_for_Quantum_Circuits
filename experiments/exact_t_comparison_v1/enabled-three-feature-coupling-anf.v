@@ -1,0 +1,21 @@
+module oracle(x0,x1,x2,x3,x4,y);
+input x0,x1,x2,x3,x4;
+output y;
+wire g0,g1,g2,g3,g4,g5,g6,g7,g8,g9,g10,g11,g12,g13,g14;
+assign g0 = x0 & x1;
+assign g1 = g0 & x4;
+assign g2 = x0 & x1;
+assign g3 = g2 & x2;
+assign g4 = g3 & x4;
+assign g5 = x0 & x1;
+assign g6 = g5 & x3;
+assign g7 = g6 & x4;
+assign g8 = x0 & x2;
+assign g9 = g8 & x3;
+assign g10 = g9 & x4;
+assign g11 = 1'b0 ^ g1;
+assign g12 = g11 ^ g4;
+assign g13 = g12 ^ g7;
+assign g14 = g13 ^ g10;
+assign y = g14;
+endmodule

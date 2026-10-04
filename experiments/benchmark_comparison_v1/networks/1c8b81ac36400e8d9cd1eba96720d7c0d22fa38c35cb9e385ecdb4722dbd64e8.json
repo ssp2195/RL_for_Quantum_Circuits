@@ -1,0 +1,6 @@
+{
+  "optimized": "7 25 64\nA 2 4\nA 12 16\nA 14 16\nA 2 8\nA 12 22\nX 20 24\nA 18 26\nA 2 6\nA 14 30\nA 32 20\nX 28 34\nA 12 30\nX 36 38\nA 24 32\nX 40 42\nA 2 10\nA 12 46\nA 32 48\nX 44 50\nX 52 24\nA 14 22\nA 24 56\nX 54 58\nX 60 56\nX 62 48\n",
+  "source": "7 28 70\nA 2 4\nA 16 12\nA 16 14\nA 2 6\nA 22 12\nA 22 14\nA 2 8\nA 28 12\nA 28 14\nA 2 10\nA 34 12\nA 34 14\nA 18 20\nA 18 30\nA 20 26\nA 26 30\nA 26 36\nA 30 32\nX 0 40\nX 52 42\nX 54 44\nX 56 24\nX 58 46\nX 60 48\nX 62 30\nX 64 50\nX 66 32\nX 68 36\n",
+  "source_form": "source",
+  "stderr": ""
+}

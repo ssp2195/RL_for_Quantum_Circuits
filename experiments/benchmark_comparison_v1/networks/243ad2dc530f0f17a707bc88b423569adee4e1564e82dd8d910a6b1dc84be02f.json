@@ -1,0 +1,6 @@
+{
+  "optimized": "6 20 52\nA 2 6\nA 2 4\nX 14 16\nA 6 8\nX 18 20\nA 10 16\nX 22 24\nA 10 14\nX 26 28\nA 12 14\nX 30 32\nA 2 8\nA 12 36\nX 34 38\nA 16 38\nX 40 42\nA 12 28\nX 44 46\nA 42 24\nX 48 50\n",
+  "source": "6 31 74\nA 2 4\nA 2 6\nA 6 8\nA 2 4\nA 20 10\nA 2 6\nA 24 10\nA 2 6\nA 28 12\nA 2 8\nA 32 12\nA 2 4\nA 36 8\nA 38 12\nA 2 6\nA 42 10\nA 44 12\nA 2 4\nA 48 8\nA 50 10\nA 52 12\nX 0 14\nX 56 16\nX 58 18\nX 60 22\nX 62 26\nX 64 30\nX 66 34\nX 68 40\nX 70 46\nX 72 54\n",
+  "source_form": "anf",
+  "stderr": ""
+}

@@ -1,0 +1,11 @@
+{
+  "schema_version":1,
+  "benchmark":"two-channel-feature-ring-davio.v",
+  "params":{"cut_size":5,"max_solver_n":6,"area_flow_rounds":6,"exact_rounds":6,"alpha":0.500000,"beta":0.100000,"multi_output":false,"clean_ancilla":true,"toffoli":false},
+  "mapper":{"baseline_and_gates":3,"baseline_t_count":21,"mapped_t_count":12,"mapped_cnot_count":24,"mapped_qubit_count":3,"runtime_ms":5.155184},
+  "cut_enum":{"total_cuts":25,"trivial_cuts":4,"bilinear_cuts":12,"multi_output_cuts":0,"merged_cuts":16,"avg_cuts_per_node":5.000000,"time_build_cuts_ms":0.031287,"cuts_by_output_count":{"2":2,"3":2,"7":1}},
+  "solver_cache":{"size":8,"hits":3,"misses":8,"hit_rate":0.272727},
+  "parity_solver":{"total_calls":0,"cache_lookups":0,"cache_hits":0,"cache_misses":0,"cache_hit_rate":0.000000,"total_time_ms":0.000000,"astar_time_ms":0.000000,"gray_synth_time_ms":0.000000},
+  "affine":{"initial_cnot_count":0,"final_cnot_count":0,"blocks_processed":0,"states_explored":0,"timeouts":0,"total_time_ms":0.000000},
+  "derived":{"self_cut_nodes":0,"mapped_and_nodes":3,"self_cut_ratio":0.000000,"cut_size_histogram":{"2":3},"num_outputs_histogram":{"1":3},"degree_histogram":{"2":3}}
+}

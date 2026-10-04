@@ -1,0 +1,26 @@
+{
+  "source_base": "2ca775e70ec3b6da94a7246a57874f5d6cee6d3f",
+  "production_source": "8509fc8dd1c095560af20bf7373af829a90cdb29",
+  "python": "3.13.5",
+  "platform": "Linux-6.18.44-x86_64-with-glibc2.41",
+  "machine": "x86_64",
+  "cpu": "Model name:                              AMD EPYC 9V74 80-Core Processor",
+  "mockturtle_commit": "47d1e70fdf775e1a295016c3c17a1ad206db24c0",
+  "exact_t_commit": "bffe54c38b6bfd689a04e0d7d5afdbd949bdac3a",
+  "binaries": {
+    "mockturtle-driver": "f0b409a702e7c46d9e7c5b07cd05d8dbee1c8e670ec8dfd6b504d0e25971105d",
+    "exact-t-map/build/exact-t-synth": "30658c3f72034b97805acd32b79e3a39c8d77040e6e2ae8564fe29d95b60bbbc"
+  },
+  "upstream_artifact": {
+    "id": 11303721270,
+    "run_id": 37202877993,
+    "sha256": "ea0a617c30f2d2c9ac1f53a84ab59173cff456ddb15927378153de78b0bbca1a"
+  },
+  "local_validation": {
+    "full_suite_passed": 1341,
+    "elapsed_seconds": 110.92,
+    "new_comparison_tests": 69,
+    "new_training_runs": 0,
+    "note": "Earlier foreground full-suite attempt was interrupted by tool timeout and was not counted as a pass."
+  }
+}

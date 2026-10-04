@@ -1,0 +1,3365 @@
+{
+  "base": "2ca775e70ec3b6da94a7246a57874f5d6cee6d3f",
+  "baseline": "unmodified pinned mockturtle 5-cut min-MC rewriting plus XAG resubstitution; our explicit shared primitive lowering; not full caterpillar or published optimum",
+  "cost": "same 4T AND, phase-only terminal products use CZ instead of unnecessary flags; all corrections, parity CNOTs and reset charged",
+  "driver_sha256": "f81acaf0013584cb4b0d429231bb7ecf160aa8de8d63161c3dfeacbb9a25a8d6",
+  "input_networks": [
+    "source",
+    "anf",
+    "davio"
+  ],
+  "method_order_seed": 60104,
+  "methods": [
+    "current_menu",
+    "mockturtle_measured"
+  ],
+  "mockturtle_commit": "47d1e70fdf775e1a295016c3c17a1ad206db24c0",
+  "problems": [
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0"
+        ],
+        [
+          "f0_0",
+          "f1_0"
+        ],
+        [
+          "f0_0",
+          "f2_0"
+        ],
+        [
+          "f1_0",
+          "f2_0"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 1,
+      "name": "enabled-three-feature-coupling",
+      "phase_mode": "exact",
+      "r": 3,
+      "schema": "outer-product-cleanup-v1",
+      "split": "test"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "a",
+          "x1"
+        ],
+        [
+          "b1",
+          "f3_1"
+        ],
+        [
+          "b3",
+          "f1_1"
+        ],
+        [
+          "f0_0",
+          "f2_1"
+        ],
+        [
+          "f0_1",
+          "f2_0"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_0",
+          "f3_1"
+        ],
+        [
+          "f1_1",
+          "f3_0"
+        ],
+        [
+          "f2_1"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "two-channel-feature-ring",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "test"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "b0",
+          "f3_0"
+        ],
+        [
+          "b3",
+          "f1_0"
+        ],
+        [
+          "f0_0",
+          "f2_1"
+        ],
+        [
+          "f0_0",
+          "f3_1"
+        ],
+        [
+          "f0_1"
+        ],
+        [
+          "f0_1",
+          "f2_0"
+        ],
+        [
+          "f0_1",
+          "f3_0"
+        ],
+        [
+          "f1_0",
+          "f3_1"
+        ],
+        [
+          "f1_0",
+          "f4_1"
+        ],
+        [
+          "f1_1",
+          "f3_0"
+        ],
+        [
+          "f1_1",
+          "f4_0"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f2_0",
+          "f4_1"
+        ],
+        [
+          "f2_1",
+          "f4_0"
+        ],
+        [
+          "f3_1"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "mixed-five-row-predicate",
+      "phase_mode": "exact",
+      "r": 5,
+      "schema": "outer-product-cleanup-v1",
+      "split": "test"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "a",
+          "x0"
+        ],
+        [
+          "b0",
+          "f4_1"
+        ],
+        [
+          "b1",
+          "f5_2"
+        ],
+        [
+          "b2",
+          "f0_1"
+        ],
+        [
+          "b3",
+          "f1_2"
+        ],
+        [
+          "b5",
+          "f3_0"
+        ],
+        [
+          "f0_0"
+        ],
+        [
+          "f0_0",
+          "f2_2"
+        ],
+        [
+          "f0_0",
+          "f4_1"
+        ],
+        [
+          "f0_1",
+          "f2_0"
+        ],
+        [
+          "f0_1",
+          "f4_2"
+        ],
+        [
+          "f0_2",
+          "f2_1"
+        ],
+        [
+          "f0_2",
+          "f4_0"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_0",
+          "f3_2"
+        ],
+        [
+          "f1_0",
+          "f5_1"
+        ],
+        [
+          "f1_1",
+          "f3_0"
+        ],
+        [
+          "f1_1",
+          "f5_2"
+        ],
+        [
+          "f1_2",
+          "f3_1"
+        ],
+        [
+          "f1_2",
+          "f5_0"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f2_0",
+          "f4_2"
+        ],
+        [
+          "f2_1",
+          "f4_0"
+        ],
+        [
+          "f2_2",
+          "f4_1"
+        ],
+        [
+          "f3_0"
+        ],
+        [
+          "f3_0",
+          "f5_2"
+        ],
+        [
+          "f3_1",
+          "f5_0"
+        ],
+        [
+          "f3_2",
+          "f5_1"
+        ],
+        [
+          "f4_0"
+        ],
+        [
+          "f5_0"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "three-channel-cross-feature-bank",
+      "phase_mode": "exact",
+      "r": 6,
+      "schema": "outer-product-cleanup-v1",
+      "split": "test"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "b0",
+          "f6_2"
+        ],
+        [
+          "b2",
+          "f0_0"
+        ],
+        [
+          "b3",
+          "f1_1"
+        ],
+        [
+          "b4",
+          "f2_2"
+        ],
+        [
+          "b6",
+          "f4_0"
+        ],
+        [
+          "b7",
+          "f5_1"
+        ],
+        [
+          "f0_0",
+          "f3_2"
+        ],
+        [
+          "f0_0",
+          "f5_1"
+        ],
+        [
+          "f0_1",
+          "f3_0"
+        ],
+        [
+          "f0_1",
+          "f5_2"
+        ],
+        [
+          "f0_2"
+        ],
+        [
+          "f0_2",
+          "f3_1"
+        ],
+        [
+          "f0_2",
+          "f5_0"
+        ],
+        [
+          "f1_0",
+          "f4_2"
+        ],
+        [
+          "f1_0",
+          "f6_1"
+        ],
+        [
+          "f1_1",
+          "f4_0"
+        ],
+        [
+          "f1_1",
+          "f6_2"
+        ],
+        [
+          "f1_2"
+        ],
+        [
+          "f1_2",
+          "f4_1"
+        ],
+        [
+          "f1_2",
+          "f6_0"
+        ],
+        [
+          "f2_0",
+          "f5_2"
+        ],
+        [
+          "f2_0",
+          "f7_1"
+        ],
+        [
+          "f2_1",
+          "f5_0"
+        ],
+        [
+          "f2_1",
+          "f7_2"
+        ],
+        [
+          "f2_2"
+        ],
+        [
+          "f2_2",
+          "f5_1"
+        ],
+        [
+          "f2_2",
+          "f7_0"
+        ],
+        [
+          "f3_0",
+          "f6_2"
+        ],
+        [
+          "f3_1",
+          "f6_0"
+        ],
+        [
+          "f3_2"
+        ],
+        [
+          "f3_2",
+          "f6_1"
+        ],
+        [
+          "f4_0",
+          "f7_2"
+        ],
+        [
+          "f4_1",
+          "f7_0"
+        ],
+        [
+          "f4_2"
+        ],
+        [
+          "f4_2",
+          "f7_1"
+        ],
+        [
+          "f5_2"
+        ],
+        [
+          "f6_2"
+        ],
+        [
+          "f7_2"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "wide-shared-mask-oracle",
+      "phase_mode": "exact",
+      "r": 8,
+      "schema": "outer-product-cleanup-v1",
+      "split": "test"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0"
+        ],
+        [
+          "f1_0"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "extension-bilinear-00",
+      "phase_mode": "exact",
+      "r": 3,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0"
+        ],
+        [
+          "f0_1"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_1"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f2_1"
+        ],
+        [
+          "f3_0"
+        ],
+        [
+          "f3_1"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "extension-bilinear-01",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_1"
+        ],
+        [
+          "f1_2"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f2_1"
+        ],
+        [
+          "f3_1"
+        ],
+        [
+          "f3_2"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "extension-bilinear-02",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_1"
+        ],
+        [
+          "f1_2"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f2_1"
+        ],
+        [
+          "f3_1"
+        ],
+        [
+          "f3_2"
+        ],
+        [
+          "f4_2"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "extension-bilinear-03",
+      "phase_mode": "exact",
+      "r": 5,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f2_0"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "extension-bilinear-04",
+      "phase_mode": "exact",
+      "r": 3,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f3_0"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "extension-bilinear-05",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0"
+        ],
+        [
+          "f1_1"
+        ],
+        [
+          "f1_2"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f2_2"
+        ],
+        [
+          "f3_0"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "extension-bilinear-06",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_1"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f3_0"
+        ],
+        [
+          "f3_1"
+        ],
+        [
+          "f4_0"
+        ],
+        [
+          "f4_1"
+        ],
+        [
+          "f4_2"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "extension-bilinear-07",
+      "phase_mode": "exact",
+      "r": 5,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0"
+        ],
+        [
+          "f2_1"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "extension-bilinear-08",
+      "phase_mode": "exact",
+      "r": 3,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_1"
+        ],
+        [
+          "f1_1"
+        ],
+        [
+          "f3_0"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "extension-bilinear-09",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_1"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f2_1"
+        ],
+        [
+          "f2_2"
+        ],
+        [
+          "f3_0"
+        ],
+        [
+          "f3_2"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "extension-bilinear-10",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0"
+        ],
+        [
+          "f0_1"
+        ],
+        [
+          "f2_1"
+        ],
+        [
+          "f2_2"
+        ],
+        [
+          "f3_1"
+        ],
+        [
+          "f4_0"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "extension-bilinear-11",
+      "phase_mode": "exact",
+      "r": 5,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0",
+          "f1_1"
+        ],
+        [
+          "f1_0",
+          "f1_1"
+        ],
+        [
+          "f1_1"
+        ],
+        [
+          "f1_1",
+          "f2_1"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "extension-quadratic_feature-00",
+      "phase_mode": "exact",
+      "r": 3,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0"
+        ],
+        [
+          "f0_0",
+          "f1_1"
+        ],
+        [
+          "f0_0",
+          "f3_0"
+        ],
+        [
+          "f1_0",
+          "f3_0"
+        ],
+        [
+          "f1_1"
+        ],
+        [
+          "f2_1",
+          "f3_0"
+        ],
+        [
+          "f3_0"
+        ],
+        [
+          "f3_1"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "extension-quadratic_feature-01",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_1"
+        ],
+        [
+          "f0_1",
+          "f0_2"
+        ],
+        [
+          "f0_1",
+          "f2_1"
+        ],
+        [
+          "f0_2"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_0",
+          "f1_1"
+        ],
+        [
+          "f1_0",
+          "f2_2"
+        ],
+        [
+          "f1_1",
+          "f2_1"
+        ],
+        [
+          "f1_2",
+          "f2_2"
+        ],
+        [
+          "f2_1",
+          "f3_2"
+        ],
+        [
+          "f2_2"
+        ],
+        [
+          "f3_1"
+        ],
+        [
+          "f3_2"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "extension-quadratic_feature-02",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0"
+        ],
+        [
+          "f0_0",
+          "f0_2"
+        ],
+        [
+          "f0_0",
+          "f3_0"
+        ],
+        [
+          "f0_1",
+          "f2_1"
+        ],
+        [
+          "f0_1",
+          "f4_1"
+        ],
+        [
+          "f0_2",
+          "f3_2"
+        ],
+        [
+          "f0_2",
+          "f4_1"
+        ],
+        [
+          "f2_1"
+        ],
+        [
+          "f2_1",
+          "f3_0"
+        ],
+        [
+          "f2_2"
+        ],
+        [
+          "f3_0"
+        ],
+        [
+          "f3_1",
+          "f3_2"
+        ],
+        [
+          "f3_2"
+        ],
+        [
+          "f4_1"
+        ],
+        [
+          "f4_2"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "extension-quadratic_feature-03",
+      "phase_mode": "exact",
+      "r": 5,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_1"
+        ],
+        [
+          "f1_0",
+          "f2_1"
+        ],
+        [
+          "f1_1"
+        ],
+        [
+          "f2_0"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "extension-quadratic_feature-04",
+      "phase_mode": "exact",
+      "r": 3,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0",
+          "f0_1"
+        ],
+        [
+          "f0_0",
+          "f2_0"
+        ],
+        [
+          "f0_1",
+          "f1_1"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_1",
+          "f2_0"
+        ],
+        [
+          "f1_1",
+          "f3_0"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f2_0",
+          "f2_1"
+        ],
+        [
+          "f2_1"
+        ],
+        [
+          "f3_0"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "extension-quadratic_feature-05",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0"
+        ],
+        [
+          "f0_1",
+          "f2_2"
+        ],
+        [
+          "f0_2",
+          "f1_0"
+        ],
+        [
+          "f0_2",
+          "f3_1"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_1",
+          "f3_0"
+        ],
+        [
+          "f1_2"
+        ],
+        [
+          "f1_2",
+          "f2_1"
+        ],
+        [
+          "f1_2",
+          "f3_2"
+        ],
+        [
+          "f2_0",
+          "f2_1"
+        ],
+        [
+          "f3_0"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "extension-quadratic_feature-06",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0"
+        ],
+        [
+          "f0_0",
+          "f2_2"
+        ],
+        [
+          "f0_1"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_0",
+          "f2_1"
+        ],
+        [
+          "f1_0",
+          "f4_2"
+        ],
+        [
+          "f1_1"
+        ],
+        [
+          "f1_1",
+          "f4_1"
+        ],
+        [
+          "f1_2",
+          "f2_0"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f2_2",
+          "f3_2"
+        ],
+        [
+          "f3_0"
+        ],
+        [
+          "f3_0",
+          "f4_1"
+        ],
+        [
+          "f3_2"
+        ],
+        [
+          "f4_0"
+        ],
+        [
+          "f4_0",
+          "f4_1"
+        ],
+        [
+          "f4_2"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "extension-quadratic_feature-07",
+      "phase_mode": "exact",
+      "r": 5,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0",
+          "f1_0"
+        ],
+        [
+          "f0_0",
+          "f1_1"
+        ],
+        [
+          "f0_1",
+          "f2_0"
+        ],
+        [
+          "f0_1",
+          "f2_1"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_0",
+          "f2_1"
+        ],
+        [
+          "f2_1"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "extension-quadratic_feature-08",
+      "phase_mode": "exact",
+      "r": 3,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0",
+          "f0_1"
+        ],
+        [
+          "f0_0",
+          "f3_0"
+        ],
+        [
+          "f0_1",
+          "f1_1"
+        ],
+        [
+          "f1_0",
+          "f2_1"
+        ],
+        [
+          "f1_1",
+          "f3_1"
+        ],
+        [
+          "f2_0",
+          "f3_1"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "extension-quadratic_feature-09",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0",
+          "f0_2"
+        ],
+        [
+          "f0_1",
+          "f0_2"
+        ],
+        [
+          "f0_1",
+          "f3_2"
+        ],
+        [
+          "f0_2",
+          "f2_1"
+        ],
+        [
+          "f1_0",
+          "f3_1"
+        ],
+        [
+          "f1_2"
+        ],
+        [
+          "f1_2",
+          "f3_1"
+        ],
+        [
+          "f2_2"
+        ],
+        [
+          "f3_0",
+          "f3_1"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "extension-quadratic_feature-10",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "f0_0"
+        ],
+        [
+          "f0_0",
+          "f2_1"
+        ],
+        [
+          "f0_1"
+        ],
+        [
+          "f0_2",
+          "f2_2"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_0",
+          "f2_2"
+        ],
+        [
+          "f1_1",
+          "f1_2"
+        ],
+        [
+          "f1_1",
+          "f2_0"
+        ],
+        [
+          "f1_2"
+        ],
+        [
+          "f2_0",
+          "f3_0"
+        ],
+        [
+          "f2_1"
+        ],
+        [
+          "f2_1",
+          "f2_2"
+        ],
+        [
+          "f2_1",
+          "f4_1"
+        ],
+        [
+          "f3_1"
+        ],
+        [
+          "f3_2"
+        ],
+        [
+          "f4_0"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "extension-quadratic_feature-11",
+      "phase_mode": "exact",
+      "r": 5,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "b1",
+          "f1_0"
+        ],
+        [
+          "b1",
+          "x0"
+        ],
+        [
+          "b2",
+          "f2_1"
+        ],
+        [
+          "f0_0",
+          "f2_0"
+        ],
+        [
+          "f0_1",
+          "f2_0"
+        ],
+        [
+          "f0_1",
+          "f2_1"
+        ],
+        [
+          "f0_1",
+          "x0"
+        ],
+        [
+          "f1_1",
+          "f2_0"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f2_0",
+          "f2_1"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "extension-mixed-00",
+      "phase_mode": "exact",
+      "r": 3,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "a",
+          "f2_0"
+        ],
+        [
+          "b1",
+          "b2"
+        ],
+        [
+          "b2",
+          "f2_0"
+        ],
+        [
+          "b2",
+          "x1"
+        ],
+        [
+          "b3",
+          "f1_1"
+        ],
+        [
+          "b3",
+          "x0"
+        ],
+        [
+          "f0_0",
+          "f3_1"
+        ],
+        [
+          "f0_1"
+        ],
+        [
+          "f0_1",
+          "x1"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_0",
+          "f1_1"
+        ],
+        [
+          "f1_0",
+          "f2_0"
+        ],
+        [
+          "f1_1"
+        ],
+        [
+          "f2_1"
+        ],
+        [
+          "f2_1",
+          "f3_0"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "extension-mixed-01",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "a",
+          "b2"
+        ],
+        [
+          "b0",
+          "f0_1"
+        ],
+        [
+          "b0",
+          "x0"
+        ],
+        [
+          "b1",
+          "b3"
+        ],
+        [
+          "b1",
+          "f3_2"
+        ],
+        [
+          "b2",
+          "f0_0"
+        ],
+        [
+          "f0_0"
+        ],
+        [
+          "f0_0",
+          "f3_1"
+        ],
+        [
+          "f0_1",
+          "f2_0"
+        ],
+        [
+          "f0_1",
+          "f2_2"
+        ],
+        [
+          "f0_2"
+        ],
+        [
+          "f0_2",
+          "x1"
+        ],
+        [
+          "f1_1",
+          "x2"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f2_0",
+          "x1"
+        ],
+        [
+          "f2_1"
+        ],
+        [
+          "f2_1",
+          "f3_0"
+        ],
+        [
+          "f2_1",
+          "f3_1"
+        ],
+        [
+          "f3_1",
+          "x1"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "extension-mixed-02",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "b0",
+          "b3"
+        ],
+        [
+          "b0",
+          "f2_2"
+        ],
+        [
+          "b1",
+          "f2_0"
+        ],
+        [
+          "b2",
+          "b4"
+        ],
+        [
+          "b2",
+          "f3_1"
+        ],
+        [
+          "b3",
+          "f2_2"
+        ],
+        [
+          "b4",
+          "f3_2"
+        ],
+        [
+          "f0_0"
+        ],
+        [
+          "f0_2",
+          "f3_0"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_0",
+          "f4_1"
+        ],
+        [
+          "f1_0",
+          "f4_2"
+        ],
+        [
+          "f1_0",
+          "x0"
+        ],
+        [
+          "f1_1"
+        ],
+        [
+          "f1_2"
+        ],
+        [
+          "f2_0",
+          "f3_0"
+        ],
+        [
+          "f2_2"
+        ],
+        [
+          "f2_2",
+          "f4_1"
+        ],
+        [
+          "f3_1"
+        ],
+        [
+          "f3_1",
+          "f4_0"
+        ],
+        [
+          "f4_1",
+          "x0"
+        ],
+        [
+          "f4_2"
+        ],
+        [
+          "f4_2",
+          "x2"
+        ],
+        [
+          "x1",
+          "x2"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "extension-mixed-03",
+      "phase_mode": "exact",
+      "r": 5,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "a",
+          "f2_1"
+        ],
+        [
+          "b1",
+          "b2"
+        ],
+        [
+          "b1",
+          "f0_1"
+        ],
+        [
+          "f0_0"
+        ],
+        [
+          "f0_0",
+          "f1_1"
+        ],
+        [
+          "f0_1",
+          "f1_1"
+        ],
+        [
+          "f0_1",
+          "x1"
+        ],
+        [
+          "f1_0",
+          "f2_1"
+        ],
+        [
+          "f1_1",
+          "f2_0"
+        ],
+        [
+          "f2_0",
+          "f2_1"
+        ],
+        [
+          "f2_1"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "extension-mixed-04",
+      "phase_mode": "exact",
+      "r": 3,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "a",
+          "f0_0"
+        ],
+        [
+          "b0",
+          "b1"
+        ],
+        [
+          "b0",
+          "f3_0"
+        ],
+        [
+          "b1",
+          "f1_0"
+        ],
+        [
+          "b2",
+          "b3"
+        ],
+        [
+          "b3",
+          "f3_1"
+        ],
+        [
+          "f0_0",
+          "f1_0"
+        ],
+        [
+          "f0_0",
+          "f3_1"
+        ],
+        [
+          "f0_0",
+          "x0"
+        ],
+        [
+          "f0_1",
+          "f1_0"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_1"
+        ],
+        [
+          "f1_1",
+          "f3_0"
+        ],
+        [
+          "f2_1"
+        ],
+        [
+          "f3_1",
+          "x0"
+        ],
+        [
+          "x0",
+          "x1"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "extension-mixed-05",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "b0",
+          "b3"
+        ],
+        [
+          "b0",
+          "f2_1"
+        ],
+        [
+          "b1",
+          "f2_0"
+        ],
+        [
+          "b1",
+          "f3_1"
+        ],
+        [
+          "b1",
+          "x0"
+        ],
+        [
+          "b2",
+          "b3"
+        ],
+        [
+          "f0_0",
+          "f1_2"
+        ],
+        [
+          "f0_2",
+          "f3_0"
+        ],
+        [
+          "f0_2",
+          "f3_1"
+        ],
+        [
+          "f1_0",
+          "f3_2"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f3_1",
+          "f3_2"
+        ],
+        [
+          "f3_2"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "extension-mixed-06",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "a",
+          "f4_0"
+        ],
+        [
+          "b0",
+          "b3"
+        ],
+        [
+          "b1",
+          "b3"
+        ],
+        [
+          "b1",
+          "f4_0"
+        ],
+        [
+          "b2",
+          "b4"
+        ],
+        [
+          "b2",
+          "f2_2"
+        ],
+        [
+          "b2",
+          "f4_0"
+        ],
+        [
+          "b2",
+          "f4_1"
+        ],
+        [
+          "b4",
+          "f1_2"
+        ],
+        [
+          "f0_0",
+          "f1_1"
+        ],
+        [
+          "f0_1",
+          "f1_2"
+        ],
+        [
+          "f0_1",
+          "f3_1"
+        ],
+        [
+          "f0_1",
+          "f3_2"
+        ],
+        [
+          "f0_2"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_1",
+          "f2_2"
+        ],
+        [
+          "f1_2",
+          "f2_2"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f2_2"
+        ],
+        [
+          "f2_2",
+          "f4_0"
+        ],
+        [
+          "f3_0"
+        ],
+        [
+          "f3_1"
+        ],
+        [
+          "f4_0",
+          "f4_1"
+        ],
+        [
+          "f4_1"
+        ],
+        [
+          "f4_2"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "extension-mixed-07",
+      "phase_mode": "exact",
+      "r": 5,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "a",
+          "b0"
+        ],
+        [
+          "a",
+          "b1"
+        ],
+        [
+          "a",
+          "f2_1"
+        ],
+        [
+          "b1",
+          "b2"
+        ],
+        [
+          "b1",
+          "f1_0"
+        ],
+        [
+          "b2",
+          "f0_1"
+        ],
+        [
+          "b2",
+          "f1_0"
+        ],
+        [
+          "f0_0"
+        ],
+        [
+          "f0_0",
+          "f2_1"
+        ],
+        [
+          "f1_0",
+          "f1_1"
+        ],
+        [
+          "f1_0",
+          "f2_0"
+        ],
+        [
+          "f1_0",
+          "f2_1"
+        ],
+        [
+          "f1_1",
+          "f2_0"
+        ],
+        [
+          "f1_1",
+          "x1"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "extension-mixed-08",
+      "phase_mode": "exact",
+      "r": 3,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "a",
+          "f0_1"
+        ],
+        [
+          "a",
+          "f3_1"
+        ],
+        [
+          "b0",
+          "f2_0"
+        ],
+        [
+          "b1",
+          "f3_0"
+        ],
+        [
+          "b2",
+          "x0"
+        ],
+        [
+          "b3",
+          "f2_0"
+        ],
+        [
+          "b3",
+          "x0"
+        ],
+        [
+          "b3",
+          "x1"
+        ],
+        [
+          "f0_0"
+        ],
+        [
+          "f0_0",
+          "f1_0"
+        ],
+        [
+          "f0_0",
+          "f2_1"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_0",
+          "f3_1"
+        ],
+        [
+          "f1_1",
+          "f3_1"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f2_1"
+        ],
+        [
+          "f3_0"
+        ],
+        [
+          "f3_0",
+          "x1"
+        ],
+        [
+          "f3_1"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 2,
+      "name": "extension-mixed-09",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "b0",
+          "b1"
+        ],
+        [
+          "b0",
+          "b3"
+        ],
+        [
+          "b1",
+          "f0_0"
+        ],
+        [
+          "b2",
+          "f1_1"
+        ],
+        [
+          "b2",
+          "f3_1"
+        ],
+        [
+          "b2",
+          "x2"
+        ],
+        [
+          "f0_0"
+        ],
+        [
+          "f0_0",
+          "f2_1"
+        ],
+        [
+          "f0_1",
+          "f2_0"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_0",
+          "f3_1"
+        ],
+        [
+          "f1_1"
+        ],
+        [
+          "f1_1",
+          "f1_2"
+        ],
+        [
+          "f1_1",
+          "f3_0"
+        ],
+        [
+          "f1_1",
+          "x0"
+        ],
+        [
+          "f1_1",
+          "x2"
+        ],
+        [
+          "f1_2",
+          "f2_2"
+        ],
+        [
+          "f1_2",
+          "x0"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f2_1"
+        ],
+        [
+          "f2_2"
+        ],
+        [
+          "f3_0",
+          "f3_1"
+        ],
+        [
+          "f3_0",
+          "x2"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "extension-mixed-10",
+      "phase_mode": "exact",
+      "r": 4,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    },
+    {
+      "assumptions": [
+        "full-independent-raw-input-cube",
+        "F_ij=a*b_i*x_j",
+        "helpers=a*(P*b+Q*x+c)",
+        "all-r*m-products-coexist",
+        "quadratic-diagonal-sign-consumer",
+        "one-main-garbage-only-instrument-then-Clifford-feedback",
+        "helpers-preserved-through-main-feedback",
+        "one-final-direct-X-helper-measurement-and-Clifford-feedback",
+        "no-postselection",
+        "no-extra-unaccounted-workspace"
+      ],
+      "consumer": [
+        [
+          "a",
+          "f0_1"
+        ],
+        [
+          "b0",
+          "b2"
+        ],
+        [
+          "b0",
+          "x2"
+        ],
+        [
+          "b1",
+          "f1_1"
+        ],
+        [
+          "b3",
+          "x1"
+        ],
+        [
+          "b4",
+          "f4_1"
+        ],
+        [
+          "f0_0",
+          "f0_2"
+        ],
+        [
+          "f0_0",
+          "x0"
+        ],
+        [
+          "f0_1"
+        ],
+        [
+          "f0_2"
+        ],
+        [
+          "f0_2",
+          "f2_2"
+        ],
+        [
+          "f0_2",
+          "x0"
+        ],
+        [
+          "f1_0"
+        ],
+        [
+          "f1_1"
+        ],
+        [
+          "f1_1",
+          "f3_1"
+        ],
+        [
+          "f1_2",
+          "f2_1"
+        ],
+        [
+          "f1_2",
+          "f2_2"
+        ],
+        [
+          "f2_0"
+        ],
+        [
+          "f2_1",
+          "f2_2"
+        ],
+        [
+          "f2_1",
+          "f3_1"
+        ],
+        [
+          "f2_2",
+          "f3_2"
+        ],
+        [
+          "f2_2",
+          "x0"
+        ],
+        [
+          "f3_2"
+        ],
+        [
+          "f4_2"
+        ]
+      ],
+      "hardware": {
+        "feedback_ticks": 2,
+        "gate_ticks": 1,
+        "measurement_ticks": 5
+      },
+      "input_domain": "full_cube",
+      "limits": {
+        "max_aux": null,
+        "max_cnot": null,
+        "max_depth": null,
+        "max_gates": null,
+        "max_rounds": null,
+        "max_t": null,
+        "max_t_depth": null,
+        "max_ticks": null
+      },
+      "m": 3,
+      "name": "extension-mixed-11",
+      "phase_mode": "exact",
+      "r": 5,
+      "schema": "outer-product-cleanup-v1",
+      "split": "comparison"
+    }
+  ],
+  "repetitions": 3,
+  "schema": "external-comparison-v1",
+  "scope": "development comparison; strengthened controls after preserved pilots; 5 reused and 36 fixed labelled targets; not a held-out RL claim",
+  "timing": "warm target-independent primitive cache; all candidates and external subprocess cost included; compiler builds excluded"
+}

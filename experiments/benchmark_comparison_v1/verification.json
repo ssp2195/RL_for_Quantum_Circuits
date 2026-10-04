@@ -1,0 +1,7 @@
+{
+  "distinct_protocols": 82,
+  "input_outcome_generator_pairs": 312704,
+  "records": 246,
+  "scope": "exact symbolic all-branch replay plus independent truth-table phase checks; no generator or policy called",
+  "valid": true
+}
