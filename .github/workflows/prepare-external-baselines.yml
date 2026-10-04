@@ -28,7 +28,7 @@ jobs:
           python -m pip download --dest /tmp/qcs-external/wheels 'pyzx==0.10.6'
           cmake -S /tmp/qcs-external/exact-t-map -B /tmp/qcs-external/exact-t-map/build -DCMAKE_BUILD_TYPE=Release
           cmake --build /tmp/qcs-external/exact-t-map/build -j2
-          /tmp/qcs-external/exact-t-map/build/exact-t-synth --help > /tmp/qcs-external/exact-t-help.txt
+          /tmp/qcs-external/exact-t-map/build/exact-t-synth --help > /tmp/qcs-external/exact-t-help.txt 2>&1 || test "$?" = 1
           git -C /tmp/qcs-external/exact-t-map rev-parse HEAD > /tmp/qcs-external/EXACT_T_COMMIT.txt
           git -C /tmp/qcs-external/mockturtle rev-parse HEAD > /tmp/qcs-external/MOCKTURTLE_COMMIT.txt
           git -C /tmp/qcs-external/mockturtle submodule status --recursive > /tmp/qcs-external/SUBMODULES.txt
