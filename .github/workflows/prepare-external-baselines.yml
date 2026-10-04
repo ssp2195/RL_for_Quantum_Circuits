@@ -1,0 +1,44 @@
+name: Prepare pinned external synthesis baselines
+on:
+  push:
+    branches: [consumer-aware-cleanup-20260928]
+    paths: [.github/workflows/prepare-external-baselines.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  prepare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Fetch exact upstream sources and Python wheels
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/qcs-external/wheels
+          git clone https://github.com/Nozidoali/exact-t-map.git /tmp/qcs-external/exact-t-map
+          git -C /tmp/qcs-external/exact-t-map checkout --detach bffe54c38b6bfd689a04e0d7d5afdbd949bdac3a
+          git clone --recursive https://github.com/lsils/mockturtle.git /tmp/qcs-external/mockturtle
+          git -C /tmp/qcs-external/mockturtle checkout --detach 47d1e70fdf775e1a295016c3c17a1ad206db24c0
+          git -C /tmp/qcs-external/mockturtle submodule update --init --recursive
+          python -m pip download --dest /tmp/qcs-external/wheels 'pyzx==0.10.6'
+          cmake -S /tmp/qcs-external/exact-t-map -B /tmp/qcs-external/exact-t-map/build -DCMAKE_BUILD_TYPE=Release
+          cmake --build /tmp/qcs-external/exact-t-map/build -j2
+          /tmp/qcs-external/exact-t-map/build/exact-t-synth --help > /tmp/qcs-external/exact-t-help.txt
+          git -C /tmp/qcs-external/exact-t-map rev-parse HEAD > /tmp/qcs-external/EXACT_T_COMMIT.txt
+          git -C /tmp/qcs-external/mockturtle rev-parse HEAD > /tmp/qcs-external/MOCKTURTLE_COMMIT.txt
+          git -C /tmp/qcs-external/mockturtle submodule status --recursive > /tmp/qcs-external/SUBMODULES.txt
+          cd /tmp/qcs-external
+          find . -name .git -type d -prune -exec rm -rf {} +
+          find wheels -type f -exec sha256sum {} + > WHEEL_SHA256.txt
+          tar -czf /tmp/qcs-external-baselines.tar.gz .
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pinned-external-baselines
+          path: /tmp/qcs-external-baselines.tar.gz
+          retention-days: 30
