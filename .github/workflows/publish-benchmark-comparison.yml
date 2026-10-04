@@ -1,0 +1,163 @@
+name: Validate external comparison and prepare verified commit
+on:
+  push:
+    branches: [consumer-aware-cleanup-20260928]
+    paths: [.github/workflows/publish-benchmark-comparison.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+  actions: read
+concurrency:
+  group: consumer-external-comparison
+  cancel-in-progress: false
+jobs:
+  compare-and-verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      PYTHONHASHSEED: '0'
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Recover the locally verified comparison source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/benchmark-publication
+          for sha in f7579fc337f2aac9e04187fa300f625e8685c11f 31f2302d3c6205a15e65331fda0f79c5fe1995a3; do
+            gh api "repos/$GITHUB_REPOSITORY/git/blobs/$sha" --jq .content | base64 --decode >> /tmp/benchmark-publication/source.patch.xz
+          done
+          echo 'b9b1881c33b08e9ef36024b0d0710cd9386d7ef552dfddb7f6a0997c375192f6  /tmp/benchmark-publication/source.patch.xz' | sha256sum -c -
+          xz -dc /tmp/benchmark-publication/source.patch.xz > /tmp/benchmark-publication/source.patch
+          echo 'acae976749c475d8aac65a95a643ab824557da9e7c4c5f89a944e74691e82cca  /tmp/benchmark-publication/source.patch' | sha256sum -c -
+          git apply --check /tmp/benchmark-publication/source.patch
+          git apply /tmp/benchmark-publication/source.patch
+          git add -A
+          git diff --cached --check
+          test -z "$(git diff --cached --name-only --diff-filter=MDR)"
+      - name: Build the pinned authors' algorithms without changing their source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone --recursive https://github.com/lsils/mockturtle.git /tmp/mockturtle
+          git -C /tmp/mockturtle checkout --detach 47d1e70fdf775e1a295016c3c17a1ad206db24c0
+          git -C /tmp/mockturtle submodule update --init --recursive
+          bash tools/benchmark_baselines/build_mockturtle.sh /tmp/mockturtle /tmp/mockturtle-driver
+          git clone https://github.com/Nozidoali/exact-t-map.git /tmp/exact-t-map
+          git -C /tmp/exact-t-map checkout --detach bffe54c38b6bfd689a04e0d7d5afdbd949bdac3a
+          cmake -S /tmp/exact-t-map -B /tmp/exact-t-map/build -DCMAKE_BUILD_TYPE=Release
+          cmake --build /tmp/exact-t-map/build -j2
+          test -z "$(git -C /tmp/mockturtle status --porcelain --untracked-files=no)"
+          test -z "$(git -C /tmp/exact-t-map status --porcelain --untracked-files=no)"
+          git -C /tmp/mockturtle submodule status --recursive > /tmp/benchmark-publication/upstream-submodules.txt
+      - name: All regression tests including completed-training generation fixtures
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install -r publication_native/requirements-reproduction.txt
+          python -m pip install -e '.[dev]'
+          python -m compileall -q hybrid_qcs tests tools/benchmark_baselines/report.py
+          python -m pytest -q | tee /tmp/benchmark-publication/pytest.log
+          grep -Eq '1341 passed' /tmp/benchmark-publication/pytest.log
+          python -m pip freeze > /tmp/benchmark-publication/python-environment.txt
+      - name: Fresh full matched experiment and author-mapper diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m hybrid_qcs.cleanup.benchmark_comparison --mockturtle /tmp/mockturtle-driver --repeats 3 --output-dir experiments/benchmark_comparison_v1 > /tmp/benchmark-publication/comparison.log
+          python -m hybrid_qcs.cleanup.exact_t_comparison --binary /tmp/exact-t-map/build/exact-t-synth --output-dir experiments/exact_t_comparison_v1 | tee /tmp/benchmark-publication/exact-t.log
+          python tools/benchmark_baselines/report.py
+      - name: Recheck complete circuits independently and retain all outcomes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m hybrid_qcs.cleanup.benchmark_comparison --verify --output-dir experiments/benchmark_comparison_v1 | tee /tmp/benchmark-publication/independent-replay.log
+          python -m hybrid_qcs.cleanup.exact_t_comparison --verify --output-dir experiments/exact_t_comparison_v1 | tee -a /tmp/benchmark-publication/independent-replay.log
+          python -m hybrid_qcs.cleanup.consumer_runner --stage verify --output-dir experiments/consumer_cleanup_v1 > /tmp/benchmark-publication/historical-evidence-replay.log
+          python - <<'PY'
+          import hashlib,json,os,platform
+          from pathlib import Path
+          a=json.loads(Path('experiments/benchmark_comparison_v1/summary.json').read_text())
+          b=json.loads(Path('experiments/exact_t_comparison_v1/results.json').read_text())
+          assert a['records']==246 and a['valid']==246
+          assert len(b)==15 and all(r['valid'] for r in b)
+          info={'run_id':os.environ['GITHUB_RUN_ID'],'workflow_commit':os.environ['GITHUB_SHA'],'python':platform.python_version(),'platform':platform.platform(),'source_patch_sha256':'acae976749c475d8aac65a95a643ab824557da9e7c4c5f89a944e74691e82cca','mockturtle':'47d1e70fdf775e1a295016c3c17a1ad206db24c0','exact_t':'bffe54c38b6bfd689a04e0d7d5afdbd949bdac3a','driver_sha256':hashlib.sha256(Path('/tmp/mockturtle-driver').read_bytes()).hexdigest(),'tests_passed':1341,'comparison_records':246,'exact_t_jobs':15,'new_policy_training':False,'scope':'fresh replication; all generated outcomes retained; no historical data replaced'}
+          Path('docs/benchmark_comparison/REMOTE_VALIDATION.json').write_text(json.dumps(info,indent=2)+'\n')
+          PY
+          cp /tmp/benchmark-publication/pytest.log docs/benchmark_comparison/REMOTE_TESTS.log
+          cp /tmp/benchmark-publication/independent-replay.log docs/benchmark_comparison/INDEPENDENT_REPLAY.log
+          git add -A
+          git diff --cached --check
+          test -z "$(git diff --cached --name-only --diff-filter=MDR)"
+      - name: Prepare verified Git objects without moving the branch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64,datetime,json,os,subprocess
+          from pathlib import Path
+          repo=os.environ['GITHUB_REPOSITORY'];parent=os.environ['GITHUB_SHA'];out=Path('/tmp/benchmark-publication')
+          def git(*args):return subprocess.check_output(['git',*args],text=True).strip()
+          def api(path,body):
+              p=subprocess.run(['gh','api','--method','POST',f'repos/{repo}/{path}','--input','-'],input=json.dumps(body),text=True,capture_output=True)
+              if p.returncode:raise RuntimeError(p.stderr)
+              return json.loads(p.stdout)
+          tree=git('rev-parse',parent+'^{tree}');batch=[];size=0
+          for line in git('diff','--cached','--name-only','--diff-filter=A').splitlines():
+              raw=Path(line).read_bytes();mode=git('ls-files','-s',line).split()[0]
+              entry={'path':line,'mode':mode,'type':'blob'}
+              if len(raw)>80000:
+                  entry['sha']=api('git/blobs',{'encoding':'base64','content':base64.b64encode(raw).decode()})['sha']
+              else:entry['content']=raw.decode('utf-8')
+              length=len(json.dumps(entry))
+              if batch and size+length>220000:
+                  tree=api('git/trees',{'base_tree':tree,'tree':batch})['sha'];batch=[];size=0
+              batch.append(entry);size+=length
+          if batch:tree=api('git/trees',{'base_tree':tree,'tree':batch})['sha']
+          assert tree==git('write-tree'), 'remote tree differs from verified source/evidence'
+          now=datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0)
+          identity={'name':'github-actions[bot]','email':'41898282+github-actions[bot]@users.noreply.github.com','date':now.isoformat().replace('+00:00','Z')}
+          msg='Compare consumer-aware cleanup with pinned external synthesis baselines\n\nPreserve the quantum synthesizer and historical evidence. Add exact phase-oracle adapters, three-source measured XAG controls, the explicitly qualified Exact-T coherent-wrapper comparison, 41 target functions, 246 matched runs, 15 author-mapper jobs and independent exact replay. All 1341 tests passed. Report workspace gains and unfavorable T-count and latency outcomes without asserting learning or state-of-the-art superiority.'
+          commit=api('git/commits',{'message':msg,'tree':tree,'parents':[parent],'author':identity,'committer':identity})
+          sha=commit['sha']
+          header=f'tree {tree}\nparent {parent}\nauthor {identity["name"]} <{identity["email"]}> {int(now.timestamp())} +0000\ncommitter {identity["name"]} <{identity["email"]}> {int(now.timestamp())} +0000\n\n'
+          matched=False
+          for tail in ('\n',''):
+              oid=subprocess.check_output(['git','hash-object','-t','commit','-w','--stdin'],input=(header+msg+tail).encode()).decode().strip()
+              if oid==sha:matched=True;break
+          assert matched,'cannot reconstruct exact Git commit bytes'
+          receipt={'commit':sha,'tree':tree,'parent':parent,'branch':'consumer-aware-cleanup-20260928','branch_updated':False,'tests':1341,'run_id':os.environ['GITHUB_RUN_ID'],'scope':'verified commit prepared; final fast-forward uses OpenAI GitHub integration'}
+          (out/'PREPARED_COMMIT.json').write_text(json.dumps(receipt,indent=2)+'\n')
+          subprocess.run(['git','update-ref','refs/heads/benchmark-verified-artifact',sha],check=True)
+          subprocess.run(['git','bundle','create',str(out/'benchmark-verified.bundle'),'refs/heads/benchmark-verified-artifact'],check=True)
+          subprocess.run(['git','archive','--format=zip','--output='+str(out/'benchmark-verified-source.zip'),sha],check=True)
+          print(json.dumps(receipt,indent=2))
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as f:
+              f.write('Verified commit ready for integration fast-forward: '+sha+'\n\n')
+              f.write(Path('docs/benchmark_comparison/REPORT.md').read_text())
+          PY
+      - name: Preserve successful or interrupted records
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p /tmp/benchmark-publication
+          if [ -d experiments/benchmark_comparison_v1 ]; then cp -a experiments/benchmark_comparison_v1 /tmp/benchmark-publication/primary-evidence; fi
+          if [ -d experiments/exact_t_comparison_v1 ]; then cp -a experiments/exact_t_comparison_v1 /tmp/benchmark-publication/exact-t-evidence; fi
+          if [ -d docs/benchmark_comparison ]; then cp -a docs/benchmark_comparison /tmp/benchmark-publication/report; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: consumer-external-comparison-validated
+          path: /tmp/benchmark-publication
+          retention-days: 30
