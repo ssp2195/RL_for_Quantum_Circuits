@@ -1,0 +1,133 @@
+name: Validate and publish paper-derived CNOT comparison
+on:
+  push:
+    branches: [consumer-aware-cleanup-20260928]
+    paths: [.github/workflows/publish-sodhani-comparison.yml]
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: publish-sodhani-comparison
+  cancel-in-progress: false
+jobs:
+  verify-study-publish:
+    if: github.repository == 'ssp2195/RL_for_Quantum_Circuits' && github.ref == 'refs/heads/consumer-aware-cleanup-20260928'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      PYTHONHASHSEED: '0'
+      MPLBACKEND: Agg
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Recover exactly the locally tested comparison source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/sodhani-publication
+          for sha in 5fc5794c0b5787bdaccf653858ae207126353954 5413f29fcd6ae45aa9371c2691a7a69dd5ac6da4 ae812c2d001ab598e4a89b793c6bedd38a03a3f8 2d656933e16d40351cb933fb8bca06160ce84e2d 4d6be21b65c61c7e7659eea01954ac4142a0419b; do
+            gh api "repos/${GITHUB_REPOSITORY}/git/blobs/${sha}" --jq .content | base64 --decode >> /tmp/sodhani-publication/source.patch.xz
+          done
+          echo '9f6d1cfa1010dbed037336369fdf3aef348c84e235555780b33fe7a042947d04  /tmp/sodhani-publication/source.patch.xz' | sha256sum -c -
+          xz -dc /tmp/sodhani-publication/source.patch.xz > /tmp/sodhani-publication/source.patch
+          echo 'eb1aee03a3a0b8902ff3627759338c65e4acdf81435a42c10777441813a341ec  /tmp/sodhani-publication/source.patch' | sha256sum -c -
+          git apply --check /tmp/sodhani-publication/source.patch
+          git apply /tmp/sodhani-publication/source.patch
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          receipt=json.loads(Path('docs/sodhani_comparison/VALIDATION.json').read_text())
+          for name,expected in receipt['source_sha256'].items():
+              assert hashlib.sha256(Path(name).read_bytes()).hexdigest()==expected,name
+          PY
+          git diff --diff-filter=MDR --exit-code 557ebec11701626eccef288e103d7613d422e0ab --
+      - name: Full historical and new exact circuit tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install -r publication_native/requirements-reproduction.txt
+          python -m pip install -e '.[dev]'
+          python -m compileall -q hybrid_qcs tests tools/sodhani_comparison
+          python -m pytest -q | tee /tmp/sodhani-publication/REMOTE_TESTS.log
+          grep -Eq '1444 passed' /tmp/sodhani-publication/REMOTE_TESTS.log
+          python -m pip freeze > /tmp/sodhani-publication/runtime.txt
+      - name: Fresh 738-record measured-oracle comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -u -m hybrid_qcs.cleanup.cnot_comparison --output-dir experiments/sodhani_cnot_v1 --repeats 3 | tee /tmp/sodhani-publication/PRIMARY.log
+          test -f experiments/sodhani_cnot_v1/COMPLETE
+      - name: Fresh 45-record qualified Exact-T wrapper comparison
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -u -m hybrid_qcs.cleanup.cnot_exact_wrapper --output-dir experiments/sodhani_exact_wrapper_v1 | tee /tmp/sodhani-publication/SUPPLEMENT.log
+          test -f experiments/sodhani_exact_wrapper_v1/COMPLETE
+      - name: Independent complete-circuit replay and numerical reporting
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m hybrid_qcs.cleanup.cnot_comparison --verify --output-dir experiments/sodhani_cnot_v1 | tee /tmp/sodhani-publication/PRIMARY_REPLAY.log
+          python -m hybrid_qcs.cleanup.cnot_exact_wrapper --verify --output-dir experiments/sodhani_exact_wrapper_v1 | tee /tmp/sodhani-publication/WRAPPER_REPLAY.log
+          python tools/sodhani_comparison/report.py
+          python - <<'PY'
+          import json,os,platform,sys
+          from pathlib import Path
+          root=Path('docs/sodhani_comparison')
+          expected=json.loads((root/'EXPECTED_PRIMARY_RESOURCES.json').read_text())
+          keys=('t_count','peak_aux','cnot','native_gates','worst_case_ticks','measurement_rounds')
+          actual={}
+          for line in Path('experiments/sodhani_cnot_v1/runs.jsonl').read_text().splitlines():
+              r=json.loads(line); key='|'.join((r['name'],r['source_method'],r['method']))
+              values=[r['resources'][x] for x in keys]
+              assert key not in actual or actual[key]==values,(key,'different repeated resources')
+              actual[key]=values
+          assert actual==expected,'remote primary quantum resources differ from local replication'
+          meta={'run_id':os.environ['GITHUB_RUN_ID'],'workflow_sha':os.environ['GITHUB_SHA'],'base':'557ebec11701626eccef288e103d7613d422e0ab','python':sys.version,'platform':platform.platform(),'tests':1444,'primary_records':738,'wrapper_records':45,'new_policy_training':False,'source':'paper-derived algorithms; original synthesizer and historical evidence unchanged','primary_resources_match_local':True,'wrapper_searches':'time-limited attempts retained; all returned circuits exactly checked'}
+          (root/'REMOTE_VALIDATION.json').write_text(json.dumps(meta,indent=2)+'\n')
+          PY
+          cp /tmp/sodhani-publication/REMOTE_TESTS.log docs/sodhani_comparison/
+          cp /tmp/sodhani-publication/PRIMARY_REPLAY.log docs/sodhani_comparison/
+          cp /tmp/sodhani-publication/WRAPPER_REPLAY.log docs/sodhani_comparison/
+      - name: Publish validated source and new evidence to the same branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          branch=consumer-aware-cleanup-20260928
+          test "$(git ls-remote --heads origin refs/heads/$branch | awk '{print $1}')" = "$GITHUB_SHA"
+          git add .github/workflows/sodhani-comparison-ci.yml hybrid_qcs/cleanup/linear_reversible.py hybrid_qcs/cleanup/cnot_comparison.py hybrid_qcs/cleanup/cnot_exact_wrapper.py tests/test_cnot_paper_comparison.py tools/sodhani_comparison docs/sodhani_comparison experiments/sodhani_cnot_v1 experiments/sodhani_exact_wrapper_v1
+          git diff --cached --check
+          git diff --cached --diff-filter=MDR --exit-code 557ebec11701626eccef288e103d7613d422e0ab --
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Compare certified ancilla-aware oracles with paper-derived CNOT refinements' -m 'Preserve the original synthesizer and evidence. Add exact block replacement, Hamming beam and two-sided descent with commutation scheduling, 738 matched measured-oracle records, 45 qualified coherent-wrapper refinements, 1444 passing tests, independent complete-circuit replay, and separate theory-led and synthesis-method publication scopes. No new RL advantage or standalone LDPC-to-oracle capability is claimed.'
+          commit=$(git rev-parse HEAD)
+          git push --porcelain origin "HEAD:refs/heads/$branch"
+          test "$(git ls-remote --heads origin refs/heads/$branch | awk '{print $1}')" = "$commit"
+          printf '%s\n' "$commit" > /tmp/sodhani-publication/PUBLISHED_COMMIT.txt
+          git rev-parse HEAD^{tree} > /tmp/sodhani-publication/PUBLISHED_TREE.txt
+          git update-ref "refs/heads/$branch" "$commit"
+          git bundle create /tmp/sodhani-publication/sodhani-oracle-comparison.bundle "refs/heads/$branch"
+          git archive --format=zip -o /tmp/sodhani-publication/sodhani-oracle-comparison-source.zip "$commit"
+          echo "Published $branch at $commit" >> "$GITHUB_STEP_SUMMARY"
+          cat docs/sodhani_comparison/REPORT.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Preserve every successful or interrupted run
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p /tmp/sodhani-publication
+          if [ -d experiments/sodhani_cnot_v1 ]; then cp -a experiments/sodhani_cnot_v1 /tmp/sodhani-publication/primary; fi
+          if [ -d experiments/sodhani_exact_wrapper_v1 ]; then cp -a experiments/sodhani_exact_wrapper_v1 /tmp/sodhani-publication/supplementary; fi
+          if [ -d docs/sodhani_comparison ]; then cp -a docs/sodhani_comparison /tmp/sodhani-publication/report; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sodhani-oracle-comparison-validated
+          path: /tmp/sodhani-publication
+          retention-days: 30
