@@ -1,0 +1,156 @@
+name: Build and verify the fifteen-slide presentation
+on:
+  push:
+    branches: [consumer-aware-cleanup-20260928]
+    paths:
+      - presentations/concise15/main.tex
+      - presentations/concise15/NOTES.md
+      - .github/workflows/build-concise15-slides.yml
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: concise15-slides
+  cancel-in-progress: false
+jobs:
+  build:
+    if: github.repository == 'ssp2195/RL_for_Quantum_Circuits' && github.ref == 'refs/heads/consumer-aware-cleanup-20260928'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install LaTeX and PDF inspection tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends texlive-latex-extra texlive-fonts-recommended texlive-pictures lmodern poppler-utils
+          python -m pip install pymupdf
+      - name: Prepare the standalone project and recorded data
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import csv, json, re, shutil
+          src=Path('presentations/concise15')
+          p=src/'main.tex'
+          s=p.read_text()
+          # Correct three literal TeX line-break escapes in the initial source.
+          for old,new in [(r'a\frontier',r'a\\frontier'),(r'its\permitted',r'its\\permitted'),(r'transition,\resource',r'transition,\\resource')]:
+              s=s.replace(old,new)
+          p.write_text(s)
+          assert len(re.findall(r'\\begin\{frame\}',s))==15
+          assert len(re.findall(r'\\end\{frame\}',s))==15
+          assert r'\pause' not in s and r'\appendix' not in s
+          out=Path('dist/Consumer_Aware_15_Slides')
+          out.mkdir(parents=True,exist_ok=True)
+          for name in ['main.tex','NOTES.md']: shutil.copy2(src/name,out/name)
+          data=out/'data'; data.mkdir(exist_ok=True)
+          rows=[
+           ['E1','3x1','current',8,2,21,51,58,2],['E1','3x1','control',8,2,21,51,36,1],
+           ['E2','4x2','current',8,1,11,45,59,2],['E2','4x2','control',8,2,13,43,32,1],
+           ['E3','5x2','current',12,2,22,68,79,3],['E3','5x2','control',16,4,29,87,68,2],
+           ['E4','6x3','current',36,4,83,219,213,7],['E4','6x3','control',52,13,151,335,187,3],
+           ['E5','8x3','current',56,5,120,324,248,8],['E5','8x3','control',64,16,169,395,186,3]]
+          with (data/'development.csv').open('w',newline='') as f:
+              w=csv.writer(f);w.writerow(['target','bank_shape','method','t_count','peak_aux','cnot','native_gates','latency_ticks','measurement_rounds']);w.writerows(rows)
+          counts=[['clean_ancillas',30,6,0],['t_count',5,13,18],['cnot',22,5,9],['native_gates',14,2,20],['latency',2,2,32],['measurement_rounds',0,4,32]]
+          assert all(sum(row[1:])==36 for row in counts)
+          with (data/'additional_counts.csv').open('w',newline='') as f:
+              w=csv.writer(f);w.writerow(['resource','current_better','equal','control_better']);w.writerows(counts)
+          (out/'README.md').write_text('''# Fifteen slides: quantum phase oracles with fewer clean ancillas
+
+          Open `main.tex` in Overleaf and select **pdfLaTeX**, or run `sh build.sh` locally. The compiled presentation is `main.pdf`.
+
+          The project is self-contained. It uses standard Beamer, Latin Modern, TikZ and PGFPlots packages. No private fonts, external figures, network access or shell-escape are needed to compile it. All graphics are editable LaTeX drawings. The data in the slides are also supplied as CSVs under `data/`; the compact tables and plot coordinates are embedded in main.tex so that it can also be compiled alone.
+
+          There are exactly 15 slides: 1--7 describe the problem and the quantum/RL representation; 8--11 explain measured cleanup and the mathematics; 12--15 contain the comparison and conclusion. Full assumptions, source references, and longer derivations are in `NOTES.md`, not in extra slides.
+
+          Results are reused from the supplied, verified presentation and archived studies. No new quantum synthesis campaign or training is claimed. The current comparison is deterministic consumer-aware synthesis versus measured compilation of externally optimized XOR--AND networks. The retained SARSA/LinUCB search is described accurately as optional. Source mathematics and implementation were checked against scientific snapshot 2671f6984b87f1d89613ba81d8b0e99798cd3f58.
+
+          `validation/` contains the compile log, exact page-count and text-boundary checks, and hashes. PDF rendering and automatic inspection were executed in GitHub Actions. Validation receipts distinguish these checks from scientific experiment reproduction.
+          ''')
+          (out/'build.sh').write_text('#!/bin/sh\nset -eu\ncd "$(dirname "$0")"\npdflatex -interaction=nonstopmode -halt-on-error main.tex\npdflatex -interaction=nonstopmode -halt-on-error main.tex\n')
+          PY
+      - name: Compile the complete presentation twice
+        working-directory: dist/Consumer_Aware_15_Slides
+        run: |
+          set -euo pipefail
+          bash build.sh > compile-console.log 2>&1
+          test -s main.pdf
+      - name: Check all fifteen PDF pages and render previews
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import fitz, re, json, hashlib, shutil, os
+          p=Path('dist/Consumer_Aware_15_Slides')
+          log=(p/'main.log').read_text(errors='replace')
+          bad=re.findall(r'Overfull \\[hv]box[^\n]*',log)
+          if bad: raise AssertionError('LaTeX overflow: '+repr(bad))
+          doc=fitz.open(p/'main.pdf')
+          assert len(doc)==15, len(doc)
+          outside=[];pages=[]
+          previews=Path('dist/previews');previews.mkdir(exist_ok=True)
+          for i,page in enumerate(doc):
+              text=page.get_text()
+              assert f'{i+1}.' in text[:180], (i+1,text[:180])
+              for block in page.get_text('dict')['blocks']:
+                  if 'lines' not in block: continue
+                  for line in block['lines']:
+                      for span in line['spans']:
+                          if not span['text'].strip():continue
+                          x0,y0,x1,y1=span['bbox']
+                          if x0<1 or y0<1 or x1>page.rect.width-1 or y1>page.rect.height-1:
+                              outside.append([i+1,span['text'],span['bbox']])
+              page.get_pixmap(matrix=fitz.Matrix(1.5,1.5)).save(previews/f'page-{i+1:02d}.png')
+              pages.append({'page':i+1,'text_characters':len(text),'width_points':page.rect.width,'height_points':page.rect.height})
+          assert not outside,outside
+          validation=p/'validation';validation.mkdir(exist_ok=True)
+          shutil.copy2(p/'main.log',validation/'main.log')
+          shutil.copy2(p/'compile-console.log',validation/'compile-console.log')
+          report={'slides':len(doc),'required_sections':{'problem_and_learning':[1,7],'measurement_and_theorems':[8,11],'results_and_conclusion':[12,15]},'overfull_boxes':bad,'text_outside_page':outside,'pages':pages,'new_quantum_experiments':False,'new_policy_training':False,'scientific_base':'2671f6984b87f1d89613ba81d8b0e99798cd3f58','workflow_run':os.environ['GITHUB_RUN_ID'],'visual_validation':'rendered all pages; automatic text bounds and LaTeX overflow checks','sha256':{str(x.relative_to(p)):hashlib.sha256(x.read_bytes()).hexdigest() for x in sorted(p.rglob('*')) if x.is_file() and x.suffix in ('.tex','.pdf','.csv','.md','.sh')}}
+          (validation/'BUILD_REPORT.json').write_text(json.dumps(report,indent=2)+'\n')
+          for ext in ['aux','log','nav','out','snm','toc','vrb']:
+              (p/f'main.{ext}').unlink(missing_ok=True)
+          (p/'compile-console.log').unlink(missing_ok=True)
+          for name in ['main.tex','main.pdf','README.md','build.sh']:
+              shutil.copy2(p/name,Path('presentations/concise15')/name)
+          for name in ['data','validation']:
+              shutil.copytree(p/name,Path('presentations/concise15')/name,dirs_exist_ok=True)
+          shutil.make_archive('dist/Consumer_Aware_15_Slides_LaTeX','zip',p)
+          shutil.copy2('dist/Consumer_Aware_15_Slides_LaTeX.zip','presentations/concise15/Consumer_Aware_15_Slides_LaTeX.zip')
+          print(json.dumps(report,indent=2))
+          PY
+      - name: Publish only the validated presentation files
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin consumer-aware-cleanup-20260928
+          test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
+          git add presentations/concise15
+          git diff --cached --check
+          git diff --cached --name-only | grep -v '^presentations/concise15/' > /tmp/unexpected-paths || true
+          test ! -s /tmp/unexpected-paths
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Validate and package the 15-slide oracle and reinforcement-learning presentation'
+          git push origin HEAD:consumer-aware-cleanup-20260928
+          git rev-parse HEAD > dist/PUBLISHED_COMMIT.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Consumer_Aware_15_Slides_LaTeX
+          path: dist/Consumer_Aware_15_Slides/
+          retention-days: 30
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: concise15-rendered-previews
+          path: |
+            dist/previews/
+            dist/PUBLISHED_COMMIT.txt
+          retention-days: 30
