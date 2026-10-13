@@ -20,14 +20,14 @@
 \setbeamercolor{block title}{fg=accent,bg=pale}
 \setbeamercolor{block body}{fg=ink,bg=pale}
 \setbeamercolor{footline}{fg=muted,bg=white}
-\setbeamerfont{frametitle}{size=\Large,series=\bfseries}
+\setbeamerfont{frametitle}{size=\fontsize{15}{17},series=\bfseries}
 \setbeamersize{text margin left=7mm,text margin right=7mm}
 \setbeamertemplate{navigation symbols}{}
 \setbeamertemplate{frametitle}{\vspace{1mm}\insertframetitle\par\vspace{1mm}{\color{accent}\hrule}\vspace{1mm}}
 \newcommand{\partnamebar}{Problem and learned search}
 \setbeamertemplate{footline}{\hspace{7mm}\scriptsize\partnamebar\hfill\insertframenumber/15\hspace{7mm}\vspace{2mm}}
-\setlength{\abovedisplayskip}{5pt}
-\setlength{\belowdisplayskip}{5pt}
+\setlength{\abovedisplayskip}{4pt}
+\setlength{\belowdisplayskip}{4pt}
 \newcommand{\ket}[1]{\lvert #1\rangle}
 \newcommand{\bra}[1]{\langle #1\rvert}
 \newcommand{\F}{\mathbb F_2}
@@ -35,7 +35,7 @@
 \newcommand{\CX}{\operatorname{CNOT}}
 \newcommand{\CZ}{\operatorname{CZ}}
 \newcommand{\src}[1]{\par\vfill{\fontsize{6.6}{7.8}\selectfont\color{muted}#1\par}}
-\newcommand{\takeaway}[1]{\par\smallskip\begin{beamercolorbox}[sep=1.6mm,wd=\linewidth]{block body}\small #1\end{beamercolorbox}}
+\newcommand{\takeaway}[1]{\par\smallskip\begin{beamercolorbox}[sep=1.4mm,wd=\linewidth]{block body}\small #1\end{beamercolorbox}}
 \newcommand{\labeltext}[1]{{\color{accent}\bfseries #1}}
 \title{Quantum Phase Oracles with Fewer Clean Ancillas}
 \author{}
@@ -44,70 +44,70 @@
 
 % ======================= PAGES 1--7 =======================
 % 1
-\begin{frame}[t]{1. The problem: implement a Boolean phase with few ancillas}
+\begin{frame}[t]{1. The problem: a phase oracle with few ancillas}
 \small
 A binary neural network (BNN) maps a finite input $z$ to an output. Let
 \[
  p(z)=1\quad\Longleftrightarrow\quad\text{the output violates a specified property}.
 \]
-A phase oracle marks such inputs without measuring them:
+A phase oracle marks these inputs without measuring them:
 \[
  O_p\ket z=(-1)^{p(z)}\ket z,
  \qquad \sum_z\alpha_z\ket z\ \longmapsto\ \sum_z\alpha_z(-1)^{p(z)}\ket z.
 \]
-With $A$ clean ancillas, put $J_A\ket z=\ket z\ket0^{\otimes A}$. A unitary implementation obeys
+With $A$ clean ancillas, put $J_A\ket z=\ket z\ket0^{\otimes A}$. A unitary circuit obeys
 \[
  U_CJ_A=J_AO_p.
 \]
-\takeaway{Reduce the largest number of ancillas needed at once. Also report $T$ gates, CNOTs, total gates, and time. Every auxiliary qubit must return to $\ket0$.}
-\src{Motivation: Nielsen--Chuang, Ch. 6 [NC]. The tested functions are structured feature-and-mask predicates, not complete BNN verification workloads [D].}
+\takeaway{Reduce the largest number of ancillas needed at once. Also count T gates, CNOTs, total gates, and time. Every auxiliary qubit must return to $\ket0$.}
+\src{Background: Nielsen--Chuang [NC]. The tested functions are structured feature-and-mask predicates, not complete BNN verification workloads [D].}
 \end{frame}
 
 % 2
-\begin{frame}[t]{2. Why a cheaper oracle matters for amplitude amplification}
+\begin{frame}[t]{2. Amplitude amplification repeats the oracle}
 \small
 Start with $\ket\psi=2^{-n/2}\sum_z\ket z$. If $M$ inputs violate the property, write
 \[
  \ket\psi=\cos\theta\ket{\mathrm{safe}}+\sin\theta\ket{\mathrm{violating}},
  \qquad \sin^2\theta=M/2^n.
 \]
-For $0<M<2^n$, the two displayed states are normalized uniform sums over their sets.
+For $0<M<2^n$, these are normalized uniform sums over the two input sets.
 \[
  Q=(2\ket\psi\bra\psi-I)O_p,
  \qquad \Pr[\mathrm{violation\ after\ }j\mathrm{\ steps}]
        =\sin^2((2j+1)\theta).
 \]
-\labeltext{Reason.} The oracle and the reflection about $\ket\psi$ are two reflections; their product rotates this two-dimensional state by $2\theta$.
-\takeaway{Each amplification step calls the oracle again. A smaller oracle reduces this repeated cost. Not finding a violation in a finite run is not, by itself, a proof that none exists.}
-\src{Standard amplitude-amplification construction [NC]. The reported resource counts later concern the oracle only: state preparation and the other reflection are excluded [D].}
+\labeltext{Reason.} The oracle and reflection about $\ket\psi$ are two reflections. Their product rotates this two-dimensional state by $2\theta$.
+\takeaway{Each step calls the oracle again. A smaller oracle reduces that repeated cost. An unsuccessful finite run is not, by itself, a proof that no violation exists.}
+\src{Amplitude amplification: [NC], Ch. 6. Resource results below concern only the oracle; state preparation and the other reflection are excluded [D].}
 \end{frame}
 
 % 3
-\begin{frame}[t]{3. A frontier record describes one partial quantum circuit}
+\begin{frame}[t]{3. A frontier record is a partial quantum circuit}
 \small
-The frontier $\mathcal F_t$ contains discovered candidates that can still be extended. A coherent record is
+The frontier $\mathcal F_t$ contains discovered candidates that can still be extended:
 \[
  \boxed{v=(G_v,\Theta_v,\mathcal R_v,\phi_v,\rho_v).}
 \]
 \begin{center}
 \begin{tabular}{@{}ll@{}}
-$G_v$ & The actual gates and their dependency graph.\\[2pt]
-$\Theta_v$ & The Clifford transformation, stored as a tableau.\\[2pt]
-$\mathcal R_v$ & An ordered sequence of Pauli rotations.\\[2pt]
-$\phi_v$ & The scalar phase needed for exact equality.\\[2pt]
-$\rho_v$ & Gates, per-wire depths, and other consumed resources.
+$G_v$ & Actual gates and their dependency graph.\\[2pt]
+$\Theta_v$ & Clifford transformation, stored as a tableau.\\[2pt]
+$\mathcal R_v$ & Ordered sequence of Pauli rotations.\\[2pt]
+$\phi_v$ & Scalar phase needed for exact equality.\\[2pt]
+$\rho_v$ & Consumed gates, per-wire depths, and other resources.
 \end{tabular}
 \end{center}
 \[
  U_v=e^{i\phi_v}C_vR_{P_m}(\theta_m)\cdots R_{P_1}(\theta_1)
- \qquad\text{(rightmost operator acts first).}
+ \quad\text{(rightmost acts first).}
 \]
-\takeaway{The RL state $S_t$ is the whole search situation: frontier, recorded alternatives, and remaining limits. A single circuit record $v$ is an outer action, not the whole RL state.}
-\src{Native circuit representation and frontier: branch files model.py and native\_search.py [N]. Measurement protocols need extra classical-outcome information; see slide 8.}
+\takeaway{The RL state $S_t$ is the \emph{whole search situation}, including all alternatives and limits. Selecting one record $v$ is an action, not a choice of the whole RL state.}
+\src{Native representation and frontier: model.py and native\_search.py [N]. A measured protocol also needs its classical outcomes and pending corrections.}
 \end{frame}
 
 % 4
-\begin{frame}[t]{4. The tableau and rotations preserve exact quantum action}
+\begin{frame}[t]{4. Tableau, rotations, and gate dependencies}
 \small
 \begin{columns}[T,onlytextwidth]
 \begin{column}{0.48\textwidth}
@@ -115,60 +115,60 @@ $\rho_v$ & Gates, per-wire depths, and other consumed resources.
 \[
  C X_j C^\dagger,\quad C Z_j C^\dagger
 \]
-are signed Pauli operators. Their stored images specify how $C$ transports every Pauli, up to a scalar phase.
+are signed Pauli operators. These images specify how $C$ transforms every Pauli, up to a scalar phase.
 
 \smallskip
-$H$, $S$, and CNOT are Clifford gates. The separate $\phi_v$ retains the required scalar phase.
+$H$, $S$, and CNOT are Clifford gates. The separate $\phi_v$ retains the scalar phase.
 \end{column}
 \begin{column}{0.48\textwidth}
 \labeltext{Ordered Pauli rotations}
 \[
- R_P(\theta)=e^{-i\theta P/2},
- \quad P=\pm P_1\otimes\cdots\otimes P_n.
+ R_P(\theta)=e^{-i\theta P/2},\qquad
+ P=\pm P_1\otimes\cdots\otimes P_n.
 \]
-Here each $P_j$ is $I,X,Y,$ or $Z$. In particular,
+Each $P_j$ is $I,X,Y,$ or $Z$. For example,
 \[
  T=e^{i\pi/8}R_Z(\pi/4).
 \]
-Noncommuting rotations cannot in general be exchanged. Their order is retained.
+Noncommuting rotations cannot in general be exchanged. Their order matters.
 \end{column}
 \end{columns}
 \smallskip
-\labeltext{Dependency graph.} A gate on wires $Q_g$ ends at layer
+\labeltext{Dependency graph.} A gate on wires $Q_g$ has layer
 \[
- d(g)=1+\max_{q\in Q_g} d_q;
+ d(g)=1+\max_{q\in Q_g}d_q,
  \qquad d_q\leftarrow d(g)\ \ (q\in Q_g).
 \]
-It therefore records both the circuit and which operations may overlap. Exact rewrites identify equal operators; their actual gate costs remain separate.
-\src{Clifford and Pauli facts: [NC]. Exact scalar handling, ordered rotations, and per-wire dependency updates: [N]. Policies use small numerical summaries, not a graph neural network.}
+It records which gates may overlap. Exact rewrites can identify equal operators without pretending that their recorded gate costs are equal.
+\src{Clifford/Pauli background: [NC]; scalar handling and dependency updates: [N]. Policies use compact summaries, not a graph neural network.}
 \end{frame}
 
 % 5
-\begin{frame}[t]{5. Reinforcement learning allocates classical search effort}
+\begin{frame}[t]{5. Reinforcement learning orders the search}
 \small
-A learner chooses an action, receives a reward, and adjusts its estimate of future reward. Here it controls a \emph{classical circuit search}, not a quantum device.
+A learner chooses an action, receives a reward, and improves its estimate of future reward. Here it controls a \emph{classical circuit search}, not a quantum device.
 \[
  G_t=\sum_{k=t}^{T-1}R_{k+1},
  \qquad q^\pi(S,v)=\mathbb E_\pi[G_t\mid S_t=S,\ v_t=v].
 \]
-$T$ is the final search decision; the search uses discount $\gamma=1$.
+$T$ is the final search decision; the discount is $\gamma=1$.
 \begin{center}
-\begin{tikzpicture}[node distance=3mm and 5mm, every node/.style={font=\small,align=center},box/.style={draw=accent,rounded corners=1mm,minimum height=11mm,text width=37mm},>=Stealth]
-\node[box] (a) {SARSA selects a\frontier record $v_t$};
-\node[box,right=of a] (b) {LinUCB ranks its\permitted continuations};
-\node[box,right=of b] (c) {Exact transition,\resource check, verification};
+\begin{tikzpicture}[node distance=5mm,every node/.style={font=\small,align=center},box/.style={draw=accent,rounded corners=1mm,minimum height=10mm,text width=37mm},>=Stealth]
+\node[box] (a) {SARSA selects a\\frontier record $v_t$};
+\node[box,right=of a] (b) {LinUCB ranks its\\eligible continuations};
+\node[box,right=of b] (c) {Exact transition,\\resource check, verification};
 \draw[->] (a)--(b);\draw[->] (b)--(c);
 \end{tikzpicture}
 \end{center}
-Rewards favor successful low-resource construction and fewer search allocations. Intermediate progress also supplies feedback.
-\takeaway{The learner changes the order of exploration. It cannot declare a wrong circuit correct or override a proved resource restriction.}
-\src{Return and action-value terminology: Sutton--Barto [SB]. Current native and cleanup search controllers: [N, L]. One search allocation may emit a verified multi-gate operation; its full physical cost is counted.}
+Rewards favor correct low-resource circuits and fewer search allocations; intermediate progress also supplies feedback.
+\takeaway{Learning changes the order of exploration. It cannot accept an incorrect circuit or override a proved resource restriction.}
+\src{Return and action value: Sutton--Barto [SB]. Native and cleanup controllers: [N, L]. Each search allocation may emit several physical gates; their full cost is counted.}
 \end{frame}
 
 % 6
-\begin{frame}[t]{6. SARSA learns which frontier record to try next}
+\begin{frame}[t]{6. SARSA selects the next frontier record}
 \small
-Let $x_t=x(S_t,v_t)$ contain small summaries of progress, resources, and remaining work. Use a linear action-value estimate:
+Let $x_t=x(S_t,v_t)$ summarize progress, resources, and remaining work. Approximate the action value by
 \[
  \widehat q_w(S_t,v_t)=w^{\mathsf T}x_t.
 \]
@@ -176,166 +176,165 @@ The temporal-difference error uses the \emph{next record actually selected}:
 \[
  \delta_t=R_{t+1}+w_t^{\mathsf T}x_{t+1}-w_t^{\mathsf T}x_t.
 \]
-At termination the next value is zero. The implemented normalized update is
+At termination the next value is zero. The implemented update is
 \[
  w_{t+1}=\Pi_{[-20,20]^d}\!\left(
  w_t+\frac{\alpha\,\delta_t x_t}{\max(1,\|x_t\|^2)}\right).
 \]
-Here $d$ is the feature count; $\Pi$ clips each coefficient to the displayed interval.
-\takeaway{A positive $\delta_t$ says the observed continuation was better than predicted. During circuit-generation tests, the learned coefficients are fixed. Completing training does not prove convergence.}
-\src{SARSA temporal-difference rule: [SB]. Normalization and coefficient bounds are implementation choices, not a convergence theorem: native\_policy.py and cleanup/policy.py [N, L].}
+$\alpha>0$ is the step size, $d$ the feature count; $\Pi$ clips the coefficients.
+\takeaway{Positive $\delta_t$ means the return was better than predicted. During circuit-generation tests the coefficients are fixed. Training completion does not prove convergence.}
+\src{SARSA: [SB]. Step normalization and bounds: native\_policy.py and cleanup/policy.py [N, L]; these safeguards are not a convergence theorem.}
 \end{frame}
 
 % 7
 \begin{frame}[t]{7. LinUCB ranks the eligible next operations}
 \small
-For each operation family $f$, let $z$ be its context and $y$ the recorded training feedback. A public prior $\beta_0$ is corrected by a small linear model:
+For each operation family $f$, let $z$ be its context and $y$ its training feedback. A public prior $\beta_0$ is adjusted using
 \[
- A_f=I+\sum z z^{\mathsf T},\qquad
- b_f=\sum z\bigl(y-z^{\mathsf T}\beta_0\bigr),\qquad
+ A_f=I+\sum zz^{\mathsf T},\qquad
+ b_f=\sum z(y-z^{\mathsf T}\beta_0),\qquad
  \widehat\beta_f=\beta_0+A_f^{-1}b_f.
 \]
-Rank the eligible operations by
+Rank eligible operations by
 \[
  \underbrace{z^{\mathsf T}\widehat\beta_f}_{\text{estimated value}}
  +\underbrace{\kappa\sqrt{z^{\mathsf T}A_f^{-1}z}}_{\text{training exploration}}.
 \]
-The feedback uses the reward and frontier-value information. Exploration is turned off and coefficients are fixed in evaluation.
-\takeaway{In the current oracle method, exact algebra constructs the main candidates. SARSA--LinUCB is an \textbf{optional search for full-bank schedules}; it does not choose the deterministic factorization or exact lifetime order.}
-\src{Disjoint linear models and actual role: cleanup/policy.py and cleanup/consumer\_search.py [L, C]. Families mean native gate types in native search, or permitted protocol operations in cleanup search. No general bandit regret claim is made.}
+$\kappa\ge0$ controls exploration. The feedback uses reward and frontier-value information. Evaluation fixes the coefficients and turns exploration off.
+\takeaway{Current oracle results use \textbf{deterministic algebraic constructions}. SARSA--LinUCB optionally searches full-bank schedules; it does not choose the factorization or exact lifetime order.}
+\src{Current roles and disjoint linear models: [L, C]. A family is a native gate type or a permitted cleanup operation. No general contextual-bandit regret claim is made.}
 \end{frame}
 
 % ======================= PAGES 8--11 ======================
-\renewcommand{\partnamebar}{Measurement, cleanup theorem, and construction}
+\renewcommand{\partnamebar}{Measurement, theorem, and construction}
 % 8
-\begin{frame}[t]{8. Measurement erases a value only after its phase is corrected}
+\begin{frame}[t]{8. Measurement needs a phase correction}
 \small
-A temporary value $f(z)$ is entangled with the input: $\sum_z\alpha_z\ket z\ket{f(z)}$.
-For $s\in\{0,1\}$, define $\ket{s_X}=(\ket0+(-1)^s\ket1)/\sqrt2$. Then
+A temporary value is entangled with the input: $\sum_z\alpha_z\ket z\ket{f(z)}$.
+With $\ket{s_X}=(\ket0+(-1)^s\ket1)/\sqrt2$, $s\in\{0,1\}$,
 \[
  \bra{s_X}f(z)\rangle=2^{-1/2}(-1)^{sf(z)}.
 \]
-After measurement, apply $D_f^s\ket z=(-1)^{sf(z)}\ket z$ and reset the measured qubit:
+Apply the correction $D_f^s\ket z=(-1)^{sf(z)}\ket z$ and reset the measured qubit:
 \[
  (-1)^{sf(z)}(-1)^{sf(z)}=1
- \quad\Longrightarrow\quad
- K_sJ_A=2^{-1/2}J_AO_p.
+ \quad\Longrightarrow\quad K_sJ_A=2^{-1/2}J_AO_p.
 \]
-An existing oracle sign $(-1)^{p(z)}$ is unchanged. Each outcome has probability $1/2$.
+Any existing oracle sign $(-1)^{p(z)}$ is unchanged; the outcome probability is $1/2$.
 
-\labeltext{Useful case.} If $f=uv$, the correction is $\CZ_{u,v}^{\,s}$. A clean-target AND computes $uv$ with four T gates; its measured cleanup needs no more T gates.
-\takeaway{The operand values needed for correction must remain available. A full measured circuit needs the coherent records \emph{plus} outcomes and correction dependencies; it is not one unitary tableau-and-rotation word.}
-\src{Established temporary-AND and measured-termination constructions: Gidney [G], Amy--Ross [AR]. The native clean-input primitive and every correction are checked in this work [D, N].}
+\smallskip
+\labeltext{Useful case:} for $f=uv$, the correction is $\CZ_{u,v}^{\,s}$. An established clean-target AND computes $uv$ with four T gates; this cleanup needs no more T gates.
+\takeaway{Correction operands must remain available. A measured protocol needs coherent records \emph{plus} outcomes and correction dependencies; it is not one unitary tableau-and-rotation word.}
+\src{Known mechanisms: Gidney [G], Amy--Ross [AR]. Exact local AND, reset, and branch checks: [D, N]. Four T gates implement a clean-target isometry, not a Toffoli on arbitrary target input.}
 \end{frame}
 
 % 9
-\begin{frame}[t]{9. The theorem: a workspace optimum for a required full bank}
-\fontsize{9.8}{11.5}\selectfont
-Let independent inputs be $a\in\F$, $b\in\F^r$, $x\in\F^m$, and $F_{ij}=ab_ix_j$.
-All $rm$ product qubits must coexist. The $k$ retained helpers have the form
+\begin{frame}[t]{9. The full-bank workspace theorem}
+\small
+Independent inputs: $a\in\F$, $b\in\F^r$, $x\in\F^m$; products $F_{ij}=ab_ix_j$.
+All $rm$ products must coexist. The $k$ retained helpers satisfy
 \[
  H=a(Pb\oplus Qx\oplus c).
 \]
-Process $F$ alone; apply Clifford feedback preserving the live values; finally measure $H$ in $X$ and correct on the original inputs. Require exact deterministic cleanup.
+Process $F$ alone, then apply Clifford feedback preserving the live values. Finally measure $H$ in $X$ and correct on the original inputs. Require deterministic cleanup.
 \[
  \boxed{A_{\mathrm{peak}}^{\mathrm{full\ bank}}=rm+\min(r,m).}
 \]
 \begin{columns}[T,onlytextwidth]
 \begin{column}{.47\textwidth}
-\labeltext{Upper bound.} If $m\le r$, retain $H_j=ax_j$ and compute $F_{ij}=b_iH_j$. Measure $F$ and correct with CZs; then do the same for $H$. The other case is symmetric.
+\labeltext{Construction.} For $m\le r$, retain $H_j=ax_j$ and compute $F_{ij}=b_iH_j$. Measure and correct $F$, then $H$. The case $r<m$ is symmetric.
 \end{column}
 \begin{column}{.50\textwidth}
-\labeltext{Lower-bound idea.} If $k<\min(r,m)$, take $b_0\ne0$ in $\ker P$. The proof uses the labels $(b_0,b_0\otimes x)$ for $x\in\ker Q$. At least $2^{m-k}>1$ labels are indistinguishable by permitted feedback. Measurement completeness gives $P_{\rm success}\le2^{-(m-k)}<1$.
+\labeltext{Converse idea.} If $k<\min(r,m)$, kernels of $P,Q$ give at least $2^{m-k}>1$ garbage labels indistinguishable by the allowed feedback. Measurement completeness implies $P_{\rm success}\le2^{-(m-k)}<1$.
 \end{column}
 \end{columns}
-\takeaway{This is an optimum only for the stated full-bank architecture. A circuit implementing the final phase may avoid that bank entirely.}
-\src{Supplied cleanup theorem, pp. 53--60 [H]. The lower-bound proof temporarily adds $h=ab$ as a proof device, not as construction workspace. Full assumptions and the reduction back to $F$ alone are in NOTES.md.}
+\takeaway{The bound requires the full bank and this cleanup model. It is not a minimum ancilla count for every circuit implementing the final oracle.}
+\src{Supplied theorem [H], pp. 53--60. NOTES.md gives the indistinguishable labels, the proof-only $h=ab$ register, and the reduction to erasing $F$ alone. Original inputs are excluded from $A_{\mathrm{peak}}$.}
 \end{frame}
 
 % 10
-\begin{frame}[t]{10. The final phase can require far less stored information}
-\fontsize{10}{12}\selectfont
-The consumer is $p=q(a,b,x,F)$, where $q$ is quadratic in its displayed variables. Substitute $F_{ij}=ab_ix_j$ \emph{before} building the circuit. Exact binary factorization gives
+\begin{frame}[t]{10. Compute the phase, not the whole bank}
+\small
+The required phase is $p=q(a,b,x,F)$, where $q$ is quadratic in its displayed variables. Substitute $F_{ij}=ab_ix_j$ and simplify before construction:
 \[
  p=q_0\oplus aB(b)^{\mathsf T}MX(x)
-   =q_0\oplus\bigoplus_{\ell=1}^{d}aL_\ell(b)R_\ell(x),
- \qquad d=\operatorname{rank}_{\F}M.
+   =q_0\oplus\bigoplus_{\ell=1}^{d}aL_\ell(b)R_\ell(x).
 \]
-Here $q_0$ is quadratic; $B,X$ list linear and quadratic operand features.
+$q_0$ is quadratic; $B,X$ list linear/quadratic features; $d=\operatorname{rank}_{\F}M$.
 
-For one factor, form $L,R$, use a clean $t$, and restore the parity wires afterward:
+For one factor, form $L,R$ and use a clean helper $t$:
 \[
  \ket{a,L,R,0}\xrightarrow{\AND(a,L;t)}\ket{a,L,R,aL}
  \xrightarrow{\CZ(t,R)}(-1)^{aLR}\ket{a,L,R,aL}.
 \]
-Measure $t$ in $X$ and correct with $\CZ(a,L)^s$. Slide 8 proves the branch is correct.
-If $s_{\!f}$ distinct quadratic products are stored, this construction has
+Measure $t$ and correct with $\CZ(a,L)^s$, as on slide 8; then restore the parities.
+For $s_f$ distinct stored quadratic products,
 \[
- \boxed{N_T=4(d+s_{\!f}),\qquad A_{\mathrm{peak}}\le s_{\!f}+1.}
+ \boxed{N_T=4(d+s_f),\qquad A_{\mathrm{peak}}\le s_f+1.}
 \]
-\labeltext{Reason.} Each stored product and each factor uses one four-T AND; one factor helper is reused. Rank is minimal only in the chosen feature basis, not over all circuits.
-\src{Exact factor construction and complete branch proof: [C, D]. Parity CNOTs, restoration, measurement and corrections are included in the measured resources. This is not the former fixed phase-polynomial search.}
+\labeltext{Reason.} There are $s_f+d$ four-T ANDs and one reused factor helper. Rank minimizes factors only in the fixed feature basis, not T-count over all circuits.
+\src{Exact construction: [C, D]. All parity formation, restoration, measurements and corrections are counted. Boolean relations describe this oracle family, not a replacement of the native hybrid representation.}
 \end{frame}
 
 % 11
 \begin{frame}[t]{11. Prepare at first use; erase after last use}
-\fontsize{10}{12}\selectfont
-Fix the factorization. Let $S_j$ be the temporary features needed by factor $j$, and let $A$ be the set of factors already completed. With no recomputation,
+\small
+Fix the factors. Let $S_j$ be the temporary features used by factor $j$, and $A$ the set of completed factors. Without recomputation,
 \[
  L(A)=\left(\bigcup_{i\in A}S_i\right)\cap
-      \left(\bigcup_{i\notin A}S_i\right),
- \qquad w(A,j)=1+|L(A)\cup S_j|.
+      \left(\bigcup_{i\notin A}S_i\right),\qquad
+ w(A,j)=1+|L(A)\cup S_j|.
 \]
-The exact minimum peak within these orders is obtained by
+The minimum peak within these orders is
 \[
  V(A)=\min_{j\notin A}\max\{w(A,j),V(A\cup\{j\})\},
  \qquad V(\{1,\ldots,d\})=0.
 \]
-\labeltext{Why exact?} Every feature in $L(A)$ must remain for a future use; all of $S_j$ must exist during $j$. First-use preparation and last-use cleanup attain that bound.
+\labeltext{Why exact?} $L(A)$ must survive for future uses; $S_j$ must exist during $j$. Preparing at first use and erasing at last use attains each bound.
 
 \smallskip
-Example: $S_1=S_3=\{A,D\}$, $S_2=S_4=\{B,C\}$.
+For $S_1=S_3=\{A,D\}$ and $S_2=S_4=\{B,C\}$:
 \[
  (1,2,3,4):\ A_{\mathrm{peak}}=5
- \quad\longrightarrow\quad
+ \ \longrightarrow\ 
  (1,3,2,4):\ A_{\mathrm{peak}}=3,
- \qquad N_T=32\ \text{in both}.
+ \qquad N_T=32\text{ in both}.
 \]
-\src{Quantum construction: [C, D]. The ordering is an application of minimum-open-stacks dynamic programming [MOS], not a new scheduling algorithm. Factors run sequentially; no feature compression or recomputation. Exact subset ordering is limited to $d\le16$.}
+\src{Quantum construction [C, D]; established minimum-open-stacks scheduling [MOS]. Factors are sequential, fixed, and not recomputed; features are not encoded together. The implementation uses exact ordering only for $d\le16$.}
 \end{frame}
 
 % ======================= PAGES 12--15 =====================
 \renewcommand{\partnamebar}{Results and conclusion}
 % 12
-\begin{frame}[t]{12. What was compared, and how resources were counted}
-\fontsize{10}{12}\selectfont
-\textbf{41 phase oracles:} five development examples and 36 additional synthetic functions. Each comparison uses the \emph{same final Boolean phase}.
+\begin{frame}[t]{12. Benchmarks and resource definitions}
+\small
+\textbf{41 phase oracles:} five development examples and 36 additional synthetic functions. Each comparison implements the \emph{same final phase}.
 
 \smallskip
-\textbf{Current method:} deterministic full-bank, bank-free and factor constructions.\par
-\textbf{Control:} authors' mockturtle XOR--AND optimization, followed by our measured-oracle construction using the same four-T AND and Clifford corrections.
+\textbf{Current:} deterministic full-bank, bank-free and factor constructions.\par
+\textbf{Control:} authors' mockturtle XOR--AND optimization, with our measured-oracle conversion using the same AND primitive and corrections.
 \begin{center}
 \begin{tabular}{@{}ll@{}}
 \toprule
 $N_T$ & T and T-dagger gates.\\
-$A_{\mathrm{peak}}$ & Maximum simultaneously needed clean-origin ancillas; inputs excluded.\\
-$N_{\mathrm{CNOT}},\ N_G$ & CNOT count and total native unitary gates, including corrections.\\
-$\Lambda$ & Worst-case schedule: gate 1, measurement 5, outcome delay 2 ticks.\\
+$A_{\mathrm{peak}}$ & Simultaneously required clean-origin ancillas; inputs excluded.\\
+$N_{\mathrm{CNOT}},N_G$ & CNOTs and all native unitary gates, including corrections.\\
+$\Lambda$ & Worst-case ticks: gate 1, measurement 5, outcome delay 2.\\
 $R_m$ & Measurement stages in the emitted protocol.\\
 \bottomrule
 \end{tabular}
 \end{center}
-Both select by $(N_T,A_{\mathrm{peak}},\Lambda,N_G,N_{\mathrm{CNOT}})$: T-count first. These are \textbf{not} equal-workspace-cap optima. All reported protocols passed archived exact checks.
-\src{Archived comparison [D], 41 targets x 2 methods x 3 repetitions = 246 records; repetitions are not independent functions. Current figures were not produced by RL. Timing is illustrative and all-to-all, not hardware data.}
+Both select by $(N_T,A_{\mathrm{peak}},\Lambda,N_G,N_{\mathrm{CNOT}})$: T-count first. These are \textbf{not} equal-workspace-cap optima. Archived exact checks cover the complete protocols.
+\src{Archived study [D]: 41 targets x 2 methods x 3 timing repetitions = 246 records, not 246 independent functions. The current comparison is deterministic. Timing is illustrative, all-to-all, and not hardware data.}
 \end{frame}
 
 % 13
-\begin{frame}[t]{13. Five development examples: all six resources}
+\begin{frame}[t]{13. Five examples: all six resource counts}
 \small
-Each cell is \textbf{current / measured XOR--AND control}; lower is better.
+Every cell is \textbf{current / measured XOR--AND control}; lower is better.
 \begin{center}
 \setlength{\tabcolsep}{5pt}
-\renewcommand{\arraystretch}{1.16}
+\renewcommand{\arraystretch}{1.05}
 \begin{tabular}{@{}lrrrrrr@{}}
 \toprule
 Shape & $N_T$ & $A_{\mathrm{peak}}$ & $N_{\mathrm{CNOT}}$ & $N_G$ & $\Lambda$ & $R_m$\\
@@ -348,23 +347,22 @@ $8\!\times\!3$ & 56 / 64 & 5 / 16 & 120 / 169 & 324 / 395 & 248 / 186 & 8 / 3\\
 \bottomrule
 \end{tabular}
 \end{center}
-\labeltext{A concrete explanation: the $4\times2$ case.}
-\[
- p=ax_2\oplus ab_2x_1\oplus ab_3x_2.
-\]
-The current circuit uses one helper twice, with cleanup after each use. The control keeps two products and cleans them together.
-\takeaway{Both use eight T gates. Reusing a qubit changes $(A_{\mathrm{peak}},R_m,\Lambda)$ from $(2,1,32)$ to $(1,2,59)$: less workspace, but more waiting.}
-\src{Source [D], original presentation pp. 34--35; exact final predicate and complete corrected circuits, not estimated counts. The shape labels describe source banks, which the selected circuit need not materialize.}
+\labeltext{The $4\times2$ example:} $p=ax_2\oplus ab_2x_1\oplus ab_3x_2$.
+
+\smallskip
+Current: use one helper twice. Control: keep two products and erase them together.
+\takeaway{Both use eight T gates. Reuse changes $(A_{\mathrm{peak}},R_m,\Lambda)$ from $(2,1,32)$ to $(1,2,59)$: less workspace, but more waiting.}
+\src{Archived emitted circuits [D], original slides pp. 34--35. The bank shape labels the original description; the selected construction need not form that bank.}
 \end{frame}
 
 % 14
-\begin{frame}[t]{14. Across 36 additional oracles, workspace is the strength}
+\begin{frame}[t]{14. Thirty-six more oracles: a resource trade-off}
 \small
-Number of targets on which the current method is better, equal, or worse:
+Counts of targets on which the current method is better, equal, or worse:
 \begin{center}
 \begin{tikzpicture}
 \begin{axis}[
- width=12.8cm,height=4.55cm,xbar stacked,bar width=9pt,
+ width=12.8cm,height=4.3cm,xbar stacked,bar width=9pt,
  xmin=0,xmax=36,xtick={0,6,12,18,24,30,36},
  ytick={0,1,2,3,4,5},
  yticklabels={Measurement rounds,Latency,Native gates,CNOTs,T-count,Clean ancillas},
@@ -383,24 +381,24 @@ Number of targets on which the current method is better, equal, or worse:
 \end{tikzpicture}
 \end{center}
 \vspace{-2mm}
-\takeaway{Ancillas improve on 30 targets and tie on 6. T-count is worse on 18; latency is worse on 32. These are resource trade-offs, not uniform superiority.}
-\src{Archived exact resource vectors [D], original presentation pp. 39--44. Twelve bilinear, twelve quadratic-feature, twelve mixed-consumer functions. The control was not given the best possible space-constrained recomputation schedule.}
+\takeaway{Ancillas improve on 30 targets and tie on 6. T-count is worse on 18; latency is worse on 32. No uniform superiority is shown.}
+\src{Archived study [D], pp. 39--44: twelve bilinear, twelve quadratic-feature, twelve mixed-consumer functions. The control is not its best possible workspace-constrained recomputation schedule.}
 \end{frame}
 
 % 15
-\begin{frame}[t]{15. The result and the role of learning}
+\begin{frame}[t]{15. Conclusion: proven construction, optional learning}
 \small
-\labeltext{What is proved.}\par
-The corrected branches preserve the phase and return ancillas to zero. The full-bank theorem has a matching workspace bound. Fixed-factor ordering is exact only within its stated no-recomputation model.
+\labeltext{Proved.}\par
+Every corrected branch gives the required phase and clean ancillas. The full-bank bound is tight within its architecture. Fixed-factor ordering is exact within its no-recomputation model.
 
 \medskip
-\labeltext{What the circuits show.}\par
-Exact algebra and reuse of temporary values can reduce clean ancillas. The complete circuit may then need more T gates or more measurement time than an alternative.
+\labeltext{Observed.}\par
+Exact algebra and reuse often lower clean workspace. The complete circuit may need more T gates or more measurement time than a competing construction.
 
 \medskip
-\labeltext{What reinforcement learning contributes so far.}\par
-SARSA selects frontier records; LinUCB ranks allowed continuations. Both remain available, but the current benchmark improvements come from deterministic constructions. A learned advantage has not been established.
-\takeaway{\textbf{Defensible claim:} certified synthesis for a specified family of Boolean phase oracles, with useful workspace--T-count--latency trade-offs. Not global ancilla optimality, not a complete BNN-verification speedup, and not SARSA--LinUCB superiority.}
-\src{Next comparison: impose the same clean-ancilla and latency caps, allowing both methods to schedule and recompute. Full references, theorem assumptions, data provenance and mathematical notes are in NOTES.md.}
+\labeltext{Role of reinforcement learning.}\par
+SARSA selects frontier records; LinUCB ranks continuations. Both remain available, but the current resource gains are deterministic. A learned advantage is not established.
+\takeaway{\textbf{Claim:} certified synthesis for a specified Boolean phase-oracle family, with workspace--T-count--latency trade-offs. Not global ancilla optimality, complete BNN-verification speedup, or SARSA--LinUCB superiority.}
+\src{Next test: equal ancilla and latency caps, with scheduling and recomputation allowed on both sides. Full assumptions, references and short proofs are supplied in NOTES.md, not in additional slides.}
 \end{frame}
 \end{document}
