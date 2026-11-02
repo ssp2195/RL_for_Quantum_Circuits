@@ -79,6 +79,12 @@ def run() -> dict:
         old = synthesize_oracle(p, seconds=10.)
         if not old.get('selected'):
             raise AssertionError(f'existing benchmark unexpectedly failed: {p.name}')
+        comparison_objective = ('peak_aux', 't_count', 'cnot', 'native_depth')
+        old_ancilla = synthesize_oracle(p, objective=comparison_objective, seconds=10.)
+        extended = synthesize_oracle(p, objective=comparison_objective,
+                                     include_generic=True, seconds=10.)
+        if not old_ancilla.get('selected') or not extended.get('selected'):
+            raise AssertionError('combined ancilla-first comparison failed verification')
         generic = BooleanPhaseProblem(p.name, p.n, p.target_polynomial)
         earlier.append({
             'problem': p.name,
@@ -87,7 +93,24 @@ def run() -> dict:
             'generic_measured': _result(generic, 'measured'),
             'generic_direct': _result(generic, 'direct'),
             'previous_optimality_claim': old['global_oracle_optimality'],
+            'ancilla_first_previous': old_ancilla['selected']['verification']['resources'],
+            'ancilla_first_extended': extended['selected']['verification']['resources'],
+            'ancilla_first_extended_method': extended['selected']['method'],
         })
+    from .generic_search import GenericFrontierSearch, train_generic_hierarchy
+    training = (BooleanPhaseProblem('train-ccz', 3, frozenset({7})),
+                BooleanPhaseProblem('train-four', 4, frozenset({15})))
+    trained = train_generic_hierarchy(training, episodes=8)
+    heldout = BooleanPhaseProblem('heldout-phase', 4, frozenset({7, 15}))
+    deterministic = GenericFrontierSearch(heldout).run()
+    learned = GenericFrontierSearch(heldout).run(trained)
+    if not deterministic['complete_library_search'] or not learned['complete_library_search']:
+        raise AssertionError('incomplete learned or deterministic comparison')
+    learning = {kind: {'expansions': value['expansions'],
+                       'candidate_count': value['candidate_count'],
+                       'selected_peak_aux': value['selected']['resources']['peak_aux'],
+                       'selected_t_count': value['selected']['resources']['t_count']}
+                for kind, value in (('deterministic', deterministic), ('trained', learned))}
     return {
         'schema': 'generic-boolean-phase-comparison-v1',
         'scope': 'finite candidate constructions; no global ancilla or T optimality',
@@ -95,6 +118,7 @@ def run() -> dict:
         'isolated_phase_examples': individual,
         'existing_five_phase_benchmarks': earlier,
         'non_diagonal_unitary_controls': _unitary_controls(),
+        'generic_frontier_training_comparison': learning,
     }
 
 
