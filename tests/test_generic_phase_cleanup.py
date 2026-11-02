@@ -143,3 +143,14 @@ def test_no_nonlinear_phase_remains_exact():
     result = GenericFrontierSearch(problem).run()
     assert result['candidate_count'] == 1
     assert result['selected']['resources']['peak_aux'] == 0
+
+
+@pytest.mark.parametrize('q,stages,peak', ((2,1,2),(2,2,1),(3,1,3),(3,3,1)))
+def test_m3_causal_multistage_construction(q, stages, peak):
+    from hybrid_qcs.cleanup.m3_corrections import construct_m3_corrections
+    result = construct_m3_corrections(q, stages)
+    assert result.causal_corrections_certified
+    assert result.peak_correction_ancillas == peak
+    assert result.lower_bound_ancillas <= peak
+    assert result.preparation_t_count == 4 * q
+    assert result.conditional_cz_count == q*q+q
