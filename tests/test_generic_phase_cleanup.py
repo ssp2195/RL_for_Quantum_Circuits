@@ -154,3 +154,17 @@ def test_m3_causal_multistage_construction(q, stages, peak):
     assert result.lower_bound_ancillas <= peak
     assert result.preparation_t_count == 4 * q
     assert result.conditional_cz_count == q*q+q
+
+
+def test_opt_in_general_candidates_preserve_original_menu():
+    from hybrid_qcs.cleanup.benchmarks import candidate_problems
+    from hybrid_qcs.cleanup.consumer_search import synthesize_oracle
+    p = candidate_problems()[0]
+    old = synthesize_oracle(p, seconds=10.)
+    new = synthesize_oracle(p, objective=('peak_aux', 't_count', 'cnot'),
+                            include_generic=True, seconds=10.)
+    assert old['status'] == new['status'] == 'certified_upper_bound'
+    assert old['selected']['method'] in {v['method'] for v in new['candidates']}
+    assert {'generic_anf_measured', 'generic_anf_direct'} <= {
+        v['method'] for v in new['candidates']}
+    assert verify_phase(p, new['selected']['protocol'])['valid']
