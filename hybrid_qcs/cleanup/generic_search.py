@@ -148,6 +148,14 @@ class GenericFrontierSearch:
             raise ValueError('training requires a model')
         if policy is not None and policy.frozen == (train is not None):
             raise ValueError('policy freeze/training mismatch')
+        if not self.nonlinear:
+            circuit = compile_boolean_phase(self.problem)
+            verified = verify_phase(self.problem, circuit)
+            if not verified['valid']:
+                raise AssertionError('Clifford-only circuit failed verification')
+            self.complete.append({'modes': (), 'resources': verified['resources'],
+                                  'protocol': circuit})
+            self.frontier.clear()
         while self.frontier and self.expansions < max_expansions:
             panel = list(self.frontier.values())
             record = min(panel, key=lambda r: r.record_id) if policy is None else max(
