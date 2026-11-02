@@ -7,7 +7,7 @@ All ancilla qubits are measured, corrected and reused between monomials.
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 from itertools import product
 
 from .contract import Hardware, Limits, Polynomial, digest
@@ -34,9 +34,10 @@ class BooleanPhaseProblem:
 
     @property
     def digest(self) -> str:
-        return digest({'name': self.name, 'n': self.n, 'anf': sorted(self.target_polynomial),
-                       'limits': self.limits.__dict__ if hasattr(self.limits, '__dict__')
-                       else {k: getattr(self.limits, k) for k in self.limits.__dataclass_fields__}})
+        return digest({'name': self.name, 'n': self.n,
+                       'anf': sorted(self.target_polynomial),
+                       'limits': asdict(self.limits),
+                       'hardware': asdict(self.hardware)})
 
     @classmethod
     def from_truth_table(cls, name: str, table: tuple[int, ...], *,
