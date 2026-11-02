@@ -115,9 +115,10 @@ def verify_phase(p: CleanupProblem, protocol: PhaseProtocol | dict, *,
                 byproduct[op.outcome] = values[t]
                 values[t] = frozenset()
                 reserved.remove(t)
-            elif op.kind in ('Z', 'CZ', 'MINUS'):
+            elif op.kind in ('Z', 'CZ', 'CCZ', 'MINUS'):
                 term = (frozenset({0}) if op.kind == 'MINUS' else values[op.wires[0]]
-                        if op.kind == 'Z' else times(values[op.wires[0]], values[op.wires[1]]))
+                        if op.kind == 'Z' else times(values[op.wires[0]], values[op.wires[1]])
+                        if op.kind == 'CZ' else times(times(values[op.wires[0]], values[op.wires[1]]), values[op.wires[2]]))
                 if op.guard is None:
                     phase = plus(phase, term)
                 else:
