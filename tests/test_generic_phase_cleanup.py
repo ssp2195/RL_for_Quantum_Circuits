@@ -108,3 +108,38 @@ def test_exact_menu_rejects_unstated_limit():
     p = BooleanPhaseProblem('many', 5, frozenset(m for m in range(32) if m.bit_count() >= 3))
     with pytest.raises(ValueError, match='exceeds'):
         optimize_boolean_phase(p, max_nonlinear_terms=1)
+
+
+def test_generic_frontier_exhausts_every_exact_continuation():
+    from hybrid_qcs.cleanup.generic_search import GenericFrontierSearch
+    problem = BooleanPhaseProblem('all-choices', 4, frozenset({7, 15}))
+    search = GenericFrontierSearch(problem)
+    result = search.run()
+    assert result['status'] == 'complete'
+    assert result['candidate_count'] == 4
+    expected = optimize_boolean_phase(problem)['selected']['resources']
+    observed = result['selected']['resources']
+    assert (observed['peak_aux'], observed['t_count'], observed['cnot']) == (
+        expected['peak_aux'], expected['t_count'], expected['cnot'])
+
+
+def test_frozen_sarsa_outer_and_linucb_inner():
+    from hybrid_qcs.cleanup.generic_search import GenericFrontierSearch, train_generic_hierarchy
+    train = (
+        BooleanPhaseProblem('train-one', 3, frozenset({7})),
+        BooleanPhaseProblem('train-two', 4, frozenset({15})),
+    )
+    model = train_generic_hierarchy(train, episodes=8)
+    assert model.frozen and model.outer_updates and model.inner_updates
+    test = BooleanPhaseProblem('held-out', 4, frozenset({7, 15}))
+    result = GenericFrontierSearch(test).run(model)
+    assert result['complete_library_search'] and result['candidate_count'] == 4
+    assert verify_phase(test, result['selected']['protocol'])['valid']
+
+
+def test_no_nonlinear_phase_remains_exact():
+    from hybrid_qcs.cleanup.generic_search import GenericFrontierSearch
+    problem = BooleanPhaseProblem('clifford-only', 3, frozenset({1, 6}))
+    result = GenericFrontierSearch(problem).run()
+    assert result['candidate_count'] == 1
+    assert result['selected']['resources']['peak_aux'] == 0
