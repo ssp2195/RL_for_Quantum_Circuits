@@ -8,7 +8,6 @@ All legal choices remain pending until explored (or a declared limit intervenes)
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from itertools import product
 import numpy as np
 
 from .general_boolean import BooleanPhaseProblem, _compile_term, _monomials, compile_boolean_phase
@@ -77,7 +76,6 @@ class GenericHierarchy:
 class GenericRecord:
     record_id: int
     modes: tuple[str, ...]
-    ops: tuple[Instruction, ...]
     resource: ResourceState
     tail: ProtocolEvent | None
     outcomes: int
@@ -103,7 +101,7 @@ class GenericFrontierSearch:
         for op in ops:
             resource = resource.append(op, 'and4', problem)
             tail = append_event(tail, op, 'and4')
-        self.records = {0: GenericRecord(0, (), ops, resource, tail, 0)}
+        self.records = {0: GenericRecord(0, (), resource, tail, 0)}
         self.frontier = {0: self.records[0]}
         self.complete: list[dict] = []
         self.expansions = 0
@@ -191,7 +189,7 @@ class GenericFrontierSearch:
                                       'protocol': completed})
             else:
                 index = len(self.records)
-                child = GenericRecord(index, modes, record.ops+emitted, resource, tail,
+                child = GenericRecord(index, modes, resource, tail,
                                       record.outcomes+sum(op.kind=='MX' for op in emitted))
                 self.records[index] = child
                 self.frontier[index] = child
