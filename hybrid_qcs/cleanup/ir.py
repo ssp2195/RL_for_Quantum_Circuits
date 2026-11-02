@@ -39,6 +39,9 @@ def local_word(kind: str, primitive: str = 'and4') -> tuple:
         return word if kind == 'AND' else tuple((INVERSE[n], q) for n, q in reversed(word))
     if kind == 'Z': return Z_WORD
     if kind == 'CZ': return CZ_WORD
+    if kind == 'CCZ':
+        # H(target) CCX H(target): the end Hadamards of the exact CCX word cancel.
+        return tuple((g.name, g.qubits) for g in toffoli_decomposition(0, 1, 2))[1:-1]
     if kind == 'X': return X_WORD
     if kind == 'H': return (('H', (0,)),)
     if kind == 'CX': return (('CNOT', (0, 1)),)
@@ -70,7 +73,7 @@ class Instruction:
 
     def __post_init__(self) -> None:
         object.__setattr__(self, 'wires', tuple(self.wires))
-        arity = {'AND': 3, 'UNAND': 3, 'Z': 1, 'CZ': 2, 'MX': 1, 'MINUS': 1, 'CX': 2}
+        arity = {'AND': 3, 'UNAND': 3, 'Z': 1, 'CZ': 2, 'CCZ': 3, 'MX': 1, 'MINUS': 1, 'CX': 2}
         if self.kind not in arity or len(self.wires) != arity[self.kind] or len(set(self.wires)) != len(self.wires):
             raise ValueError('invalid instruction kind or arity')
         if any(type(q) is not int or q < 0 for q in self.wires):
