@@ -116,7 +116,7 @@ def nondominated(entries: list[dict]) -> list[dict]:
 
 
 def synthesize_oracle(p: CleanupProblem, policy=None, *, objective=DEFAULT_OBJECTIVE,
-                      include_learned: bool = False, max_factors: int = 16,
+                      include_learned: bool = False, include_generic: bool = False, max_factors: int = 16,
                       seconds: float = 10., cancel: Callable[[], bool] | None = None) -> dict:
     """Choose complete oracles, not an obligatorily materialized intermediate bank.
 
@@ -171,6 +171,16 @@ def synthesize_oracle(p: CleanupProblem, policy=None, *, objective=DEFAULT_OBJEC
             check_cancel(stopped)
             c, receipt = compile_factors(p, storage=mode, max_factors=max_factors, cancel=stopped)
             add('rank_' + mode, c, receipt)
+        if include_generic:
+            from .general_boolean import BooleanPhaseProblem, compile_boolean_phase
+            generic = BooleanPhaseProblem(p.name, p.n, p.target_polynomial)
+            count = sum(m.bit_count() >= 3 for m in generic.target_polynomial)
+            for mode in ('measured', 'direct'):
+                check_cancel(stopped)
+                constructed = compile_boolean_phase(generic, (mode,) * count)
+                add('generic_anf_' + mode, PhaseProtocol(
+                    p.digest, constructed.width, constructed.ops,
+                    'exact_general_boolean_' + mode))
         if include_learned:
             check_cancel(stopped)
             remaining = seconds - (time.perf_counter()-started)
