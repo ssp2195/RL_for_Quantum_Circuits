@@ -8,7 +8,7 @@ It is exact GF(2) algebra, never a learned correctness decision.
 from __future__ import annotations
 
 from .contextual import LiveStage, MeasuredValue, causal_corrections
-from .contract import Polynomial, times, plus
+from .contract import Polynomial, times
 from .ir import Instruction
 
 
