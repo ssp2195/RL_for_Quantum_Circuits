@@ -14,6 +14,8 @@ complete instrument is checked independently by verify_phase.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from collections import deque
+from functools import lru_cache
 from itertools import combinations
 
 from .contract import times
@@ -145,12 +147,16 @@ class CausalCorrectionFrontier:
         self.baseline = LiveStage(_m3_values(q)[0]+_m3_values(q)[1])
 
     def run(self) -> dict:
-        frontier = [StageRecord((), (1 << self.q)-1)]
+        frontier = deque([StageRecord((), (1 << self.q)-1)])
+        @lru_cache(maxsize=None)
+        def suffix_m2(remaining: int, stages_left: int) -> int:
+            return necessary_peak_ancillas(
+                self.baseline, _pending(self.q,remaining),stages_left)
         generated = 1
         expanded = edges = m2_pruned = 0
         solutions: list[dict] = []
         while frontier:
-            record = frontier.pop(0)
+            record = frontier.popleft()
             remaining_stages = self.max_stages - len(record.selected)
             if record.remaining_mask == 0:
                 problem, circuit = compile_staged_corrections(self.q,record.selected)
@@ -169,8 +175,7 @@ class CausalCorrectionFrontier:
                 continue
             if remaining_stages <= 0:
                 continue
-            minimum = necessary_peak_ancillas(
-                self.baseline, _pending(self.q,record.remaining_mask),remaining_stages)
+            minimum = suffix_m2(record.remaining_mask,remaining_stages)
             if self.m2_enabled and minimum > self.cap:
                 m2_pruned += 1
                 continue
@@ -194,6 +199,7 @@ class CausalCorrectionFrontier:
             'generated_records':generated,'expanded_records':expanded,
             'expanded_edges':edges,'m2_pruned_records':m2_pruned,
             'verified_schedules':len(solutions),'selected':selected,
+            'm2_rank_checks':suffix_m2.cache_info().misses,
             'global_oracle_optimality':False,
             'stage_model':'one simultaneous helper preparation/measurement cycle per stage',
         }
