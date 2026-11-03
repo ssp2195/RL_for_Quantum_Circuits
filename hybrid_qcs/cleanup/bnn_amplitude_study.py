@@ -24,6 +24,7 @@ class BNNCase:
     radius: int
     weights: tuple
     biases: tuple
+    reference: int = 0
 
     @property
     def n(self):
@@ -37,7 +38,7 @@ CASES = (
             (((1,1,-1,-1),),), ((-3,),)),
     BNNCase('B3', '5-input BNN with 3 hidden neurons and majority output', 2,
             (((1,1,1,-1,-1),(-1,1,-1,1,1),(1,-1,1,1,-1)),
-             ((1,1,1),)), ((-1,1,0),(-1,))),
+             ((1,1,1),)), ((-1,1,0),(-1,)), 14),
 )
 
 
@@ -52,10 +53,10 @@ def predict(case: BNNCase, x: int) -> int:
 
 def bnn_result(case: BNNCase) -> dict:
     n=case.n
-    nominal=predict(case,0)
-    truth=tuple(int(x.bit_count()<=case.radius and predict(case,x)!=nominal)
+    nominal=predict(case,case.reference)
+    truth=tuple(int((x ^ case.reference).bit_count()<=case.radius and predict(case,x)!=nominal)
                 for x in range(1<<n))
-    assert not truth[0] and any(truth)
+    assert not truth[case.reference] and any(truth)
     problem=BooleanPhaseProblem.from_truth_table(case.name,truth)
     assert all(evaluate(problem.target_polynomial,x)==truth[x] for x in range(1<<n))
     nonlinear=sum(m.bit_count()>=3 for m in problem.target_polynomial)
@@ -74,9 +75,10 @@ def bnn_result(case: BNNCase) -> dict:
     return {
         'name':case.name,'description':case.description,'n':n,
         'radius':case.radius,'nominal_class':nominal,
+        'reference_input':''.join(str((case.reference>>i)&1) for i in range(n)),
         'weights':[[list(row) for row in layer] for layer in case.weights],
         'biases':[list(row) for row in case.biases],
-        'search_size':sum(x.bit_count()<=case.radius for x in range(1<<n)),
+        'search_size':sum((x ^ case.reference).bit_count()<=case.radius for x in range(1<<n)),
         'marked_count':sum(truth),
         'marked_inputs':[''.join(str((x>>i)&1) for i in range(n))
                          for x,v in enumerate(truth) if v],
@@ -118,7 +120,7 @@ def run() -> dict:
     return {
         'schema':'bnn-aa-oracle-v1',
         'source_branch':'stable-generic-phase-cleanup-20261102',
-        'goal':'HammingBall(x,0^n,r) AND (BNN(x)!=BNN(0^n))',
+        'goal':'HammingBall(x,x0,r) AND (BNN(x)!=BNN(x0))',
         'scope':'phase oracle only; excludes AA state preparation and reflection',
         'objective':['peak_aux','t_count','cnot','native_depth'],
         'bnn_oracles':bnns,'reference_synthetic_benchmarks':reference,
