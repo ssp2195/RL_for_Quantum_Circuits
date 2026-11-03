@@ -115,3 +115,15 @@ def test_reject_incomplete_or_reused_contexts():
         compile_staged_corrections(3,(1,2))
     with pytest.raises(ValueError,match='cannot be prepared'):
         compile_staged_corrections(2,(1,1,2))
+
+
+def test_m2_prunes_partial_frontier_when_root_capacity_is_sufficient():
+    # q=6, L=2, A=1: root rank 36 <= 2*(3q+1) = 38,
+    # but after one helper is selected, rank 30 > 19 in the last stage.
+    with_m2=CausalCorrectionFrontier(6,2,1,m2_enabled=True).run()
+    without=CausalCorrectionFrontier(6,2,1,m2_enabled=False).run()
+    assert with_m2['status'] == without['status'] == 'infeasible_in_stage_grammar'
+    assert with_m2['m2_pruned_records'] == 6
+    assert with_m2['expanded_edges'] == 6
+    assert without['expanded_edges'] == 36
+    assert with_m2['m2_rank_checks'] < with_m2['generated_records']
