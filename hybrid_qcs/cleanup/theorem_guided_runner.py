@@ -61,6 +61,7 @@ def study_stages():
         ('two_round_q4',4,2,2),
         ('four_round_q4',4,4,1),
         ('infeasible_q4',4,1,1),
+        ('infeasible_q6',6,2,1),
     )
     rows=[]
     for name,q,rounds,cap in parameters:
