@@ -175,8 +175,9 @@ class CausalCorrectionFrontier:
                 continue
             if remaining_stages <= 0:
                 continue
-            minimum = suffix_m2(record.remaining_mask,remaining_stages)
-            if self.m2_enabled and minimum > self.cap:
+            if self.m2_enabled and (
+                suffix_m2(record.remaining_mask,remaining_stages) > self.cap
+            ):
                 m2_pruned += 1
                 continue
             expanded += 1
