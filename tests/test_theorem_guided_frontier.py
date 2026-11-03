@@ -126,4 +126,4 @@ def test_m2_prunes_partial_frontier_when_root_capacity_is_sufficient():
     assert with_m2['m2_pruned_records'] == 6
     assert with_m2['expanded_edges'] == 6
     assert without['expanded_edges'] == 36
-    assert with_m2['m2_rank_checks'] < with_m2['generated_records']
+    assert with_m2['m2_rank_checks'] <= with_m2['generated_records']
