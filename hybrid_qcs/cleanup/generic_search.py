@@ -13,6 +13,7 @@ import numpy as np
 from .general_boolean import BooleanPhaseProblem, _compile_term, _monomials, compile_boolean_phase
 from .ir import Instruction, ResourceState, ProtocolEvent, append_event
 from .phase_protocol import verify_phase
+from .causal_protocol import causalize_immediate_cleanup
 
 
 OUTER_DIM = 6
@@ -85,8 +86,10 @@ class GenericRecord:
 class GenericFrontierSearch:
     """Explicit exact construction grammar; its optimum is library-relative."""
 
-    def __init__(self, problem: BooleanPhaseProblem, *, max_nonlinear_terms: int = 12):
+    def __init__(self, problem: BooleanPhaseProblem, *, max_nonlinear_terms: int = 12,
+                 m1_guided: bool = True):
         self.problem = problem
+        self.m1_guided = m1_guided
         self.nonlinear = tuple(m for m in _monomials(problem) if m.bit_count() >= 3)
         if len(self.nonlinear) > max_nonlinear_terms:
             raise ValueError('generic frontier exceeds declared exhaustive-term limit')
@@ -119,6 +122,8 @@ class GenericFrontierSearch:
             raise ValueError('ineligible construction choice')
         emitted = _compile_term(self.nonlinear[len(record.modes)], mode,
                                 self.problem.n, record.outcomes)
+        if self.m1_guided:
+            emitted = causalize_immediate_cleanup(emitted, self.problem.n)
         resource, tail = record.resource, record.tail
         for op in emitted:
             resource = resource.append(op, 'and4', self.problem)
@@ -147,7 +152,7 @@ class GenericFrontierSearch:
         if policy is not None and policy.frozen == (train is not None):
             raise ValueError('policy freeze/training mismatch')
         if not self.nonlinear:
-            circuit = compile_boolean_phase(self.problem)
+            circuit = compile_boolean_phase(self.problem, m1_guided=self.m1_guided)
             verified = verify_phase(self.problem, circuit)
             if not verified['valid']:
                 raise AssertionError('Clifford-only circuit failed verification')
@@ -180,7 +185,8 @@ class GenericFrontierSearch:
             modes = record.modes + (mode,)
             reward = self._reward(record.resource, resource)
             if len(modes) == len(self.nonlinear):
-                completed = compile_boolean_phase(self.problem, modes)
+                completed = compile_boolean_phase(self.problem, modes,
+                                                 m1_guided=self.m1_guided)
                 verified = verify_phase(self.problem, completed)
                 if not verified['valid']:
                     raise AssertionError('exact constructed candidate failed verification: ' + verified['reason'])
@@ -207,6 +213,7 @@ class GenericFrontierSearch:
                      if self.complete else None)
         return {'status': 'complete' if not self.frontier else 'limit_reached',
                 'expansions': self.expansions, 'records': len(self.records),
+                'm1_guided': self.m1_guided,
                 'candidate_count': len(self.complete), 'selected': selection,
                 'global_oracle_optimality': False,
                 'complete_library_search': not self.frontier}
