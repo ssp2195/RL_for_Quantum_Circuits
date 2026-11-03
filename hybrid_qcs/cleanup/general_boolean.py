@@ -14,6 +14,7 @@ from .contract import Hardware, Limits, Polynomial, digest
 from .consumer import bits
 from .ir import Instruction
 from .phase_protocol import PhaseProtocol, verify_phase
+from .causal_protocol import causalize_immediate_cleanup
 
 
 @dataclass(frozen=True)
@@ -94,6 +95,7 @@ def _compile_term(mask: int, mode: str, n: int, outcome: int) -> tuple[Instructi
 def compile_boolean_phase(
     problem: BooleanPhaseProblem,
     modes: tuple[str, ...] | None = None,
+    *, m1_guided: bool = False,
 ) -> PhaseProtocol:
     """Build an exact complete oracle; modes index degree>=3 monomials."""
     terms = _monomials(problem)
@@ -115,8 +117,11 @@ def compile_boolean_phase(
             emitted = _compile_term(term, mode, problem.n, outcome)
         ops.extend(emitted)
         outcome += sum(op.kind == 'MX' for op in emitted)
+    if m1_guided:
+        ops = list(causalize_immediate_cleanup(tuple(ops), problem.n))
     return PhaseProtocol(problem.digest, problem.n + peak, tuple(ops),
-                         'generic_boolean_anf_exact_' + '_'.join(modes))
+                         ('generic_m1_causal_' if m1_guided else 'generic_boolean_anf_exact_')
+                         + '_'.join(modes))
 
 
 def optimize_boolean_phase(
